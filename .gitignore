@@ -1,0 +1,7 @@
+# Ignore executable files
+*.exe
+
+# Ignore build directories
+build/
+release/
+debug/

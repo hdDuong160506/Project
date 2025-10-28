@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Map Route</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#f6f7fb; }
+    #topbar {
+      position: relative;
+      z-index: 1000;
+      padding:8px;
+      background:#fff;
+      box-shadow:0 1px 3px rgba(0,0,0,0.08);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    #map { height: calc(100vh - 72px); width: 100%; }
+    input { padding:6px; width:180px; }
+    button { padding:6px 10px; cursor:pointer; }
+    #status { margin-left: 8px; font-size: 0.95rem; color:#333; min-width:180px; }
+    .small { font-size:0.85rem; color:#666; }
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <label>Start (lon,lat): <input id="start" value="106.70098,10.77689" /></label>
+    <label>End (lon,lat):   <input id="end"   value="106.65897,10.76269" /></label>
+
+    <select id="profile" title="Chọn loại di chuyển">
+      <option value="driving-car">Driving</option>
+      <option value="cycling-regular">Cycling</option>
+      <option value="foot-walking">Walking</option>
+    </select>
+
+    <button id="btn" type="button">Vẽ đường</button>
+    <span id="status">Ready <span class="small">• Nhập lon,lat rồi bấm Vẽ đường</span></span>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // --- Khởi tạo map ---
+    const map = L.map('map').setView([10.77, 106.69], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let routeLayer = null;
+    const statusEl = document.getElementById('status');
+    const btn = document.getElementById('btn');
+
+    function setStatus(s) { statusEl.textContent = s; }
+
+    btn.addEventListener('click', drawRoute);
+
+    // --- Hàm validate lon/lat ---
+    function validLonLat(pair) {
+      if (!Array.isArray(pair) || pair.length !== 2) return false;
+      const [lon, lat] = pair;
+      if (typeof lon !== 'number' || typeof lat !== 'number') return false;
+      if (lon < -180 || lon > 180) return false;
+      if (lat < -90 || lat > 90) return false;
+      return true;
+    }
+
+    // --- Hàm parse input "lon,lat" thành [lon, lat] float ---
+    function parseCoord(str) {
+      if (!str) return null;
+      const parts = str.split(',').map(s => s.trim());
+      if (parts.length !== 2) return null;
+      const lon = parseFloat(parts[0]);
+      const lat = parseFloat(parts[1]);
+      if (Number.isNaN(lon) || Number.isNaN(lat)) return null;
+      return [lon, lat];
+    }
+
+    // --- Vẽ route bằng cách gọi backend ---
+    async function drawRoute() {
+      // disable nút để tránh bấm nhiều lần
+      btn.disabled = true;
+      setStatus('Loading...');
+
+      try {
+        const startText = document.getElementById('start').value.trim();
+        const endText = document.getElementById('end').value.trim();
+        const profile = document.getElementById('profile').value;
+
+        const start = parseCoord(startText);
+        const end = parseCoord(endText);
+
+        if (!start || !end) {
+          setStatus('Sai định dạng tọa độ. Phải là: lon,lat');
+          btn.disabled = false;
+          return;
+        }
+        if (!validLonLat(start) || !validLonLat(end)) {
+          setStatus('Tọa độ ngoài phạm vi hợp lệ (lon: -180..180, lat: -90..90).');
+          btn.disabled = false;
+          return;
+        }
+
+        // Gọi backend (phải chạy Flask server trên 127.0.0.1:5000)
+        const payload = { start: start, end: end, profile: profile };
+        const res = await fetch('http://127.0.0.1:5000/route', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          // in chi tiết lỗi (có thể là lỗi ORS forwarded)
+          const text = await res.text();
+          console.error('Server error response:', text);
+          setStatus('Server error: ' + res.status + '. Xem console.');
+          btn.disabled = false;
+          return;
+        }
+
+        const geojson = await res.json();
+
+        // Nếu không có features -> thông báo
+        if (!geojson || !geojson.features || !geojson.features.length) {
+          console.warn('Empty geojson:', geojson);
+          setStatus('Không có đường trả về (empty geojson). Kiểm tra tọa độ hoặc API key.');
+          btn.disabled = false;
+          return;
+        }
+
+        // Remove old layer nếu có
+        if (routeLayer) {
+          map.removeLayer(routeLayer);
+          routeLayer = null;
+        }
+
+        // Add new route (Leaflet xử lý GeoJSON)
+        routeLayer = L.geoJSON(geojson, {
+          style: () => ({ color: 'blue', weight: 5, opacity: 0.85 }),
+          pointToLayer: (feature, latlng) => L.marker(latlng)
+        }).addTo(map);
+
+        // Fit map vào bounds của route
+        const bounds = routeLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [40, 40] });
+        }
+
+        // Hiển thị summary nếu có
+        try {
+          const feat = geojson.features[0];
+          if (feat.properties && feat.properties.summary) {
+            const s = feat.properties.summary;
+            const km = (s.distance / 1000).toFixed(2);
+            const mins = Math.round(s.duration / 60);
+            setStatus(`Distance: ${km} km • Duration: ${mins} min`);
+          } else {
+            setStatus('Route loaded');
+          }
+        } catch (e) {
+          setStatus('Route loaded');
+        }
+      } catch (err) {
+        console.error('Exception drawRoute:', err);
+        setStatus('Error. Xem console (F12).');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // --- Optional: thêm phím Enter để submit khi focus input ---
+    document.getElementById('start').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') drawRoute();
+    });
+    document.getElementById('end').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') drawRoute();
+    });
+  </script>
+</body>
+</html>

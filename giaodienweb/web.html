@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VUA WEB</title>
+  <title>Web Bán Hàng Trùm VN</title>
   <style>
     * {
       box-sizing: border-box;
@@ -35,7 +35,7 @@
     }
 
     .cart-btn {
-      background: #2563eb;
+      background: #ff0000;
       color: #fff;
       border: none;
       padding: 8px 12px;
@@ -45,7 +45,7 @@
     }
 
     .cart-btn:hover {
-      background: #1e40af
+      background: #af1616
     }
 
     main {
@@ -166,7 +166,7 @@
     }
 
     .auth-buttons button {
-      background: #00ccff;
+      background: #2600ff;
       color: white;
       border: none;
       padding: 6px 10px;
@@ -175,26 +175,145 @@
     }
 
     .auth-buttons button:hover {
-      background: #1e40af;
+      background: #334c96;
+    }
+
+    .why-choose {
+      background: #eef3ff;
+      padding: 40px 0;
+      text-align: center;
+      border-radius: 16px;
+      margin: 30px 0;
+    }
+
+    .why-choose h2 {
+      font-size: 24px;
+      color: #1e3a8a;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .reasons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px;
+      padding: 0 10px;
+    }
+
+    .reason-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px;
+      width: 320px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .reason-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    .reason-card img {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 10px;
+    }
+
+    .reason-card h4 {
+      font-size: 18px;
+      margin-bottom: 6px;
+      color: #222;
+    }
+
+    .reason-card p {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.4;
+    }
+
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #f6f7fb;
+      color: #1e3a8a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 30px 30px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .nav-left .brand {
+      font-size: 40px;
+      font-weight: bold;
+      color: #1e3a8a;
+    }
+
+    .nav-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 30px;
+      color: #2563eb;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .account-btn {
+      background: #2600ff;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .cart-btn {
+      background: #ff0000;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .cart-btn:hover {
+      background: #af1616;
+    }
+
+    main {
+      margin-top: 90px;
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="brand">SHOPPY</div>
-    <h1 style="text-align:center; color:#2563eb;">
-      🛒 Web mua hàng dẫn đầu, một chạm là mua 🛒
-    </h1>
-    <div style="display:flex; align-items:center; gap:10px;">
-      <!-- 🔹 Nút tài khoản chuyển trang -->
-      <div class="auth-buttons">
-        <button onclick="window.location.href='account.html'">👤 Tài khoản</button>
-      </div>
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="brand">SHOPPY</div>
+    </div>
 
+    <h1 class="nav-center">🛒 Web mua hàng dẫn đầu, một chạm là mua 🛒</h1>
+
+    <div class="nav-right">
+      <button class="account-btn" onclick="window.location.href='account.html'">👤 Tài khoản</button>
       <button class="cart-btn" id="open-cart">Giỏ hàng (<span id="cart-count">0</span>)</button>
     </div>
   </header>
+
 
   <main>
     <section>
@@ -202,7 +321,26 @@
         <img src="image/banner.jpg" alt="Banner quảng cáo"
           style="width:95%; max-height:300px; object-fit:cover; border-radius:16px; box-shadow:0 2px 6px rgba(0,0,0,0.15);" />
       </div>
-
+      <section class="why-choose">
+        <h2>Lý do nên chọn mua hàng tại SHOPPY?</h2>
+        <div class="reasons">
+          <div class="reason-card">
+            <img src="image/icons/icon1.jpg" alt="Đa dạng sản phẩm">
+            <h4>Đa dạng sản phẩm</h4>
+            <p>Từ văn phòng phẩm, quần áo đến phụ kiện – tất cả đều có tại Shoppy với giá tốt nhất.</p>
+          </div>
+          <div class="reason-card">
+            <img src="image/icons/icon2.jpg" alt="Giao hàng linh hoạt">
+            <h4>Giao hàng linh hoạt</h4>
+            <p>Chúng tôi hỗ trợ đổi trả miễn phí và giao hàng tận nơi nhanh chóng, tiện lợi.</p>
+          </div>
+          <div class="reason-card">
+            <img src="image/icons/icon3.png" alt="Thanh toán an toàn">
+            <h4>Thanh toán an toàn</h4>
+            <p>Thanh toán qua nhiều phương thức: tiền mặt, thẻ ngân hàng, ví điện tử, đảm bảo bảo mật.</p>
+          </div>
+        </div>
+      </section>
       <div style="background:#f7f7f7;padding:20px 0;margin:40px 0;text-align:center;border-radius:12px;">
         <p style="font-size:18px;margin-bottom:6px;color:#555;">📍 Vị trí hiện tại: TP. Hội An, Quảng Nam</p>
         <p style="font-size:18px;margin-bottom:20px;color:#555;">☁️ Thời tiết: Có mây, 28°C</p>
@@ -211,7 +349,7 @@
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;
                       background:#ffffff;border-radius:8px;cursor:pointer;border:1px solid #ddd;">
-              <img src="image/kinhlup.png" alt="Tìm" style="width:18px;height:18px;" />
+              <img src="image/icons/kinhlup.png" alt="Tìm" style="width:18px;height:18px;" />
             </div>
             <input id="search" placeholder="Tìm kiếm..."
               style="padding:8px 10px;border-radius:8px;border:1px solid #ddd;outline:none;" />
@@ -238,21 +376,17 @@
     </div>
   </div>
 
-  <footer>
-    GOAT - 24C08.<br>
-    KHOA CNTT - HCMUS.
-  </footer>
-
   <script>
     // Dữ liệu mẫu sản phẩm
     const PRODUCTS = [
-      { id: 1, name: 'Bút bi xanh', price: 7000, img: 'image/butbi.png' },
-      { id: 2, name: 'Sổ tay A5', price: 25000, img: 'image/sotay.jpg' },
-      { id: 3, name: 'Balo vải', price: 210000, img: 'image/balovai.jpg' },
-      { id: 4, name: 'Tai nghe Sony WH-CH510', price: 420000, img: 'image/sony-wh-ch510-beige-01-600x600.jpg' },
-      { id: 5, name: 'Móc khóa nhựa', price: 15000, img: 'image/moc-khoa-tre-mg04-in-logo-theo-yeu-cau-6-1024x1024.jpg' },
-      { id: 6, name: 'Áo khoác nỉ', price: 350000, img: 'image/aokhoac.jpg' },
-      { id: 7, name: 'Bình giữ nhiệt Inox', price: 120000, img: 'image/binhgiunhiet.png' },
+      { id: 1, name: 'Bút bi xanh', price: 7000, img: 'image/product/butbi.png' },
+      { id: 2, name: 'Sổ tay A5', price: 25000, img: 'image/product/sotay.jpg' },
+      { id: 3, name: 'Balo vải', price: 210000, img: 'image/product/balovai.jpg' },
+      { id: 4, name: 'Tai nghe Sony WH-CH510', price: 420000, img: 'image/product/tainghe.jpg' },
+      { id: 5, name: 'Móc khóa nhựa', price: 15000, img: 'image/product/mockhoa.jpg' },
+      { id: 6, name: 'Áo khoác nỉ', price: 350000, img: 'image/product/aokhoac.jpg' },
+      { id: 7, name: 'Bình giữ nhiệt Inox', price: 120000, img: 'image/product/binhgiunhiet.png' },
+      { id: 8, name: 'Quần Tây', price: 180000, img: 'image/product/quantay.jpg' },
     ];
 
     let cart = JSON.parse(localStorage.getItem('cart_v1') || '{}');
@@ -347,3 +481,145 @@
 </body>
 
 </html>
+
+
+<footer>
+  <div class="footer">
+    <div class="footer-section">
+      <div class="footer-logo">
+        <h2 style="color:#00aaff; font-size:28px;">SHOPPY</h2>
+        <p style="color:#ccc;">Web bán hàng hàng đầu Việt Nam.</p>
+      </div>
+      <h3>Đối tác thanh toán</h3>
+      <div class="partners">
+        <img src="image/payment/visa.png" alt="Visa">
+        <img src="image/payment/mastercard.png" alt="Mastercard">
+        <img src="image/payment/momo.png" alt="MoMo">
+        <img src="image/payment/vnpay.jpg" alt="VNPay">
+        <img src="image/payment/vietqr.png" alt="VietQR">
+        <img src="image/payment/mbbank.png" alt="MB Bank">
+        <img src="image/payment/viettinbank.png" alt="Viettinbank">
+      </div>
+    </div>
+
+    <div class="footer-section">
+      <h3>Về Shoppy</h3>
+      <ul>
+        <li><a href="#">Giới thiệu</a></li>
+        <li><a href="#">Liên hệ</a></li>
+        <li><a href="#">Tuyển dụng</a></li>
+        <li><a href="#">Trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h3>Sản phẩm</h3>
+      <ul>
+        <li><a href="#">Đồ dùng học tập</a></li>
+        <li><a href="#">Đồ điện tử</a></li>
+        <li><a href="#">Thời trang</a></li>
+        <li><a href="#">Đồ gia dụng</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h3>Chính sách</h3>
+      <ul>
+        <li><a href="#">Chính sách bảo mật</a></li>
+        <li><a href="#">Điều khoản sử dụng</a></li>
+        <li><a href="#">Đổi trả & Hoàn tiền</a></li>
+      </ul>
+
+      <h3 style="margin-top:20px;">Theo dõi chúng tôi</h3>
+      <div class="social-icons">
+        <img src="image/icons/fb.jpg" alt="Facebook">
+        <img src="image/icons/ins.jpg" alt="Instagram">
+        <img src="image/icons/tiktok.jpg" alt="TikTok">
+        <img src="image/icons/youtube.png" alt="YouTube">
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    @ 2025 Shoppy — Khoa CNTT, HCMUS
+  </div>
+</footer>
+
+<style>
+  .footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    background: #111b21;
+    color: #fff;
+    padding: 50px 20px;
+    border-top: 3px solid #00aaff;
+  }
+
+  .footer-section {
+    flex: 1 1 220px;
+    margin: 15px;
+  }
+
+  .footer-section h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .footer-section ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .footer-section ul li {
+    margin-bottom: 8px;
+  }
+
+  .footer-section ul li a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .footer-section ul li a:hover {
+    color: #00aaff;
+  }
+
+  .partners img {
+    height: 30px;
+    margin: 4px;
+    border-radius: 6px;
+    background: #fff;
+    padding: 2px;
+  }
+
+  .social-icons img {
+    height: 28px;
+    margin: 6px 8px 0 0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px;
+  }
+
+  .store-buttons img {
+    height: 45px;
+    margin-right: 8px;
+    margin-top: 10px;
+  }
+
+  .footer-bottom {
+    background: #0b1318;
+    text-align: center;
+    color: #aaa;
+    padding: 15px;
+    font-size: 13px;
+  }
+
+  @media (max-width: 768px) {
+    .footer {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Register Form</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <button class="back-btn" onclick="window.history.back()">◀️ Quay lại</button>
+
+  <div class="container" id="container">
+    <!-- FORM ĐĂNG KÝ -->
+    <div class="form-container sign-up-container">
+      <form action="#">
+        <h1>Tạo tài khoản</h1>
+        <div class="social-container">
+          <a href="#" class="social">G+</a>
+          <a href="#" class="social">f</a>
+          <a href="#" class="social">Git</a>
+          <a href="#" class="social">in</a>
+        </div>
+        <span>hoặc sử dụng email của bạn để đăng ký</span>
+        <input type="text" placeholder="Họ Và Tên" />
+        <input type="email" placeholder="Email" />
+        <input type="password" placeholder="Mật Khẩu" />
+        <button>Đăng Ký</button>
+      </form>
+    </div>
+
+    <!-- FORM ĐĂNG NHẬP -->
+    <div class="form-container sign-in-container">
+      <form action="#">
+        <h1>Đăng Nhập</h1>
+        <div class="social-container">
+          <a href="#" class="social">G+</a>
+          <a href="#" class="social">f</a>
+          <a href="#" class="social">Git</a>
+          <a href="#" class="social">in</a>
+        </div>
+        <span>hoặc sử dụng mật khẩu email của bạn</span>
+        <input type="email" placeholder="Email" />
+        <input type="password" placeholder="Mật Khẩu" />
+        <a href="#">Quên mật khẩu?</a>
+        <button>Đăng Nhập</button>
+      </form>
+    </div>
+
+    <!-- PHẦN NỀN CAM (OVERLAY) -->
+    <div class="overlay-container">
+      <div class="overlay">
+        <div class="overlay-panel overlay-left">
+          <h1>Chào mừng trở lại!</h1>
+          <p>Nhập thông tin cá nhân của bạn để sử dụng tất cả các tính năng của trang web</p>
+          <button class="ghost" id="signIn">Đăng Nhập</button>
+        </div>
+        <div class="overlay-panel overlay-right">
+          <h1>Xin chào mọi người!</h1>
+          <p>Đăng ký thông tin cá nhân của bạn để sử dụng tất cả các tính năng của trang web</p>
+          <button class="ghost" id="signUp">Đăng Ký</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

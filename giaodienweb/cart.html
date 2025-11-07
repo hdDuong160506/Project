@@ -20,27 +20,63 @@
       padding-bottom: 100px;
     }
 
-    /* Header của trang giỏ hàng */
+    /* Header của trang giỏ hàng -- ĐÃ SỬA */
     .cart-page-header {
-      background: #fff;
+      background: #005FFF;
+      /* Màu xanh giống trong ảnh */
       padding: 20px 40px;
-      border-bottom: 1px solid #ddd;
+      /* border-bottom: 1px solid #ddd; */
+      /* Đã bỏ border đáy */
       display: flex;
       align-items: center;
       gap: 12px;
+      color: #fff;
+      /* Chữ bên trong mặc định màu trắng */
+    }
+
+    /* Logo và Tên Cửa hàng trong header -- ĐÃ THÊM */
+    .logo-container {
+      display: flex;
+      /* Dùng flexbox để logo và chữ nằm cạnh nhau */
+      align-items: center;
+      /* Căn giữa theo chiều dọc */
+      gap: 8px;
+      /* Khoảng cách giữa logo và chữ */
+    }
+
+    .logo-container a {
+      display: flex;
+      /* Đảm bảo link cũng là flex để chứa cả logo và h1 */
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      /* Bỏ gạch chân cho link */
+      color: inherit;
+      /* Kế thừa màu chữ từ cha (.cart-page-header) */
+    }
+
+    .header-logo {
+      height: 36px;
+      /* Chiều cao của logo, điều chỉnh nếu cần */
+      width: auto;
+      /* Chiều rộng tự động để giữ tỉ lệ */
     }
 
     .cart-page-header h1 {
       font-size: 28px;
-      color: #00aaff; /* Màu xanh */
+      color: #fff;
+      /* Đổi thành chữ trắng */
       font-weight: 700;
     }
 
     .cart-page-header span {
       font-size: 24px;
-      color: #00aaff; /* Màu xanh */
-      font-weight: 700; /* In đậm */
-      border-left: 1px solid #ccc;
+      color: #fff;
+      /* Đổi thành chữ trắng */
+      font-weight: 700;
+      /* In đậm */
+      border-left: 1px solid #fff;
+      /* Đổi gạch phân cách thành màu trắng */
       padding-left: 12px;
       margin-top: 4px;
     }
@@ -63,11 +99,29 @@
       margin-bottom: 12px;
     }
 
-    .col-product { flex: 4; }
-    .col-price { flex: 2; text-align: center; }
-    .col-qty { flex: 2; text-align: center; }
-    .col-total { flex: 2; text-align: center; }
-    .col-action { flex: 1; text-align: right; }
+    .col-product {
+      flex: 4;
+    }
+
+    .col-price {
+      flex: 2;
+      text-align: center;
+    }
+
+    .col-qty {
+      flex: 2;
+      text-align: center;
+    }
+
+    .col-total {
+      flex: 2;
+      text-align: center;
+    }
+
+    .col-action {
+      flex: 1;
+      text-align: right;
+    }
 
     /* Kiểu của mỗi item trong giỏ hàng */
     .cart-page-item {
@@ -106,11 +160,13 @@
 
     .product-info .rating-info {
       font-size: 13px;
-      color: #222; /* Màu đen */
+      color: #222;
+      /* Màu đen */
     }
 
     .rating-info .stars {
-      color: #f59e0b; /* Màu vàng */
+      color: #f59e0b;
+      /* Màu vàng */
       letter-spacing: -1px;
     }
 
@@ -176,11 +232,13 @@
     .total-text span {
       font-size: 22px;
       font-weight: 700;
-      color: #00aaff; /* Màu cam */
+      color: #00aaff;
+      /* Màu cam */
     }
 
     .checkout-page-btn {
-      background: #00aaff; /* Màu cam */
+      background: #00aaff;
+      /* Màu cam */
       color: white;
       border: none;
       padding: 12px 30px;
@@ -207,6 +265,7 @@
         opacity: 0;
         transform: translateY(10px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -226,22 +285,27 @@
         opacity: 1;
         transform: translateY(0);
       }
+
       to {
         opacity: 0;
         transform: translateY(-10px);
       }
     }
 
-    /* --- Nút quay lại --- */
+    /* --- Nút quay lại -- ĐÃ SỬA */
     .back-link {
       margin-left: auto;
       text-decoration: none;
-      color: #555;
+      color: #fff;
+      /* Đổi thành chữ trắng */
       font-size: 16px;
       font-weight: 500;
     }
+
     .back-link:hover {
-      color: #00aaff;
+      color: #ddd;
+      /* Hover ra màu trắng nhạt hơn */
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -249,9 +313,14 @@
 <body>
 
   <header class="cart-page-header">
-    <h1>SHOPPY</h1>
+    <div class="logo-container">
+      <a href="web.html">
+        <img src="image/logo/logo1.png" alt="SHOPPY Logo" class="header-logo">
+        <h1>SHOPPY</h1>
+      </a>
+    </div>
     <span>Giỏ hàng</span>
-    <a href="web.html" id="back-to-home" class="back-link">❮ Trở lại mua sắm</a>
+    <a href="web.html" class="back-link">❮ Trở lại mua sắm</a>
   </header>
 
   <main>
@@ -264,7 +333,7 @@
     </div>
 
     <div id="cart-page-list">
-      </div>
+    </div>
   </main>
 
   <div class="checkout-bar">
@@ -316,7 +385,7 @@
       }
 
       cartList.innerHTML = '';
-      
+
       Object.entries(cart).forEach(([id, qty]) => {
         const p = PRODUCTS.find(x => x.id == id);
         if (!p) return;
@@ -326,7 +395,7 @@
 
         const item = document.createElement('div');
         item.className = 'cart-page-item';
-        
+
         item.innerHTML = `
           <div class="col-product">
             <input type="checkbox" checked style="margin-right: 10px;" />
@@ -366,26 +435,16 @@
       const total = Object.entries(cart).reduce((s, [id, q]) => {
         const p = PRODUCTS.find(x => x.id == id); return s + (p ? p.price * q : 0);
       }, 0);
-      
+
       if (confirm(`Xác nhận thanh toán ${formatMoney(total)} ?`)) {
-        alert('Thanh toán thành công — cảm ơn bạn!'); 
-        cart = {}; 
+        alert('Thanh toán thành công — cảm ơn bạn!');
+        cart = {};
         saveCart();
       }
     });
-
-    // Nút "Quay lại" (với hiệu ứng)
-    $('#back-to-home').addEventListener('click', (e) => {
-      e.preventDefault();
-      document.body.classList.add('page-fade-out');
-      setTimeout(() => {
-        window.location.href = e.target.href; // Chuyển đến link trong thẻ a
-      }, 500);
-    });
-
-    // Chạy render lần đầu khi tải trang
     renderCartPage();
 
   </script>
 </body>
+
 </html>

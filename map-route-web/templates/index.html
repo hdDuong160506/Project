@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Map Route — Bản đồ & chỉ đường</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --accent:#2563eb;
+      --muted:#6b7280;
+      --success:#10b981;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.8);
+      --radius:12px;
+    }
+    html,body{height:100%; margin:0; font-family: Inter, "Segoe UI", Roboto, Arial; background:var(--bg); color:#0f172a;}
+    /* Top bar */
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:12px;
+      background: linear-gradient(90deg,#ffffff,#f3f6fb);
+      box-shadow: 0 4px 18px rgba(10,20,40,0.06);
+      position:relative;
+      z-index:1000;
+      flex-wrap:wrap;
+    }
+
+    .control {
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    label.small { font-size:0.86rem; color:var(--muted); margin-right:6px; }
+
+    input[type="text"]{
+      min-width:220px;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #d1d5db;
+      background:var(--card);
+      outline:none;
+      font-size:0.93rem;
+    }
+    input[type="text"]:focus { box-shadow:0 4px 14px rgba(37,99,235,0.12); border-color:var(--accent); }
+
+    select {
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #d1d5db;
+      font-size:0.93rem;
+      background:var(--card);
+    }
+
+    button.btn {
+      padding:9px 12px;
+      border-radius:10px;
+      border:none;
+      background:var(--accent);
+      color:white;
+      font-weight:600;
+      cursor:pointer;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      box-shadow: 0 6px 18px rgba(37,99,235,0.12);
+    }
+    button.btn:disabled { opacity:0.6; cursor:not-allowed; box-shadow:none; }
+
+    /* Map area */
+    #map { height: calc(100vh - 78px); width:100%; }
+
+    /* Status card */
+    .status {
+      margin-left: auto;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:260px;
+    }
+    .summary {
+      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,250,255,0.9));
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid #e6eefb;
+      box-shadow: 0 6px 24px rgba(14,22,40,0.04);
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .summary .big { font-weight:700; color:#0b1220; font-size:1rem; }
+    .summary .small { font-size:0.86rem; color:var(--muted); }
+
+    /* Tag chips */
+    .chip {
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#f8fafc;
+      border:1px solid #e6eefb;
+      font-size:0.86rem;
+      color:#0b1220;
+    }
+
+    /* Floating tools */
+    .tools {
+      position: absolute;
+      right: 18px;
+      bottom: 22px;
+      z-index:1100;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .tools button { background:var(--card); border:1px solid #e6eefb; padding:8px; border-radius:10px; cursor:pointer; box-shadow:0 6px 18px rgba(6,8,12,0.04); }
+    .tools button:active { transform:translateY(1px); }
+
+    /* Loading overlay */
+    #loading {
+      display:none;
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      background:var(--card);
+      padding:14px 18px;
+      border-radius:12px;
+      box-shadow:0 12px 36px rgba(12,15,30,0.12);
+      z-index:1200;
+      font-weight:600;
+    }
+
+    /* Popup style tweak */
+    .leaflet-popup-content-wrapper { border-radius:10px; }
+    /* small responsive */
+    @media (max-width:760px){
+      .status { min-width:160px; margin-top:8px; width:100%; }
+      input[type="text"]{ min-width:140px; }
+      .topbar { gap:8px; padding:10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar" role="region" aria-label="controls">
+    <div class="control">
+      <label class="small">Bắt đầu (<em>Start</em>)</label>
+      <input id="start" type="text" value="106.70098,10.77689" aria-label="start coordinate" />
+    </div>
+
+    <div class="control">
+      <label class="small">Kết thúc (<em>End</em>)</label>
+      <input id="end" type="text" value="106.65897,10.76269" aria-label="end coordinate" />
+    </div>
+
+    <div class="control">
+      <label class="small">Di chuyển (<em>Profile</em>)</label>
+      <select id="profile" aria-label="travel profile">
+        <option value="driving-car">🚗 Driving</option>
+        <option value="cycling-regular">🚴 Cycling</option>
+        <option value="foot-walking">🚶 Walking</option>
+      </select>
+    </div>
+
+    <div class="control">
+      <button class="btn" id="btn">Vẽ đường (Draw)</button>
+    </div>
+
+    <div class="status" id="status-area">
+      <div class="summary" id="summary">
+        <div>
+          <div class="big" id="distance">—</div>
+          <div class="small" id="duration">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="small">Trạng thái (<em>Status</em>)</div>
+          <div id="status-text" class="small" style="font-weight:600;color:var(--muted)">Sẵn sàng (Ready)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map" role="application" aria-label="map"></div>
+
+  <div class="tools" aria-hidden="false">
+    <button id="geolocate" title="Dùng vị trí hiện tại (Use current location)">📍 Vị trí hiện tại (My location)</button>
+    <button id="zoomHome" title="Zoom đến tuyến (Zoom to route)">🔎 Fit</button>
+  </div>
+
+  <div id="loading">Đang tải tuyến đường…</div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // --- Map init ---
+    const map = L.map('map', { preferCanvas: true }).setView([10.77, 106.69], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // UI elements
+    const btn = document.getElementById('btn');
+    const startInput = document.getElementById('start');
+    const endInput = document.getElementById('end');
+    const profileEl = document.getElementById('profile');
+    const statusText = document.getElementById('status-text');
+    const distanceEl = document.getElementById('distance');
+    const durationEl = document.getElementById('duration');
+    const loading = document.getElementById('loading');
+    const geolocateBtn = document.getElementById('geolocate');
+    const zoomHomeBtn = document.getElementById('zoomHome');
+
+    let routeLayer = null;
+    let startMarker = null;
+    let endMarker = null;
+    let lastBounds = null;
+
+    function setStatus(text, isError=false){
+      statusText.textContent = text;
+      statusText.style.color = isError ? 'var(--danger)' : 'var(--muted)';
+    }
+    function showLoading(show){ loading.style.display = show ? 'block' : 'none'; }
+
+    // --- Helpers ---
+    function parseCoord(str){
+      if (!str) return null;
+      const parts = str.split(',').map(s => s.trim());
+      if (parts.length !== 2) return null;
+      const lon = parseFloat(parts[0]);
+      const lat = parseFloat(parts[1]);
+      if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+      return [lon, lat];
+    }
+    function validLonLat(pair){
+      if (!Array.isArray(pair) || pair.length !== 2) return false;
+      const [lon, lat] = pair;
+      return lon >= -180 && lon <= 180 && lat >= -90 && lat <= 90;
+    }
+
+    // Small SVG flag icons (data URI) to keep single file
+    const greenFlagSvg = encodeURI(`
+      <svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'>
+        <path fill='#10b981' d='M4 2v20h2V2z'></path>
+        <path fill='#059669' d='M6 4c2.5 0 3.5-1 6-1 2.5 0 3.5 1 6 1v10c-2.5 0-3.5 1-6 1-2.5 0-3.5-1-6-1z'></path>
+      </svg>`);
+
+    const redFlagSvg = encodeURI(`
+      <svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'>
+        <path fill='#ef4444' d='M4 2v20h2V2z'></path>
+        <path fill='#dc2626' d='M6 4c2.5 0 3.5-1 6-1 2.5 0 3.5 1 6 1v10c-2.5 0-3.5 1-6 1-2.5 0-3.5-1-6-1z'></path>
+      </svg>`);
+
+    function makeDivIcon(svgData, label){
+      return L.divIcon({
+        className: "custom-flag",
+        html: `<div style="display:flex;flex-direction:column;align-items:center;">
+                 <img src="data:image/svg+xml;utf8,${svgData}" style="width:34px;height:34px;display:block"/>
+                 <div style="background:rgba(255,255,255,0.95);padding:4px 8px;border-radius:8px;margin-top:6px;border:1px solid #e6eefb;font-size:0.82rem;">
+                   ${label}
+                 </div>
+               </div>`,
+        iconSize: [46,60],
+        iconAnchor: [23,54],
+        popupAnchor: [0,-54]
+      });
+    }
+
+    const startIcon = makeDivIcon(greenFlagSvg, 'Start');
+    const endIcon = makeDivIcon(redFlagSvg, 'End');
+
+    // --- drawRoute ---
+    async function drawRoute(){
+      btn.disabled = true;
+      setStatus('Đang tải (Loading)...');
+      showLoading(true);
+      try {
+        const start = parseCoord(startInput.value);
+        const end = parseCoord(endInput.value);
+        const profile = profileEl.value;
+
+        if (!start || !end){
+          setStatus('Sai định dạng tọa độ (format: lon,lat)', true);
+          return;
+        }
+        if (!validLonLat(start) || !validLonLat(end)){
+          setStatus('Tọa độ ngoài phạm vi hợp lệ', true);
+          return;
+        }
+
+        // POST to Flask route (same server)
+        const payload = { start: start, end: end, profile: profile };
+        const res = await fetch('/route', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok){
+          const text = await res.text().catch(()=> '');
+          console.error('Server error response:', text);
+          setStatus('Lỗi server — xem console (F12)', true);
+          return;
+        }
+
+        const geojson = await res.json();
+
+        if (!geojson || !geojson.features || !geojson.features.length){
+          setStatus('Không có đường trả về (empty geojson)', true);
+          console.warn('Empty geojson:', geojson);
+          return;
+        }
+
+        // remove old
+        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+        if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
+        if (endMarker) { map.removeLayer(endMarker); endMarker = null; }
+
+        // add route
+        routeLayer = L.geoJSON(geojson, {
+          style: () => ({ color: '#1e40af', weight: 6, opacity: 0.95, dashArray: null }),
+          onEachFeature: (f, layer) => {
+            if (f.properties && f.properties.summary){
+              const s = f.properties.summary;
+              const txt = `Distance: ${(s.distance/1000).toFixed(2)} km • Duration: ${Math.round(s.duration/60)} min`;
+              layer.bindPopup(txt);
+            }
+          }
+        }).addTo(map);
+
+        // markers (Leaflet uses lat,lon)
+        startMarker = L.marker([start[1], start[0]], { icon: startIcon })
+                        .addTo(map).bindPopup(`<b>Start</b><br>${start[1].toFixed(6)}, ${start[0].toFixed(6)}`);
+        endMarker = L.marker([end[1], end[0]], { icon: endIcon })
+                        .addTo(map).bindPopup(`<b>End</b><br>${end[1].toFixed(6)}, ${end[0].toFixed(6)}`);
+
+        // fit to bounds
+        const bounds = routeLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [40,40] });
+          lastBounds = bounds;
+        }
+
+        // summary
+        try {
+          const feat = geojson.features[0];
+          if (feat.properties && feat.properties.summary){
+            const s = feat.properties.summary;
+            distanceEl.textContent = `${(s.distance/1000).toFixed(2)} km`;
+            durationEl.textContent = `${Math.round(s.duration/60)} phút`;
+            setStatus('Route loaded (Tuyến đã tải).');
+          } else {
+            distanceEl.textContent = '—';
+            durationEl.textContent = '—';
+            setStatus('Route loaded.');
+          }
+        } catch(e){
+          distanceEl.textContent = '—';
+          durationEl.textContent = '—';
+          setStatus('Route loaded.');
+        }
+
+      } catch (err){
+        console.error('Exception drawRoute:', err);
+        setStatus('Lỗi (Error). Xem console (F12)', true);
+      } finally {
+        showLoading(false);
+        btn.disabled = false;
+      }
+    }
+
+    // --- geolocation helper ---
+    geolocateBtn.addEventListener('click', () => {
+      if (!navigator.geolocation){
+        setStatus('Trình duyệt không hỗ trợ vị trí (no geolocation)', true);
+        return;
+      }
+      setStatus('Đang lấy vị trí hiện tại...');
+      showLoading(true);
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        startInput.value = `${lon.toFixed(6)},${lat.toFixed(6)}`;
+        setStatus('Vị trí đã đặt làm Start.');
+        showLoading(false);
+        // auto-draw small route? keep user control; we will not auto draw
+      }, (err) => {
+        console.error(err);
+        setStatus('Không thể lấy vị trí: ' + (err.message || err.code), true);
+        showLoading(false);
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    });
+
+    // zoom to last route bounds
+    zoomHomeBtn.addEventListener('click', () => {
+      if (lastBounds && lastBounds.isValid()) map.fitBounds(lastBounds, { padding: [40,40] });
+      else map.setView([10.77,106.69], 13);
+    });
+
+    // Enter to submit
+    [startInput, endInput].forEach(el => {
+      el.addEventListener('keypress', (e) => { if (e.key === 'Enter') drawRoute(); });
+    });
+    btn.addEventListener('click', drawRoute);
+
+    // nice small UX: click map to set end/start with Shift key
+    map.on('click', function(e){
+      // if user holds shift -> set start; if ctrl/alt -> set end; else nothing
+      if (e.originalEvent.shiftKey){
+        const lat = e.latlng.lat.toFixed(6);
+        const lon = e.latlng.lng.toFixed(6);
+        startInput.value = `${lon},${lat}`;
+        setStatus('Click: đặt Start (Hold Shift để đặt Start).');
+      } else if (e.originalEvent.ctrlKey || e.originalEvent.metaKey){
+        const lat = e.latlng.lat.toFixed(6);
+        const lon = e.latlng.lng.toFixed(6);
+        endInput.value = `${lon},${lat}`;
+        setStatus('Click: đặt End (Ctrl/Cmd để đặt End).');
+      }
+    });
+
+    // initial hint
+    setStatus('Sẵn sàng (Ready). Nhập lon,lat rồi bấm Vẽ đường (Draw).');
+
+    // Expose drawRoute on window for quick manual tests if needed
+    window.drawRoute = drawRoute;
+  </script>
+</body>
+</html>

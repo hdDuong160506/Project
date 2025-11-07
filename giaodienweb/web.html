@@ -20,22 +20,8 @@
       padding: 20px
     }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px
-    }
-
-    .brand {
-      font-weight: 700;
-      font-size: 40px;
-      color: #1e3a8a;
-      letter-spacing: 1px;
-    }
-
     .cart-btn {
-      background: #ff0000;
+      background: #00a2ff;
       color: #fff;
       border: none;
       padding: 8px 12px;
@@ -45,7 +31,7 @@
     }
 
     .cart-btn:hover {
-      background: #af1616
+      background: #1130b9
     }
 
     main {
@@ -95,8 +81,8 @@
     #cart-popup {
       display: none;
       position: fixed;
-      top: 90px;
-      right: 20px;
+      top: 135px;
+      right: 60px;
       width: 320px;
       background: white;
       border: 1px solid #ccc;
@@ -238,89 +224,279 @@
       top: 0;
       left: 0;
       width: 100%;
-      background: #f6f7fb;
-      color: #1e3a8a;
+      background: #1867f8;
+      color: white;
+      z-index: 1000;
+      padding: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 30px 30px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
+      padding: 6px 60px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .navbar-top a {
+      color: white;
+      text-decoration: none;
+      padding: 0 5px;
+    }
+
+    .navbar-top a:hover {
+      opacity: 0.8;
+    }
+
+    .nav-links-left a,
+    .nav-links-right a,
+    .navbar-top span {
+      margin: 0 4px;
+      color: white;
+    }
+
+    .nav-links-right .auth-link {
+      font-weight: 500;
+    }
+
+    .navbar-top span {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .navbar-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 60px;
+      /* Padding hai bên */
+      gap: 20px;
+    }
+
+    /* --- Logo (Cập nhật màu) --- */
+    .nav-left .brand {
+      font-size: 40px;
+      font-weight: bold;
+      color: white;
+      /* Đổi logo thành màu trắng */
+      letter-spacing: 1px;
+    }
+
+    /* --- Thanh tìm kiếm (Mới) --- */
+    .nav-center-search {
+      flex: 1;
+      /* Cho phép thanh tìm kiếm co giãn */
+      max-width: 600px;
+    }
+
+    #search-form {
+      display: flex;
+      width: 100%;
+      background: white;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 2px solid #0ec0c0;
+      /* Viền cam */
+    }
+
+    #search {
+      /* Ghi đè style inline cũ */
+      flex: 1;
+      padding: 12px 15px !important;
+      border: none !important;
+      outline: none !important;
+      font-size: 14px;
+      background: white !important;
+      color: #222;
+    }
+
+    .search-btn {
+      background: #1867f8;
+      /* Màu cam */
+      border: none;
+      padding: 0 20px;
+      cursor: pointer;
+    }
+
+    .search-btn:hover {
+      background: #1867f8;
+    }
+
+    /* --- Nút Giỏ hàng (Mới) --- */
+    .nav-right {
+      display: flex;
+      align-items: center;
+    }
+
+    /* Ẩn các nút cũ (nếu còn) */
+    .account-btn {
+      display: none;
+    }
+
+    /* Nút giỏ hàng biểu tượng mới */
+    .cart-btn-icon {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      position: relative;
+      padding: 0;
+    }
+
+    /* Style cho bong bóng đếm số lượng */
+    .cart-count-bubble {
+      position: absolute;
+      top: -8px;
+      right: -10px;
+      background: white;
+      color: #f53d2d;
+      /* Màu cam */
+      font-weight: bold;
+      font-size: 12px;
+      border-radius: 50%;
+      padding: 2px 6px;
+      min-width: 10px;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* Cập nhật margin-top cho main */
+    main {
+      /* Giá trị cũ là 90px */
+      margin-top: 130px;
+      /* Tăng lên vì navbar mới cao hơn (2 hàng) */
+    }
+
+    /* --- Hết CSS Navbar kiểu Shopee --- */
+    /* === DÁN VÀO TRONG THẺ <STYLE> CỦA CẢ 2 TỆP === */
+
+    /* Animation cho trang "hiện" lên khi tải */
+    @keyframes pageFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Thêm animation này vào body của CẢ HAI trang */
+    body {
+      /* ...các style cũ của body... */
+      animation: pageFadeIn 0.5s ease-in-out;
+    }
+
+    /* Lớp CSS dùng để "ẩn" trang đi */
+    body.page-fade-out {
+      animation: pageFadeOut 0.5s ease-in-out forwards;
+    }
+
+    @keyframes pageFadeOut {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    .nav-left .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-left .brand-logo {
+      height: 80px;
+      width: 80px;
+      object-fit: contain;
     }
 
     .nav-left .brand {
       font-size: 40px;
       font-weight: bold;
-      color: #1e3a8a;
-    }
-
-    .nav-center {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 30px;
-      color: #2563eb;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .account-btn {
-      background: #2600ff;
       color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .cart-btn {
-      background: #ff0000;
-      color: #fff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .cart-btn:hover {
-      background: #af1616;
-    }
-
-    main {
-      margin-top: 90px;
+      letter-spacing: 1px;
     }
   </style>
 </head>
 
 <body>
   <header class="navbar">
-    <div class="nav-left">
-      <div class="brand">SHOPPY</div>
+    <div class="navbar-top">
+      <div class="nav-links-left">
+        <a href="#">Kênh Người Bán</a>
+        <span>|</span>
+        <a href="#">Trở thành Người bán Shoppy</a>
+        <span>|</span>
+        <a href="#">Kết nối</a>
+      </div>
+      <div class="nav-links-right">
+        <a href="#">🔔 Thông báo</a>
+        <a href="#">❓ Hỗ Trợ</a>
+        <a href="#" class="auth-link" onclick="window.location.href='account.html'">Tài Khoản</a>
+      </div>
     </div>
 
-    <h1 class="nav-center">🛒 Web mua hàng dẫn đầu, một chạm là mua 🛒</h1>
+    <div class="navbar-main">
+      <div class="nav-left">
+        <a href="web.html" class="brand-link">
+          <img src="image/logo/logo1.png" alt="Logo" class="brand-logo">
+          <div class="brand">SHOPPY</div>
+        </a>
+      </div>
 
-    <div class="nav-right">
-      <button class="account-btn" onclick="window.location.href='account.html'">👤 Tài khoản</button>
-      <button class="cart-btn" id="open-cart">Giỏ hàng (<span id="cart-count">0</span>)</button>
+      <div class="nav-center-search">
+        <form id="search-form" onsubmit="event.preventDefault();">
+          <input id="search" placeholder="Tìm kiếm sản phẩm..." />
+          <button type="submit" class="search-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px">
+              <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <div class="nav-right">
+        <button class="cart-btn-icon" id="open-cart">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="28px" height="28px">
+            <path
+              d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0 0 20 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.9 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
+          </svg>
+          <span id="cart-count" class="cart-count-bubble">0</span>
+        </button>
+      </div>
     </div>
   </header>
-
-
   <main>
     <section>
-      <div style="width:100%; text-align:center; margin:20px 0;">
+      <div style="width:100%; text-align:center; margin:20px 0; position: relative;">
         <img src="image/banner.jpg" alt="Banner quảng cáo"
-          style="width:95%; max-height:300px; object-fit:cover; border-radius:16px; box-shadow:0 2px 6px rgba(0,0,0,0.15);" />
+          style="width:95%; max-height:300px; object-fit:cover; border-radius:16px; box-shadow:0 2px 6px rgba(0,0,0,0.15); filter: blur(2px); opacity: 0.5;" />
+        <h1 style="
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     color: #fff;
+     font-size: 50px;
+     font-weight: 700;
+     text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+     white-space: nowrap;
+   ">
+          🛒 Web mua hàng dẫn đầu, một chạm là mua 🛒
+        </h1>
       </div>
+
       <section class="why-choose">
         <h2>Lý do nên chọn mua hàng tại SHOPPY?</h2>
         <div class="reasons">
@@ -344,19 +520,11 @@
       <div style="background:#f7f7f7;padding:20px 0;margin:40px 0;text-align:center;border-radius:12px;">
         <p style="font-size:18px;margin-bottom:6px;color:#555;">📍 Vị trí hiện tại: TP. Hội An, Quảng Nam</p>
         <p style="font-size:18px;margin-bottom:20px;color:#555;">☁️ Thời tiết: Có mây, 28°C</p>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h2>Các sản phẩm gợi ý:</h2>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;
-                      background:#ffffff;border-radius:8px;cursor:pointer;border:1px solid #ddd;">
-              <img src="image/icons/kinhlup.png" alt="Tìm" style="width:18px;height:18px;" />
-            </div>
-            <input id="search" placeholder="Tìm kiếm..."
-              style="padding:8px 10px;border-radius:8px;border:1px solid #ddd;outline:none;" />
-          </div>
-        </div>
+
+        <h2 style="margin-bottom:12px; text-align: left; padding: 0 20px;">Các sản phẩm gợi ý:</h2>
 
         <div class="products" id="product-list"></div>
+      </div>
     </section>
   </main>
 
@@ -375,6 +543,187 @@
       <button class="small-btn" id="close-cart" style="margin-left:auto;">Đóng</button>
     </div>
   </div>
+
+  <footer>
+    <div class="footer">
+      <div class="footer-section">
+        <div class="footer-logo">
+          <h2 style="color:#00aaff; font-size:28px;">SHOPPY</h2>
+          <p style="color:#ccc;">Web bán hàng hàng đầu Việt Nam.</p>
+        </div>
+        <h3>Đối tác thanh toán</h3>
+        <div class="partners">
+          <img src="image/payment/visa.png" alt="Visa">
+          <img src="image/payment/mastercard.png" alt="Mastercard">
+          <img src="image/payment/momo.png" alt="MoMo">
+          <img src="image/payment/vnpay.jpg" alt="VNPay">
+          <img src="image/payment/vietqr.png" alt="VietQR">
+          <img src="image/payment/mbbank.png" alt="MB Bank">
+          <img src="image/payment/viettinbank.png" alt="Viettinbank">
+        </div>
+      </div>
+
+      <div class="footer-section">
+        <h3>Về Shoppy</h3>
+        <ul>
+          <li><a href="#">Giới thiệu</a></li>
+          <li><a href="#">Liên hệ</a></li>
+          <li><a href="#">Tuyển dụng</a></li>
+          <li><a href="#">Trợ giúp</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h3>Sản phẩm</h3>
+        <ul>
+          <li><a href="#">Đồ dùng học tập</a></li>
+          <li><a href="#">Đồ điện tử</a></li>
+          <li><a href="#">Thời trang</a></li>
+          <li><a href="#">Đồ gia dụng</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h3>Chính sách</h3>
+        <ul>
+          <li><a href="#">Chính sách bảo mật</a></li>
+          <li><a href="#">Điều khoản sử dụng</a></li>
+          <li><a href="#">Đổi trả & Hoàn tiền</a></li>
+        </ul>
+
+        <h3 style="margin-top:20px;">Theo dõi chúng tôi</h3>
+        <div class="social-icons">
+          <a href="https://www.facebook.com" target="_blank">
+            <img src="image/icons/fb.jpg" alt="Facebook">
+          </a>
+          <a href="https://www.instagram.com" target="_blank">
+            <img src="image/icons/ins.jpg" alt="Instagram">
+          </a>
+          <a href="https://www.tiktok.com" target="_blank">
+            <img src="image/icons/tiktok.jpg" alt="TikTok">
+          </a>
+          <a href="https://www.youtube.com" target="_blank">
+            <img src="image/icons/youtube.png" alt="YouTube">
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      @ 2025 Shoppy — Khoa CNTT, HCMUS
+    </div>
+  </footer>
+
+  <style>
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      background: #111b21;
+      color: #fff;
+      padding: 50px 20px;
+      border-top: 3px solid #00aaff;
+    }
+
+    .footer-section {
+      flex: 1 1 220px;
+      margin: 15px;
+    }
+
+    .footer-section h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .footer-section ul li {
+      margin-bottom: 8px;
+    }
+
+    .footer-section ul li a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .footer-section ul li a:hover {
+      color: #00aaff;
+    }
+
+    .partners img {
+      height: 30px;
+      margin: 4px;
+      border-radius: 6px;
+      background: #fff;
+      padding: 2px;
+    }
+
+    .social-icons img {
+      height: 28px;
+      margin: 6px 8px 0 0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 4px;
+    }
+
+    .store-buttons img {
+      height: 45px;
+      margin-right: 8px;
+      margin-top: 10px;
+    }
+
+    .footer-bottom {
+      background: #0b1318;
+      text-align: center;
+      color: #aaa;
+      padding: 15px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Responsive cho Navbar */
+      .navbar-top,
+      .navbar-main {
+        padding: 10px 15px;
+      }
+
+      .navbar-top {
+        display: none;
+        /* Ẩn top-bar trên di động cho đơn giản */
+      }
+
+      .navbar-main {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .nav-center-search {
+        width: 100%;
+        max-width: none;
+      }
+
+      main {
+        margin-top: 180px;
+        /* Tăng margin cho navbar di động */
+      }
+
+      #cart-popup {
+        top: 185px;
+        right: 15px;
+        width: calc(100% - 30px);
+      }
+    }
+  </style>
 
   <script>
     // Dữ liệu mẫu sản phẩm
@@ -403,13 +752,13 @@
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          <img src="${p.img}" alt="${p.name}" />
-          <h4>${p.name}</h4>
-          <div class="price">${formatMoney(p.price)}</div>
-          <div class="actions">
-            <button class="small-btn" onclick="addToCart(${p.id})">Thêm vào giỏ</button>
-            <button class="small-btn" onclick="alert('Chi tiết: ${p.name} — ${formatMoney(p.price)}')">Xem</button>
-          </div>`;
+         <img src="${p.img}" alt="${p.name}" />
+         <h4>${p.name}</h4>
+         <div class="price">${formatMoney(p.price)}</div>
+         <div class="actions">
+           <button class="small-btn" onclick="addToCart(${p.id})">Thêm vào giỏ</button>
+           <a href="product-detail.html?id=${p.id}" class="small-btn" style="text-decoration: none; color: #333; text-align: center;">Xem</a>
+         </div>`;
         wrap.appendChild(card);
       });
     }
@@ -419,7 +768,12 @@
     function updateCartUI() {
       const cartList = $('#cart-list');
       const cartCount = Object.values(cart).reduce((s, q) => s + q, 0);
-      $('#cart-count').textContent = cartCount;
+
+      // Cập nhật bong bóng đếm số lượng
+      const cartCountBubble = $('#cart-count');
+      cartCountBubble.textContent = cartCount;
+      cartCountBubble.style.display = cartCount > 0 ? 'block' : 'none';
+
       const total = Object.entries(cart).reduce((s, [id, q]) => {
         const p = PRODUCTS.find(x => x.id == id);
         return s + (p ? p.price * q : 0);
@@ -434,17 +788,17 @@
         const item = document.createElement('div');
         item.className = 'cart-item';
         item.innerHTML = `
-          <img src="${p.img}" alt="${p.name}" />
-          <div style="flex:1">
-            <div style="font-size:14px">${p.name}</div>
-            <div style="font-size:13px;color:#666">${formatMoney(p.price)} x ${qty} = ${formatMoney(p.price * qty)}</div>
-          </div>
-          <div class="qty">
-            <button class="small-btn" onclick="changeQty(${id}, -1)">-</button>
-            <div style="min-width:20px;text-align:center">${qty}</div>
-            <button class="small-btn" onclick="changeQty(${id}, 1)">+</button>
-            <button class="small-btn" style="margin-left:6px" onclick="removeItem(${id})">xóa</button>
-          </div>`;
+         <img src="${p.img}" alt="${p.name}" />
+         <div style="flex:1">
+           <div style="font-size:14px">${p.name}</div>
+           <div style="font-size:13px;color:#666">${formatMoney(p.price)} x ${qty} = ${formatMoney(p.price * qty)}</div>
+         </div>
+         <div class="qty">
+           <button class="small-btn" onclick="changeQty(${p.id}, -1)">-</button>
+           <div style="min-width:20px;text-align:center">${qty}</div>
+           <button class="small-btn" onclick="changeQty(${p.id}, 1)">+</button>
+           <button class="small-btn" style="margin-left:6px" onclick="removeItem(${p.id})">xóa</button>
+         </div>`;
         cartList.appendChild(item);
       });
     }
@@ -454,15 +808,22 @@
     function removeItem(id) { id = String(id); delete cart[id]; saveCart(); }
 
     $('#clear-cart').addEventListener('click', () => { if (confirm('Xóa toàn bộ giỏ hàng?')) { cart = {}; saveCart(); } });
-    $('#checkout').addEventListener('click', () => {
+    $('#checkout').addEventListener('click', (e) => {
+      e.preventDefault(); // Ngăn chuyển trang ngay lập C
+
       const count = Object.values(cart).reduce((s, q) => s + q, 0);
-      if (count === 0) { alert('Giỏ hàng đang rỗng.'); return; }
-      const total = Object.entries(cart).reduce((s, [id, q]) => {
-        const p = PRODUCTS.find(x => x.id == id); return s + (p ? p.price * q : 0);
-      }, 0);
-      if (confirm(`Xác nhận thanh toán ${formatMoney(total)} ?`)) {
-        alert('Thanh toán thành công — cảm ơn bạn!'); cart = {}; saveCart();
+      if (count === 0) {
+        alert('Giỏ hàng đang rỗng.');
+        return;
       }
+
+      // 1. Thêm lớp CSS để chạy animation "fade-out"
+      document.body.classList.add('page-fade-out');
+
+      // 2. Chờ 500ms (khớp với thời gian animation) rồi mới chuyển trang
+      setTimeout(() => {
+        window.location.href = 'cart.html';
+      }, 500);
     });
 
     // Mở / đóng giỏ hàng popup
@@ -481,145 +842,3 @@
 </body>
 
 </html>
-
-
-<footer>
-  <div class="footer">
-    <div class="footer-section">
-      <div class="footer-logo">
-        <h2 style="color:#00aaff; font-size:28px;">SHOPPY</h2>
-        <p style="color:#ccc;">Web bán hàng hàng đầu Việt Nam.</p>
-      </div>
-      <h3>Đối tác thanh toán</h3>
-      <div class="partners">
-        <img src="image/payment/visa.png" alt="Visa">
-        <img src="image/payment/mastercard.png" alt="Mastercard">
-        <img src="image/payment/momo.png" alt="MoMo">
-        <img src="image/payment/vnpay.jpg" alt="VNPay">
-        <img src="image/payment/vietqr.png" alt="VietQR">
-        <img src="image/payment/mbbank.png" alt="MB Bank">
-        <img src="image/payment/viettinbank.png" alt="Viettinbank">
-      </div>
-    </div>
-
-    <div class="footer-section">
-      <h3>Về Shoppy</h3>
-      <ul>
-        <li><a href="#">Giới thiệu</a></li>
-        <li><a href="#">Liên hệ</a></li>
-        <li><a href="#">Tuyển dụng</a></li>
-        <li><a href="#">Trợ giúp</a></li>
-      </ul>
-    </div>
-
-    <div class="footer-section">
-      <h3>Sản phẩm</h3>
-      <ul>
-        <li><a href="#">Đồ dùng học tập</a></li>
-        <li><a href="#">Đồ điện tử</a></li>
-        <li><a href="#">Thời trang</a></li>
-        <li><a href="#">Đồ gia dụng</a></li>
-      </ul>
-    </div>
-
-    <div class="footer-section">
-      <h3>Chính sách</h3>
-      <ul>
-        <li><a href="#">Chính sách bảo mật</a></li>
-        <li><a href="#">Điều khoản sử dụng</a></li>
-        <li><a href="#">Đổi trả & Hoàn tiền</a></li>
-      </ul>
-
-      <h3 style="margin-top:20px;">Theo dõi chúng tôi</h3>
-      <div class="social-icons">
-        <img src="image/icons/fb.jpg" alt="Facebook">
-        <img src="image/icons/ins.jpg" alt="Instagram">
-        <img src="image/icons/tiktok.jpg" alt="TikTok">
-        <img src="image/icons/youtube.png" alt="YouTube">
-      </div>
-    </div>
-  </div>
-
-  <div class="footer-bottom">
-    @ 2025 Shoppy — Khoa CNTT, HCMUS
-  </div>
-</footer>
-
-<style>
-  .footer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    background: #111b21;
-    color: #fff;
-    padding: 50px 20px;
-    border-top: 3px solid #00aaff;
-  }
-
-  .footer-section {
-    flex: 1 1 220px;
-    margin: 15px;
-  }
-
-  .footer-section h3 {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 12px;
-  }
-
-  .footer-section ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  .footer-section ul li {
-    margin-bottom: 8px;
-  }
-
-  .footer-section ul li a {
-    color: #ccc;
-    text-decoration: none;
-    font-size: 14px;
-  }
-
-  .footer-section ul li a:hover {
-    color: #00aaff;
-  }
-
-  .partners img {
-    height: 30px;
-    margin: 4px;
-    border-radius: 6px;
-    background: #fff;
-    padding: 2px;
-  }
-
-  .social-icons img {
-    height: 28px;
-    margin: 6px 8px 0 0;
-    border-radius: 8px;
-    background: #fff;
-    padding: 4px;
-  }
-
-  .store-buttons img {
-    height: 45px;
-    margin-right: 8px;
-    margin-top: 10px;
-  }
-
-  .footer-bottom {
-    background: #0b1318;
-    text-align: center;
-    color: #aaa;
-    padding: 15px;
-    font-size: 13px;
-  }
-
-  @media (max-width: 768px) {
-    .footer {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-</style>

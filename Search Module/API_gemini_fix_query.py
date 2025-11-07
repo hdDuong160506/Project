@@ -1,7 +1,7 @@
 import requests
 import re
 
-GEMINI_API_KEY = "AIzaSyA-TF_uFo-ToX2pC5kWA1iRmAhUpg99jg0"
+GEMINI_API_KEY = "YOUR_KEY"
 MODEL = "gemini-2.5-flash"
 
 def looks_like_foreign(text: str):

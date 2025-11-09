@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API - Đăng ký / Đăng nhập</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #da190b;
+        }
+
+        .btn-info {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-info:hover:not(:disabled) {
+            background: #0b7dda;
+        }
+
+        .output-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .output-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        #output {
+            background-color: #f4f4f4;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .info {
+            color: #2196F3;
+            font-style: italic;
+            margin-top: 10px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #4CAF50;
+        }
+
+        .status-offline {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+
+            button {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test API - Hệ thống Xác thực</h1>
+
+        <!-- Card Đăng ký -->
+        <div class="card">
+            <h2>📝 1. Đăng ký tài khoản</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="reg-name">Tên đầy đủ:</label>
+                    <input type="text" id="reg-name" placeholder="Nguyễn Văn A" required minlength="2" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email:</label>
+                    <input type="email" id="reg-email" placeholder="example@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-pwd">Mật khẩu:</label>
+                    <input type="password" id="reg-pwd" placeholder="Ít nhất 6 ký tự" required minlength="6">
+                </div>
+                <button type="submit" class="btn-primary">Đăng ký</button>
+            </form>
+            <div class="info">
+                💡 Sau khi đăng ký, vui lòng kiểm tra email để kích hoạt tài khoản.
+            </div>
+        </div>
+
+        <!-- Card Đăng nhập -->
+        <div class="card">
+            <h2>🔑 2. Đăng nhập</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email:</label>
+                    <input type="email" id="login-email" placeholder="example@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-pwd">Mật khẩu:</label>
+                    <input type="password" id="login-pwd" placeholder="Nhập mật khẩu" required>
+                </div>
+                <button type="submit" class="btn-primary">Đăng nhập</button>
+            </form>
+            <div class="info">
+                ⚠️ Chỉ đăng nhập được sau khi kích hoạt email!
+            </div>
+        </div>
+
+        <!-- Card Chức năng đã đăng nhập -->
+        <div class="card">
+            <h2>⚙️ 3. Chức năng (Yêu cầu đăng nhập)</h2>
+            <div>
+                <button id="profile-button" class="btn-info" disabled>👤 Xem Profile</button>
+                <button id="refresh-button" class="btn-secondary" disabled>🔄 Làm mới Token</button>
+                <button id="logout-button" class="btn-danger" disabled>🚪 Đăng xuất</button>
+            </div>
+            <div class="info">
+                <span class="status-indicator status-offline" id="auth-status"></span>
+                <span id="auth-text">Chưa đăng nhập</span>
+            </div>
+        </div>
+
+        <!-- Kết quả -->
+        <div class="output-section">
+            <h2>📊 Kết quả:</h2>
+            <pre id="output">Chưa có hành động nào. Hãy thử đăng ký hoặc đăng nhập!</pre>
+        </div>
+    </div>
+
+    <script>
+        let accessToken = null;
+        let refreshToken = null;
+        const outputEl = document.getElementById('output');
+        const API_URL = 'http://127.0.0.1:5000';
+        
+        // Cập nhật trạng thái đăng nhập
+        function updateAuthStatus() {
+            const statusIndicator = document.getElementById('auth-status');
+            const authText = document.getElementById('auth-text');
+            const profileBtn = document.getElementById('profile-button');
+            const refreshBtn = document.getElementById('refresh-button');
+            const logoutBtn = document.getElementById('logout-button');
+
+            if (accessToken) {
+                statusIndicator.className = 'status-indicator status-online';
+                authText.textContent = 'Đã đăng nhập';
+                profileBtn.disabled = false;
+                refreshBtn.disabled = false;
+                logoutBtn.disabled = false;
+            } else {
+                statusIndicator.className = 'status-indicator status-offline';
+                authText.textContent = 'Chưa đăng nhập';
+                profileBtn.disabled = true;
+                refreshBtn.disabled = true;
+                logoutBtn.disabled = true;
+            }
+        }
+
+        function showOutput(data, isError = false) {
+            let output = JSON.stringify(data, null, 2);
+            
+            if (isError) {
+                output = '❌ LỖI:\n' + output;
+                outputEl.className = 'error';
+            } else if (data.msg && data.msg.includes('thành công')) {
+                output = '✅ THÀNH CÔNG:\n' + output;
+                outputEl.className = 'success';
+            } else {
+                outputEl.className = '';
+            }
+            
+            outputEl.textContent = output;
+        }
+
+        // Hàm xử lý loading
+        function setLoading(buttonId, isLoading) {
+            const button = document.getElementById(buttonId);
+            if (isLoading) {
+                button.setAttribute('data-original-text', button.textContent);
+                button.textContent = '⏳ Đang xử lý...';
+                button.disabled = true;
+            } else {
+                button.textContent = button.getAttribute('data-original-text');
+                button.disabled = false;
+            }
+        }
+
+        // 1. XỬ LÝ ĐĂNG KÝ
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.submitter;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '⏳ Đang đăng ký...';
+            submitBtn.disabled = true;
+
+            const data = {
+                name: document.getElementById('reg-name').value.trim(),
+                email: document.getElementById('reg-email').value.trim(),
+                pwd: document.getElementById('reg-pwd').value
+            };
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (accessToken) {
+                    headers['Authorization'] = `Bearer ${accessToken}`;
+                }
+
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                showOutput(result, !response.ok);
+                
+                if (response.ok) {
+                    // Reset form nếu thành công
+                    e.target.reset();
+                }
+            } catch (error) {
+                showOutput({ error: 'Không thể kết nối đến server: ' + error.message }, true);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // 2. XỬ LÝ ĐĂNG NHẬP
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.submitter;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '⏳ Đang đăng nhập...';
+            submitBtn.disabled = true;
+
+            const data = {
+                email: document.getElementById('login-email').value.trim(),
+                pwd: document.getElementById('login-pwd').value
+            };
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (accessToken) {
+                    headers['Authorization'] = `Bearer ${accessToken}`;
+                }
+
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    accessToken = result.access_token;
+                    refreshToken = result.refresh_token;
+                    updateAuthStatus();
+                    showOutput({ 
+                        msg: '✅ Đăng nhập thành công!',
+                        user: result.user,
+                        note: 'Token đã được lưu. Bạn có thể sử dụng các chức năng bên dưới.'
+                    });
+                    // Reset form
+                    e.target.reset();
+                } else {
+                    showOutput(result, true);
+                }
+            } catch (error) {
+                showOutput({ error: 'Không thể kết nối đến server: ' + error.message }, true);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // 3. XỬ LÝ LẤY PROFILE
+        document.getElementById('profile-button').addEventListener('click', async function() {
+            if (!accessToken) {
+                showOutput({ msg: '⚠️ Bạn chưa đăng nhập!' }, true);
+                return;
+            }
+
+            this.textContent = '⏳ Đang tải...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/profile`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showOutput({ 
+                        msg: '✅ Lấy thông tin thành công!',
+                        profile: result
+                    });
+                } else {
+                    showOutput(result, true);
+                    // Nếu token hết hạn, xóa token
+                    if (response.status === 401) {
+                        accessToken = null;
+                        refreshToken = null;
+                        updateAuthStatus();
+                    }
+                }
+            } catch (error) {
+                showOutput({ error: 'Không thể kết nối đến server: ' + error.message }, true);
+            } finally {
+                this.textContent = '👤 Xem Profile';
+                this.disabled = false;
+            }
+        });
+        
+        // 4. XỬ LÝ LÀM MỚI TOKEN
+        document.getElementById('refresh-button').addEventListener('click', async function() {
+            if (!refreshToken) {
+                showOutput({ msg: '⚠️ Bạn chưa đăng nhập!' }, true);
+                return;
+            }
+
+            this.textContent = '⏳ Đang làm mới...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/refresh`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${refreshToken}` }
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    accessToken = result.access_token;
+                    showOutput({ 
+                        msg: '✅ Làm mới token thành công!',
+                        new_access_token: result.access_token.substring(0, 50) + '...'
+                    });
+                } else {
+                    showOutput(result, true);
+                    // Nếu refresh token hết hạn
+                    if (response.status === 401) {
+                        accessToken = null;
+                        refreshToken = null;
+                        updateAuthStatus();
+                    }
+                }
+            } catch (error) {
+                showOutput({ error: 'Không thể kết nối đến server: ' + error.message }, true);
+            } finally {
+                this.textContent = '🔄 Làm mới Token';
+                this.disabled = false;
+            }
+        });
+
+        // 5. XỬ LÝ ĐĂNG XUẤT
+        document.getElementById('logout-button').addEventListener('click', async function() {
+            if (!refreshToken) {
+                showOutput({ msg: '⚠️ Bạn chưa đăng nhập!' }, true);
+                return;
+            }
+
+            this.textContent = '⏳ Đang đăng xuất...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${refreshToken}` }
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    accessToken = null;
+                    refreshToken = null;
+                    updateAuthStatus();
+                    showOutput({ msg: '✅ Đăng xuất thành công! Token đã được xóa.' });
+                } else {
+                    showOutput(result, true);
+                }
+            } catch (error) {
+                showOutput({ error: 'Không thể kết nối đến server: ' + error.message }, true);
+            } finally {
+                this.textContent = '🚪 Đăng xuất';
+                this.disabled = false;
+            }
+        });
+
+        // Khởi tạo trạng thái
+        updateAuthStatus();
+    </script>
+</body>
+</html>

@@ -246,36 +246,27 @@
       return lon >= -180 && lon <= 180 && lat >= -90 && lat <= 90;
     }
 
-    // Small SVG flag icons (data URI) to keep single file
-    const greenFlagSvg = encodeURI(`
-      <svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'>
-        <path fill='#10b981' d='M4 2v20h2V2z'></path>
-        <path fill='#059669' d='M6 4c2.5 0 3.5-1 6-1 2.5 0 3.5 1 6 1v10c-2.5 0-3.5 1-6 1-2.5 0-3.5-1-6-1z'></path>
-      </svg>`);
 
-    const redFlagSvg = encodeURI(`
-      <svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'>
-        <path fill='#ef4444' d='M4 2v20h2V2z'></path>
-        <path fill='#dc2626' d='M6 4c2.5 0 3.5-1 6-1 2.5 0 3.5 1 6 1v10c-2.5 0-3.5 1-6 1-2.5 0-3.5-1-6-1z'></path>
-      </svg>`);
+    const startIconUrl = "../static/placeholder-blue.png";
+    const endIconUrl   = "../static/placeholder-red.png";
 
-    function makeDivIcon(svgData, label){
+    function makeDivIconFromUrl(iconUrl, label){
       return L.divIcon({
         className: "custom-flag",
-        html: `<div style="display:flex;flex-direction:column;align-items:center;">
-                 <img src="data:image/svg+xml;utf8,${svgData}" style="width:34px;height:34px;display:block"/>
-                 <div style="background:rgba(255,255,255,0.95);padding:4px 8px;border-radius:8px;margin-top:6px;border:1px solid #e6eefb;font-size:0.82rem;">
-                   ${label}
-                 </div>
-               </div>`,
-        iconSize: [46,60],
-        iconAnchor: [23,54],
-        popupAnchor: [0,-54]
+        html: `<div style="display:flex; flex-direction:column; align-items:center;">
+                <img src="${iconUrl}" style="width:34px; height:34px; display:block"/>
+                <div style="background:rgba(255,255,255,0.95); padding:4px 8px; border-radius:8px; margin-top:6px; border:1px solid #e6eefb; font-size:0.82rem;">
+                  ${label}
+                </div>
+              </div>`,
+        iconSize: [46, 60],
+        iconAnchor: [23, 54],
+        popupAnchor: [0, -54]
       });
     }
 
-    const startIcon = makeDivIcon(greenFlagSvg, 'Start');
-    const endIcon = makeDivIcon(redFlagSvg, 'End');
+    const startIcon = makeDivIconFromUrl(startIconUrl, 'Start');
+    const endIcon   = makeDivIconFromUrl(endIconUrl,   'End');
 
     // --- drawRoute ---
     async function drawRoute(){

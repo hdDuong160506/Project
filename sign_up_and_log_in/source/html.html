@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { text-align: center; color: white; margin-bottom: 30px; font-size: 28px; }
+        .cards-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .cards-wrapper { grid-template-columns: 1fr; } }
+        .card { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .card.full-width { grid-column: 1 / -1; }
+        .card.disabled { opacity: 0.6; pointer-events: none; position: relative; }
+        .card.disabled::after { content: '🔒 Đã đăng nhập'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(102, 126, 234, 0.95); color: white; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 18px; z-index: 10; }
+        .card h2 { color: #667eea; margin-bottom: 20px; font-size: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #333; font-weight: 500; }
+        input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: border-color 0.3s; }
+        input:focus { outline: none; border-color: #667eea; }
+        button { width: 100%; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: all 0.3s; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .btn-google { background: #fff; color: #333; border: 2px solid #e0e0e0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-google:hover:not(:disabled) { background: #f5f5f5; }
+        .btn-secondary { background: #4CAF50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-info { background: #2196F3; color: white; }
+        .divider { text-align: center; margin: 20px 0; position: relative; }
+        .divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e0e0e0; }
+        .divider span { background: white; padding: 0 15px; position: relative; color: #999; font-size: 14px; }
+        .link-button { background: none; color: #667eea; padding: 5px; font-size: 14px; text-decoration: underline; margin-top: 5px; }
+        .link-button:hover:not(:disabled) { color: #764ba2; }
+        .info { color: #2196F3; font-style: italic; margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 14px; }
+        .success { color: #4CAF50; background: #e8f5e9; }
+        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+        .status-online { background: #4CAF50; }
+        .output-section { background: white; border-radius: 16px; padding: 20px; margin-top: 20px; }
+        .output-section h2 { color: #667eea; margin-bottom: 15px; font-size: 18px; }
+        #output { background-color: #f4f4f4; padding: 15px; border: 2px solid #ddd; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px; max-height: 300px; overflow-y: auto; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 16px; padding: 30px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .modal-content h3 { color: #667eea; margin-bottom: 20px; }
+        .otp-input { width: 100%; text-align: center; font-size: 24px; letter-spacing: 10px; padding: 15px; }
+        .close-modal { background: #e0e0e0; color: #333; margin-top: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Authentication System</h1>
+        <div class="cards-wrapper">
+            <div class="card" id="register-card">
+                <h2>📝 Đăng ký tài khoản</h2>
+                <form id="register-form">
+                    <div class="form-group"><label for="reg-name">Tên:</label><input type="text" id="reg-name" required></div>
+                    <div class="form-group"><label for="reg-email">Email:</label><input type="email" id="reg-email" placeholder="example@gmail.com, name@outlook.com..." required></div>
+                    <div class="form-group"><label for="reg-pwd">Mật khẩu:</label><input type="password" id="reg-pwd" placeholder="Ít nhất 6 ký tự" required></div>
+                    <button type="submit" class="btn-primary">Đăng ký</button>
+                </form>
+                <div class="divider"><span>HOẶC</span></div>
+                <button onclick="loginWithGoogle()" class="btn-google">
+                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="#4285F4"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="#34A853"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="#FBBC05"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="#EA4335"/></g></svg>
+                    Đăng ký với Google
+                </button>
+                <div class="info">💡 Đăng ký bằng Email cần xác thực. Google tự động xác thực.<br>
+                <small style="color: #f57c00;"><strong>⚠️ Quan trọng với Outlook/Hotmail:</strong></small><br>
+                <small>1️⃣ Kiểm tra thư mục <strong>Junk Email</strong> (Thư rác)</small><br>
+                <small>2️⃣ Kiểm tra tab <strong>"Other"</strong> (không phải Focused)</small><br>
+                <small>3️⃣ Chờ 5-10 phút vì Outlook có thể delay</small><br>
+                <small>4️⃣ Nếu không thấy, hãy đăng ký bằng Gmail hoặc đăng nhập Google</small></div>
+            </div>
+            <div class="card" id="login-card">
+                <h2>🔑 Đăng nhập</h2>
+                <form id="login-form">
+                    <div class="form-group"><label for="login-email">Email:</label><input type="email" id="login-email" required></div>
+                    <div class="form-group"><label for="login-pwd">Mật khẩu:</label><input type="password" id="login-pwd" required></div>
+                    <button type="submit" class="btn-primary">Đăng nhập</button>
+                </form>
+                <button onclick="showForgotPassword()" class="link-button">Quên mật khẩu?</button>
+                <div class="divider"><span>HOẶC</span></div>
+                <button onclick="loginWithGoogle()" class="btn-google">
+                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="#4285F4"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="#34A853"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="#FBBC05"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="#EA4335"/></g></svg>
+                    Đăng nhập với Google
+                </button>
+            </div>
+        </div>
+        <div class="card full-width hidden" id="forgot-card">
+            <h2>🔐 Quên mật khẩu</h2>
+            <form id="forgot-form">
+                <div class="form-group"><label for="forgot-email">Nhập email của bạn:</label><input type="email" id="forgot-email" required></div>
+                <button type="submit" class="btn-primary">Gửi mã OTP</button>
+            </form>
+            <div class="info">📧 Chúng tôi sẽ gửi mã OTP 6 số đến email của bạn.</div>
+            <button onclick="hideForgotPassword()" class="link-button">← Quay lại</button>
+        </div>
+        <div class="card full-width hidden" id="dashboard-card">
+            <h2>⚙️ Dashboard</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <button id="profile-button" class="btn-info">👤 Xem Profile</button>
+                <button id="refresh-button" class="btn-secondary">🔄 Làm mới Token</button>
+                <button id="logout-button" class="btn-danger">🚪 Đăng xuất</button>
+            </div>
+            <div class="info success" style="margin-top: 15px;"><span class="status-indicator status-online"></span><span>Đã đăng nhập thành công</span></div>
+        </div>
+        <div class="output-section">
+            <h2>📊 Kết quả:</h2>
+            <pre id="output">Chưa có hành động nào. Hãy thử đăng ký hoặc đăng nhập!</pre>
+        </div>
+    </div>
+    <div class="modal" id="otp-modal">
+        <div class="modal-content">
+            <h3>🔢 Nhập mã OTP</h3>
+            <p style="color: #666; margin-bottom: 20px;">Mã OTP 6 số đã được gửi đến email của bạn.</p>
+            <form id="otp-form">
+                <div class="form-group"><input type="text" id="otp-input" class="otp-input" maxlength="6" placeholder="000000" required></div>
+                <button type="submit" class="btn-primary">Xác nhận</button>
+                <button type="button" onclick="closeOtpModal()" class="close-modal">Hủy</button>
+            </form>
+        </div>
+    </div>
+    <div class="modal" id="reset-modal">
+        <div class="modal-content">
+            <h3>🔑 Đặt lại mật khẩu</h3>
+            <form id="reset-form">
+                <div class="form-group"><label for="new-pwd">Mật khẩu mới:</label><input type="password" id="new-pwd" placeholder="Ít nhất 6 ký tự" required></div>
+                <div class="form-group"><label for="confirm-pwd">Xác nhận mật khẩu:</label><input type="password" id="confirm-pwd" placeholder="Nhập lại mật khẩu" required></div>
+                <button type="submit" class="btn-primary">Đặt lại mật khẩu</button>
+                <button type="button" onclick="closeResetModal()" class="close-modal">Hủy</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        let accessToken=null,refreshToken=null,resetToken=null,forgotEmail=null,verifiedEmail=null;
+        async function getAndSendLocation(accessToken) {
+            if (!navigator.geolocation || !accessToken) return;
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const long = position.coords.longitude;
+                    
+                    try {
+                        await fetch(`${API_URL}/update-location`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ lat, long })
+                        });
+                    } catch (err) {
+                        console.log('Không thể cập nhật vị trí:', err);
+                    }
+                },
+                (error) => {
+                    console.log('Không lấy được GPS:', error.code);
+                }
+            );
+        }
+        const outputEl=document.getElementById('output'),API_URL='http://127.0.0.1:5000';
+        
+        function showForgotPassword(){document.getElementById('forgot-card').classList.remove('hidden');document.getElementById('register-card').classList.add('hidden');document.getElementById('login-card').classList.add('hidden');}
+        function hideForgotPassword(){document.getElementById('forgot-card').classList.add('hidden');document.getElementById('register-card').classList.remove('hidden');document.getElementById('login-card').classList.remove('hidden');}
+        function updateAuthStatus(){const r=document.getElementById('register-card'),l=document.getElementById('login-card'),f=document.getElementById('forgot-card'),d=document.getElementById('dashboard-card');if(accessToken){r.classList.add('disabled');l.classList.add('disabled');f.classList.add('hidden');d.classList.remove('hidden');}else{r.classList.remove('disabled','hidden');l.classList.remove('disabled','hidden');f.classList.add('hidden');d.classList.add('hidden');}}
+        function showOutput(data,isError=false){let output=JSON.stringify(data,null,2);if(isError){output='❌ LỖI:\n'+output;outputEl.style.background='#ffebee';outputEl.style.color='#f44336';}else if(data.msg&&(data.msg.includes('thành công')||data.msg.includes('Thành công'))){output='✅ THÀNH CÔNG:\n'+output;outputEl.style.background='#e8f5e9';outputEl.style.color='#4CAF50';}else{outputEl.style.background='#f4f4f4';outputEl.style.color='#333';}outputEl.textContent=output;}
+        function closeOtpModal(){document.getElementById('otp-modal').classList.remove('active');document.getElementById('otp-input').value='';}
+        function closeResetModal(){document.getElementById('reset-modal').classList.remove('active');document.getElementById('new-pwd').value='';document.getElementById('confirm-pwd').value='';resetToken=null;hideForgotPassword();}
+        async function autoLoginAfterVerify(email){showOutput({msg:'✅ Email đã được xác thực!',note:'Đang tự động đăng nhập...'});await new Promise(r=>setTimeout(r,1500));const e=document.getElementById('login-email'),p=document.getElementById('login-pwd');e.value=email;p.value='';p.focus();showOutput({msg:'✅ Email đã xác thực thành công!',note:'Vui lòng nhập mật khẩu để đăng nhập.'});document.getElementById('login-card').scrollIntoView({behavior:'smooth',block:'center'});}
+        
+        document.addEventListener('DOMContentLoaded',()=>{const u=new URLSearchParams(window.location.search),a=u.get('access_token'),r=u.get('refresh_token'),e=u.get('error'),v=u.get('verified'),em=u.get('email');if(a&&r){accessToken=a;refreshToken=r;updateAuthStatus();getAndSendLocation(a);showOutput({msg:'✅ Đăng nhập bằng Google thành công!',note:'Token đã được lưu. Bạn có thể sử dụng các chức năng.'});window.history.replaceState({},document.title,"/");}else if(e){showOutput({error:'Lỗi đăng nhập Google: '+e},true);window.history.replaceState({},document.title,"/");}else if(v==='true'){if(em){autoLoginAfterVerify(em);}else{showOutput({msg:'✅ Email đã được xác thực thành công!',note:'Bạn có thể đăng nhập ngay bây giờ.'});}window.history.replaceState({},document.title,"/");}updateAuthStatus();window.addEventListener('message',e=>{if(e.data.type==='EMAIL_VERIFIED'){if(e.data.email){autoLoginAfterVerify(e.data.email);}else{showOutput({msg:'✅ Email đã được xác thực thành công!',note:'Bạn có thể đăng nhập ngay bây giờ.'});}}});});
+        
+        function loginWithGoogle(){window.location.href=`${API_URL}/login/google`;}
+        
+        document.getElementById('register-form').addEventListener('submit',async function(e){e.preventDefault();const btn=e.submitter,txt=btn.textContent;btn.textContent='⏳ Đang đăng ký...';btn.disabled=true;const email=document.getElementById('reg-email').value.trim();try{const res=await fetch(`${API_URL}/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('reg-name').value.trim(),email:email,pwd:document.getElementById('reg-pwd').value})});const result=await res.json();showOutput(result,!res.ok);if(res.ok){verifiedEmail=email;e.target.reset();setTimeout(()=>{showOutput({msg:result.msg,note:'📧 Vui lòng kiểm tra hộp thư email (kể cả Spam/Junk) để xác thực tài khoản.'});},500);}}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{btn.textContent=txt;btn.disabled=false;}});
+        
+        document.getElementById('login-form').addEventListener('submit',async function(e){e.preventDefault();const btn=e.submitter,txt=btn.textContent;btn.textContent='⏳ Đang đăng nhập...';btn.disabled=true;try{const res=await fetch(`${API_URL}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('login-email').value.trim(),pwd:document.getElementById('login-pwd').value})});const result=await res.json();if(res.ok){accessToken=result.access_token;refreshToken=result.refresh_token;updateAuthStatus();getAndSendLocation(accessToken);showOutput({msg:'✅ Đăng nhập thành công!',user:result.user});e.target.reset();}else{showOutput(result,true);}}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{btn.textContent=txt;btn.disabled=false;}});
+        
+        document.getElementById('forgot-form').addEventListener('submit',async function(e){e.preventDefault();const btn=e.submitter,txt=btn.textContent;btn.textContent='⏳ Đang gửi...';btn.disabled=true;forgotEmail=document.getElementById('forgot-email').value.trim();try{const res=await fetch(`${API_URL}/forgot-password`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail})});const result=await res.json();showOutput(result,!res.ok);if(res.ok){document.getElementById('otp-modal').classList.add('active');document.getElementById('otp-input').focus();}}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{btn.textContent=txt;btn.disabled=false;}});
+        
+        document.getElementById('otp-form').addEventListener('submit',async function(e){e.preventDefault();const btn=e.submitter,txt=btn.textContent;btn.textContent='⏳ Đang xác thực...';btn.disabled=true;const otp=document.getElementById('otp-input').value.trim();if(otp.length!==6||!/^\d+$/.test(otp)){showOutput({msg:'OTP phải là 6 chữ số'},true);btn.textContent=txt;btn.disabled=false;return;}try{const res=await fetch(`${API_URL}/verify-otp`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail,otp:otp})});const result=await res.json();if(res.ok){resetToken=result.reset_token;closeOtpModal();document.getElementById('reset-modal').classList.add('active');document.getElementById('new-pwd').focus();showOutput(result);}else{showOutput(result,true);}}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{btn.textContent=txt;btn.disabled=false;}});
+        
+        document.getElementById('reset-form').addEventListener('submit',async function(e){e.preventDefault();const btn=e.submitter,txt=btn.textContent,newPwd=document.getElementById('new-pwd').value,confirmPwd=document.getElementById('confirm-pwd').value;if(newPwd!==confirmPwd){showOutput({msg:'Mật khẩu xác nhận không khớp'},true);return;}if(newPwd.length<6){showOutput({msg:'Mật khẩu phải có ít nhất 6 ký tự'},true);return;}btn.textContent='⏳ Đang đặt lại...';btn.disabled=true;try{const res=await fetch(`${API_URL}/reset-password`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reset_token:resetToken,new_pwd:newPwd})});const result=await res.json();showOutput(result,!res.ok);if(res.ok){setTimeout(()=>{closeResetModal();},2000);}}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{btn.textContent=txt;btn.disabled=false;}});
+        
+        document.getElementById('profile-button').addEventListener('click',async function(){if(!accessToken)return;this.textContent='⏳ Đang tải...';this.disabled=true;try{const res=await fetch(`${API_URL}/profile`,{method:'GET',headers:{'Authorization':`Bearer ${accessToken}`}});const result=await res.json();if(res.ok){showOutput({msg:'✅ Thông tin profile:',profile:result});}else{showOutput(result,true);if(res.status===401){accessToken=null;refreshToken=null;updateAuthStatus();}}}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{this.textContent='👤 Xem Profile';this.disabled=false;}});
+        
+        document.getElementById('refresh-button').addEventListener('click',async function(){if(!refreshToken)return;this.textContent='⏳ Đang làm mới...';this.disabled=true;try{const res=await fetch(`${API_URL}/refresh`,{method:'POST',headers:{'Authorization':`Bearer ${refreshToken}`}});const result=await res.json();if(res.ok){accessToken=result.access_token;showOutput({msg:'✅ Làm mới token thành công!'});}else{showOutput(result,true);if(res.status===401){accessToken=null;refreshToken=null;updateAuthStatus();}}}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{this.textContent='🔄 Làm mới Token';this.disabled=false;}});
+        
+        document.getElementById('logout-button').addEventListener('click',async function(){if(!refreshToken)return;this.textContent='⏳ Đang đăng xuất...';this.disabled=true;try{const res=await fetch(`${API_URL}/logout`,{method:'POST',headers:{'Authorization':`Bearer ${refreshToken}`}});const result=await res.json();accessToken=null;refreshToken=null;updateAuthStatus();showOutput({msg:'✅ Đăng xuất thành công!'});}catch(err){showOutput({error:'Không thể kết nối đến server: '+err.message},true);}finally{this.textContent='🚪 Đăng xuất';this.disabled=false;}});
+        
+        document.getElementById('otp-input').addEventListener('input',function(e){this.value=this.value.replace(/[^0-9]/g,'');});
+    </script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm kiếm sản phẩm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+    #dot {
+        animation: blink 1s infinite;
+        color: red;
+    }
+    @keyframes blink {
+        0% { opacity: 0.2; }
+        50% { opacity: 1; }
+        100% { opacity: 0.2; }
+    }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <h1 class="mb-4">Tìm kiếm sản phẩm</h1>
+
+    <!-- Form tìm kiếm -->
+    <form method="GET" action="/" class="mb-4" id="search_form">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-5 d-flex">
+                <input type="text" name="search" id="search_input" class="form-control" 
+                    placeholder="Nhập tên sản phẩm..." 
+                    value="{{ search_text|default('') }}">
+                <button type="button" onclick="startVoiceSearch()" class="btn btn-danger ms-2">🎙️</button>
+            </div>
+            <div class="col-md-3">
+                <select name="distance_filter" class="form-select">
+                    <option value="">Khoảng cách (km)</option>
+                    <option value="1" {% if distance_filter=='1' %}selected{% endif %}>Dưới 1 km</option>
+                    <option value="3" {% if distance_filter=='3' %}selected{% endif %}>Dưới 3 km</option>
+                    <option value="5" {% if distance_filter=='5' %}selected{% endif %}>Dưới 5 km</option>
+                    <option value="10" {% if distance_filter=='10' %}selected{% endif %}>Dưới 10 km</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="price_filter" class="form-select">
+                    <option value="">Chọn mức giá</option>
+                    <option value="1" {% if price_filter=='1' %}selected{% endif %}>Dưới 50.000 VNĐ</option>
+                    <option value="2" {% if price_filter=='2' %}selected{% endif %}>50.000 - 100.000 VNĐ</option>
+                    <option value="3" {% if price_filter=='3' %}selected{% endif %}>100.000 - 200.000 VNĐ</option>
+                    <option value="4" {% if price_filter=='4' %}selected{% endif %}>200.000 - 500.000 VNĐ</option>
+                    <option value="5" {% if price_filter=='5' %}selected{% endif %}>500.000 - 1.000.000 VNĐ</option>
+                    <option value="6" {% if price_filter=='6' %}selected{% endif %}>Trên 1.000.000 VNĐ</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">Tìm</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Kết quả tìm kiếm -->
+    {% if results %}
+        {% for product in results %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ product.product_data.product_name }}</h5>
+                    <small>Vị trí: {{ product.location_data.location_name }}</small>
+                </div>
+                <div class="card-body">
+                    {% if product.stores %}
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                            {% for store in product.stores %}
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ store.store_name }}</h6>
+                                            <p class="card-text mb-1">{{ store.store_address }}</p>
+                                            <p class="card-text mb-1">Vĩ độ: {{ store.store_lat }}, Kinh độ: {{ store.store_long }}</p>
+                                            {% if store.distance_km %}
+                                                <p class="card-text">Khoảng cách: {{ '%.2f'|format(store.distance_km) }} km</p>
+                                            {% else %}
+                                                <p class="card-text text-muted">Khoảng cách chưa xác định</p>
+                                            {% endif %}
+                                            {% if store.min_price %}
+                                                <p class="card-text mb-0">
+                                                    {% if store.max_price and store.max_price != store.min_price %}
+                                                        {# Có khoảng giá #}
+                                                        <strong class="text-danger fs-5">
+                                                            💰 {{ "{:,.0f}".format(store.min_price) }} - {{ "{:,.0f}".format(store.max_price) }} VNĐ
+                                                        </strong>
+                                                    {% else %}
+                                                        {# Giá cố định #}
+                                                        <strong class="text-danger fs-5">
+                                                            💰 {{ "{:,.0f}".format(store.min_price) }} VNĐ
+                                                        </strong>
+                                                    {% endif %}
+                                                </p>
+                                            {% else %}
+                                                <p class="card-text text-muted mb-0">
+                                                    <em>Chưa có giá</em>
+                                                </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Không có cửa hàng nào.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">Không tìm thấy kết quả nào.</p>
+    {% endif %}
+</div>
+
+<!-- Voice search popup -->
+<div id="voice_popup" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+     background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
+     justify-content: center; align-items: center; z-index: 9999;">
+    <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; width: 350px;">
+        <h5>🎙️ Đang nghe...</h5>
+        <p>Nói vào micro</p>
+        <p id="transcript_display" class="text-primary fw-bold fs-5 mb-3" style="min-height: 25px;"></p>
+        <div id="dot" style="font-size: 40px;">•</div>
+        <button type="button" onclick="cancelVoiceSearch()" class="btn btn-secondary mt-4">Hủy</button>
+    </div>
+</div>
+
+<script>
+let currentRecognition = null;
+let submitTimer = null; 
+const SUBMIT_DELAY = 1000;
+let finalResultReceived = false;
+
+function startVoiceSearch() {
+    if (!("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+        alert("Trình duyệt không hỗ trợ tìm kiếm bằng giọng nói!");
+        return;
+    }
+
+    if (submitTimer) clearTimeout(submitTimer);
+    finalResultReceived = false;
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    currentRecognition = recognition; 
+    recognition.interimResults = true; 
+    recognition.lang = "vi-VN";
+    recognition.maxAlternatives = 1;
+
+    const popup = document.getElementById("voice_popup");
+    const transcriptDisplay = document.getElementById("transcript_display");
+    transcriptDisplay.textContent = "";
+    popup.style.display = "flex";
+
+    recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) finalTranscript += transcript;
+            else interimTranscript += transcript;
+        }
+        transcriptDisplay.textContent = finalTranscript + interimTranscript;
+
+        if (finalTranscript) {
+            finalResultReceived = true;
+            document.getElementById("search_input").value = finalTranscript;
+            if (submitTimer) clearTimeout(submitTimer);
+            submitTimer = setTimeout(() => {
+                popup.style.display = "none";
+                document.getElementById("search_form").submit();
+                submitTimer = null;
+            }, SUBMIT_DELAY);
+        }
+    };
+
+    recognition.onspeechend = () => recognition.stop();
+    recognition.onend = () => {
+        currentRecognition = null;
+        if (!submitTimer && !finalResultReceived) popup.style.display = "none";
+    };
+    recognition.onerror = (event) => {
+        if (submitTimer) clearTimeout(submitTimer);
+        popup.style.display = "none";
+        currentRecognition = null; 
+        finalResultReceived = false;
+        if (event.error !== "abort") alert("Lỗi: " + event.error);
+    };
+
+    recognition.start();
+}
+
+function cancelVoiceSearch() {
+    if (currentRecognition) currentRecognition.abort();
+    if (submitTimer) { clearTimeout(submitTimer); submitTimer = null; }
+    document.getElementById("voice_popup").style.display = "none";
+    finalResultReceived = false;
+}
+</script>
+</body>
+</html>

@@ -36,6 +36,21 @@ async function loadProducts(search = '', distance = '', price = '') {
   }
 }
 
+// Hàm mới: Xử lý bật/tắt danh sách cửa hàng
+function toggleStoresList(productId) {
+    const storesList = document.getElementById(`stores-list-${productId}`);
+    const toggleButton = document.getElementById(`toggle-stores-btn-${productId}`);
+    
+    if (storesList.classList.contains('active')) {
+        storesList.classList.remove('active');
+        toggleButton.textContent = 'Xem Cửa Hàng ▼';
+    } else {
+        storesList.classList.add('active');
+        toggleButton.textContent = 'Ẩn Cửa Hàng ▲';
+    }
+}
+
+
 // Render danh sách sản phẩm theo cấu trúc mới
 function renderProducts() {
   const wrap = $('#product-list');
@@ -76,10 +91,23 @@ function renderProducts() {
           </div>
           <p class="product-location">📍 ${product.location_name}</p>
       </div>
+      <div class="product-actions-main">
+          ${product.stores && product.stores.length > 0 
+            ? `<button 
+                 class="btn-toggle-stores" 
+                 id="toggle-stores-btn-${product.product_id}"
+                 onclick="toggleStoresList(${product.product_id})">
+                 Xem Cửa Hàng ▼
+               </button>`
+            : '<span style="color:#888; font-size:13px;">Không có cửa hàng bán</span>'
+          }
+      </div>
     `;
 
     // ==== Danh sách cửa hàng bán sản phẩm ====
+    // Thêm ID để dễ dàng truy cập bằng JS
     const storesList = document.createElement('div');
+    storesList.id = `stores-list-${product.product_id}`; 
     storesList.className = 'stores-list';
 
     if (product.stores && product.stores.length > 0) {
@@ -88,20 +116,26 @@ function renderProducts() {
         // Lấy ảnh chính của cửa hàng (ps_type = 1), nếu không có thì dùng ảnh sản phẩm
         const mainImage = store.product_images.find(img => img.ps_type === 1);
         const storeImageUrl = mainImage ? mainImage.ps_image_url : product.product_image_url;
+        
+        // Tạo đường dẫn chi tiết
+        const detailUrl = `product-detail.html?product_id=${product.product_id}&store_id=${store.store_id}`;
+
 
         const storeCard = document.createElement('div');
         storeCard.className = 'store-card';
 
         // HTML hiển thị từng cửa hàng
         storeCard.innerHTML = `
-          <div class="store-header">
-              <img src="${storeImageUrl}" alt="${store.store_name}" class="store-image">
-              <div class="store-info">
-                  <h4 class="store-name">${store.store_name}</h4>
-                  <p class="store-address">${store.store_address}</p>
-                  <p class="store-distance">📍 ${store.distance_km ? store.distance_km + ' km' : 'Không xác định'}</p>
+          <a href="${detailUrl}" class="store-header-link">
+              <div class="store-header">
+                  <img src="${storeImageUrl}" alt="${store.store_name}" class="store-image">
+                  <div class="store-info">
+                      <h4 class="store-name">${store.store_name}</h4>
+                      <p class="store-address">${store.store_address}</p>
+                      <p class="store-distance">📍 ${store.distance_km ? store.distance_km + ' km' : 'Không xác định'}</p>
+                  </div>
               </div>
-          </div>
+          </a>
 
           <div class="store-price">
               ${
@@ -117,9 +151,9 @@ function renderProducts() {
           <div class="store-actions">
               <button class="btn-add-cart" onclick="addToCart(${product.product_id}, ${store.store_id})">Thêm vào giỏ</button>
               
-              <a href="product-detail.html?product_id=${product.product_id}&store_id=${store.store_id}"
+              <a href="${detailUrl}"
                  class="btn-view">
-                 Xem
+                 Xem Chi Tiết
               </a>
           </div>
         `;
@@ -128,7 +162,7 @@ function renderProducts() {
       });
 
     } else {
-      // Không có cửa hàng bán
+      // Không có cửa hàng bán (sẽ không chạy vì đã kiểm tra bên trên, nhưng giữ lại phòng trường hợp lỗi)
       storesList.innerHTML = '<p style="color:#888; text-align:center; padding:10px;">Không có cửa hàng nào bán sản phẩm này.</p>';
     }
 
@@ -138,7 +172,6 @@ function renderProducts() {
     wrap.appendChild(productContainer);
   });
 }
-
 
 
 // ======================================================================
@@ -456,13 +489,71 @@ document.addEventListener('click', function(event) {
 });
 
 
+// ======================================================================
+// PHẦN 6: CẬP NHẬT GIAO DIỆN TÀI KHOẢN
+// ======================================================================
+
+function updateAccountLink() {
+    const accountLink = document.getElementById('account-link');
+    const userName = localStorage.getItem('userName');
+    
+    // Nút Đăng Xuất (icon)
+    const logoutLink = document.getElementById('logout-link');
+
+    if (accountLink) {
+        if (userName) {
+            // Hiển thị tên tài khoản
+            accountLink.textContent = userName;
+            accountLink.href = 'account.html'; // Vẫn giữ về trang account
+            if (logoutLink) logoutLink.style.display = 'flex'; // Hiện nút Đăng Xuất
+        } else {
+            // Nếu chưa đăng nhập
+            accountLink.textContent = 'Tài Khoản';
+            accountLink.href = 'account.html';
+            if (logoutLink) logoutLink.style.display = 'none'; // Ẩn nút Đăng Xuất
+        }
+    }
+}
+
 
 // ======================================================================
-// PHẦN 6: KHỞI ĐỘNG TRANG
+// PHẦN 7: ĐĂNG XUẤT (LOGOUT)
+// ======================================================================
+
+function logout() {
+  // Xóa tất cả thông tin đăng nhập
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken'); 
+  localStorage.removeItem('userName'); 
+  
+  // Thực hiện hiệu ứng chuyển trang rồi chuyển hướng đến trang đăng nhập
+  document.body.classList.add('page-fade-out');
+
+  setTimeout(() => {
+    // Chuyển hướng đến trang đăng nhập
+    window.location.href = 'index.html';
+  }, 500); 
+}
+
+// Gắn sự kiện cho nút Đăng Xuất
+if ($('#logout-link')) {
+  $('#logout-link').addEventListener('click', logout);
+}
+
+
+// ======================================================================
+// PHẦN 8: KHỞI TẠO VÀ XỬ LÝ SỰ KIỆN
 // ======================================================================
 
 // Khi trang load → tải toàn bộ sản phẩm + cập nhật giỏ hàng
 window.onload = async function() {
   await loadProducts();
   updateCartUI();
+  
+  // === [BỔ SUNG] Gọi hàm cập nhật tên người dùng ===
+  updateAccountLink();
+  // ==================================================
+  
+  // Kích hoạt lại animation cho trang chủ
+  document.body.classList.remove('page-fade-out'); 
 };

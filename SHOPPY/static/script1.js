@@ -1,5 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+  // === [THÊM MỚI] KIỂM TRA ĐĂNG NHẬP ===
+  // Nếu đã có Token trong LocalStorage thì đá về trang chủ ngay
+  const existingToken = localStorage.getItem('accessToken'); // Lưu ý: script1.js của bạn đang lưu là 'accessToken'
+  
+  // Kiểm tra xem token có thực sự tồn tại không
+  if (existingToken) {
+      // (Tùy chọn) Bạn có thể check thêm logic backend check xem token còn hạn không
+      // Nhưng để nhanh, chỉ cần check có token là redirect
+      window.location.href = 'index.html'; 
+      return; // Dừng code phía dưới lại
+  }
+  // ======================================
+
   // === PHẦN 1: CODE ĐỂ LẬT TRANG ===
   const signUpButton = document.getElementById('signUp');
   const signInButton = document.getElementById('signIn');
@@ -451,6 +464,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok) {
           localStorage.setItem('accessToken', result.access_token);
           localStorage.setItem('refreshToken', result.refresh_token);
+
+          // [BỔ SUNG] Lưu tên người dùng vào localStorage
+          if (result.user && result.user.name) {
+              localStorage.setItem('userName', result.user.name);
+          }
+
           getAndSendLocation(result.access_token);
           showLoginMessage('✅ Đăng nhập thành công! Đang chuyển hướng...', false);
           setTimeout(() => {
@@ -479,15 +498,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 2. Xử lý callback (KHÔNG THAY ĐỔI)
+  // 2. Xử lý callback (BỔ SUNG LƯU TÊN NGƯỜI DÙNG TỪ URL)
   const u = new URLSearchParams(window.location.search);
   const a = u.get('access_token');
   const r = u.get('refresh_token');
   const e = u.get('error');
+  // Giả định backend Google OAuth trả về user_name trong URL
+  const userNameParam = u.get('user_name'); 
 
   if (a && r) {
     localStorage.setItem('accessToken', a);
     localStorage.setItem('refreshToken', r);
+    
+    // [BỔ SUNG] Lưu tên người dùng từ URL (Google Login)
+    if (userNameParam) {
+        localStorage.setItem('userName', decodeURIComponent(userNameParam));
+    }
+    
     getAndSendLocation(a);
     showLoginMessage('✅ Đăng nhập Google thành công! Đang chuyển hướng...', false);
     const loginFormEl = document.getElementById('login-form');

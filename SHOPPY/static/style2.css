@@ -55,7 +55,7 @@ body.page-fade-out {
   background: #1867f8;
   color: white;
   z-index: 1000;
-  padding: 0;
+  padding: 0; /* Giữ padding: 0 để kiểm soát khoảng cách bên trong bằng navbar-top và navbar-main */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -282,60 +282,15 @@ main {
   gap: 20px;
 }
 
-.product-container {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 18px rgba(9, 10, 11, 0.06);
-  display: flex;
-  flex-direction: column;
-}
 
-.product-info { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
-    margin-bottom: 20px; 
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eee; /* Đường kẻ phân tách */
-}
+.product-info { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
 .product-info img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; }
 .product-info h3 { margin: 0 0 8px 0; font-size: 18px; color: #222; line-height: 1.3; }
 .product-price { color: #e74c3c; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
 .product-location { margin: 0; color: #888; font-size: 13px; }
 
-/* Nút Xem Cửa Hàng */
-.product-actions-main { margin-top: 10px; }
-
-.btn-toggle-stores {
-    background: #1867f8; color: white; border: none;
-    padding: 8px 15px; border-radius: 8px; cursor: pointer;
-    font-size: 14px; font-weight: 600; transition: background 0.3s;
-    display: inline-block;
-}
-.btn-toggle-stores:hover { background: #1459d7; }
-
-
-/* Danh sách cửa hàng trong sản phẩm (MẶC ĐỊNH ẨN) */
-.stores-list { 
-    display: none; /* Mặc định ẩn */
-    flex-direction: column; 
-    gap: 12px; 
-    margin-top: 10px;
-    animation: fadeIn 0.3s ease-out; /* Thêm animation khi hiện */
-}
-
-/* HIỆN danh sách cửa hàng khi có class 'active' */
-.stores-list.active {
-    display: flex;
-}
-
-/* Thẻ A bọc ảnh và thông tin cửa hàng */
-.store-header-link {
-    text-decoration: none; /* Bỏ gạch chân */
-    color: inherit; /* Giữ màu chữ mặc định */
-}
-
+/* Danh sách cửa hàng trong sản phẩm */
+.stores-list { display: flex; flex-direction: column; gap: 12px; }
 .store-card { background: #f8f9fa; border-radius: 8px; padding: 12px; border: 1px solid #e9ecef; }
 .store-header { display: flex; gap: 10px; margin-bottom: 10px; }
 .store-image { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
@@ -353,12 +308,14 @@ main {
   font-size: 12px; transition: background 0.3s;
 }
 .btn-add-cart:hover { background: #007acc; }
+
+/* Loại bỏ .btn-view:hover { color: white; } bị thừa vì màu đã là white */
 .btn-view {
   background: #28a745; color: white; text-decoration: none;
-  padding: 6px 8px; border-radius: 6px; text-align: center;
-  font-size: 11px; transition: background 0.3s;
-} 
-.btn-view:hover { background: #218838; color: white; }
+  padding: 6px 10px; border-radius: 6px; text-align: center;
+  font-size: 12px; transition: background 0.3s;
+}
+.btn-view:hover { background: #218838; }
 
 /* --- 6. CART POPUP (GIỎ HÀNG) --- */
 #cart-popup {
@@ -431,8 +388,7 @@ main {
 }
 
 /* --- 8. FOOTER --- */
-footer { margin-top: 40px; text-align: center; color: #666; font-size: 13px; }
-
+/* Đã loại bỏ .footer vì nó bị lặp lại/chứa các khai báo chi tiết */
 .footer {
   display: flex;
   flex-wrap: wrap;
@@ -452,7 +408,16 @@ footer { margin-top: 40px; text-align: center; color: #666; font-size: 13px; }
 
 .partners img { height: 30px; margin: 4px; border-radius: 6px; background: #fff; padding: 2px; }
 .social-icons img { height: 28px; margin: 6px 8px 0 0; border-radius: 8px; background: #fff; padding: 4px; }
-.footer-bottom { background: #0b1318; text-align: center; color: #aaa; padding: 15px; font-size: 13px; }
+.footer-bottom { 
+  background: #0b1318; 
+  text-align: center; 
+  color: #aaa; 
+  padding: 15px; 
+  font-size: 13px; 
+}
+/* Giữ lại style này để duy trì khoảng cách trên */
+footer { margin-top: 40px; text-align: center; color: #666; font-size: 13px; }
+
 
 /* --- 9. RESPONSIVE (MOBILE) --- */
 @media (max-width: 768px) {

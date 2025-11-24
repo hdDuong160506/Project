@@ -1,239 +1,257 @@
-  <!doctype html>
-  <html lang="vi">
+<!doctype html>
+<html lang="vi">
 
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SHOPPY VIỆT NAM</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SHOPPY VIỆT NAM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 
-  <body>
-    <header class="navbar">
-      <div class="navbar-top">
-        <div class="nav-links-left">
-          <a href="#">Kênh Người Bán</a>
-          <span>|</span>
-          <a href="#">Trở thành Người bán Shoppy</a>
-          <span>|</span>
-          <a href="#">Kết nối</a>
-        </div>
-        <div class="nav-links-right">
-          <a href="#">🔔 Thông báo</a>
-          <a href="#">❓ Hỗ Trợ</a>
-          <a href="#" class="auth-link" onclick="window.location.href='account.html'">Tài Khoản</a>
-        </div>
+<body>
+  <header class="navbar">
+    <div class="navbar-top">
+      <div class="nav-links-left">
+        <a href="#">Kênh Người Bán</a>
+        <span>|</span>
+        <a href="#">Trở thành Người bán Shoppy</a>
+        <span>|</span>
+        <a href="#">Kết nối</a>
       </div>
-
-      <div class="navbar-main">
-        <div class="nav-left">
-          <a href="index.html" class="brand-link">
-            <img src="images/logo/logo1.png" alt="Logo" class="brand-logo">
-            <div class="brand">SHOPPY</div>
-          </a>
+      <div class="nav-links-right" style="display: flex; align-items: center; gap: 12px;">
+        <a href="#">🔔 Thông báo</a>
+        <a href="#">❓ Hỗ Trợ</a>
+        <a href="#" class="auth-link" id="account-link" onclick="window.location.href='account.html'">Tài Khoản</a>
+        <div id="logout-link" title="Đăng Xuất" style="margin-left: 8px; cursor: pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#FFFFFF">
+            <path
+              d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-240-56-56 94-94H440v-80h238l-94-94 56-56 200 200-200 200Z" />
+          </svg>
         </div>
-
-        <div class="nav-center-search">
-          <form id="search_form" onsubmit="event.preventDefault();">
-
-            <div class="search-icon-left" title="Bộ lọc tìm kiếm" onclick="toggleFilterMenu()">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-                <path d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
-              </svg>
-            </div>
-
-            <input type="text" name="search" id="search_input" placeholder="Tìm kiếm trên Shoppy..." autocomplete="off" />
-
-            <div class="search-actions-right">
-              <button type="button" onclick="startVoiceSearch()" class="icon-btn" title="Tìm bằng giọng nói">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-                  <path d="M480-400q-50 0-85-35t-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35Zm0-240Zm-40 520v-123q-104-14-172-93t-68-184h80q0 83 58.5 141.5T480-320q83 0 141.5-58.5T680-520h80q0 105-68 184t-172 93v123h-80Zm40-360q17 0 28.5-11.5T520-520v-240q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240q0 17 11.5 28.5T480-480Z" />
-                </svg>
-              </button>
-              <button type="submit" class="icon-btn search-submit" title="Tìm kiếm">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1867f8">
-                  <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" />
-                </svg>
-              </button>
-            </div>
-
-            <div id="filter-dropdown" class="filter-dropdown-menu">
-              <div class="filter-group">
-                <label>Khoảng cách:</label>
-                <select name="distance_filter" id="distance_filter" class="custom-select">
-                  <option value="">Tất cả</option>
-                  <option value="1">Dưới 1 km</option>
-                  <option value="3">Dưới 3 km</option>
-                  <option value="5">Dưới 5 km</option>
-                  <option value="10">Dưới 10 km</option>
-                </select>
-              </div>
-              <div class="filter-group">
-                <label>Mức giá:</label>
-                <select name="price_filter" id="price_filter" class="custom-select">
-                  <option value="">Tất cả</option>
-                  <option value="1">Dưới 50k</option>
-                  <option value="2">50k - 100k</option>
-                  <option value="3">100k - 200k</option>
-                  <option value="4">200k - 500k</option>
-                  <option value="5">500k - 1tr</option>
-                  <option value="6">Trên 1tr</option>
-                </select>
-              </div>
-            </div>
-
-          </form>
-        </div>
-
-        <div class="nav-right">
-          <button class="cart-btn-icon" id="open-cart">
-              <svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="white"><path d="M280-80q-33 0-56.5-23.5T200-160q0-33 23.5-56.5T280-240q33 0 56.5 23.5T360-160q0 33-23.5 56.5T280-80Zm400 0q-33 0-56.5-23.5T600-160q0-33 23.5-56.5T680-240q33 0 56.5 23.5T760-160q0 33-23.5 56.5T680-80ZM246-720l96 200h280l110-200H246Zm-38-80h590q23 0 35 20.5t1 41.5L692-482q-11 20-29.5 31T622-440H324l-44 80h480v80H280q-45 0-68-39.5t-2-78.5l54-98-144-304H40v-80h130l38 80Zm134 280h280-280Z"/></svg>
-              <span class="cart-count-bubble" id="cart-count" style="display: none;">0</span>
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <main>
-      <section>
-        <div style="width:100%; text-align:center; margin:20px 0; position: relative;">
-          <img src="images/banner.jpg" alt="Banner quảng cáo" style="width:95%; max-height:300px; object-fit:cover; border-radius:16px; box-shadow:0 2px 6px rgba(0,0,0,0.15); filter: blur(2px); opacity: 0.5;" />
-          <h1 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 50px; font-weight: 700; text-shadow: 2px 2px 8px rgba(0,0,0,0.6); white-space: nowrap;">
-            🛒 Web mua hàng dẫn đầu, một chạm là mua 🛒
-          </h1>
-        </div>
-
-        <section class="why-choose">
-          <h2>Lý do nên chọn mua hàng tại SHOPPY?</h2>
-          <div class="reasons">
-            <div class="reason-card">
-              <img src="images/icons/icon1.jpg" alt="Đa dạng sản phẩm">
-              <h4>Đa dạng sản phẩm</h4>
-              <p>Từ văn phòng phẩm, quần áo đến phụ kiện – tất cả đều có tại Shoppy với giá tốt nhất.</p>
-            </div>
-            <div class="reason-card">
-              <img src="images/icons/icon2.jpg" alt="Giao hàng linh hoạt">
-              <h4>Giao hàng linh hoạt</h4>
-              <p>Chúng tôi hỗ trợ đổi trả miễn phí và giao hàng tận nơi nhanh chóng, tiện lợi.</p>
-            </div>
-            <div class="reason-card">
-              <img src="images/icons/icon3.png" alt="Thanh toán an toàn">
-              <h4>Thanh toán an toàn</h4>
-              <p>Thanh toán qua nhiều phương thức: tiền mặt, thẻ ngân hàng, ví điện tử, đảm bảo bảo mật.</p>
-            </div>
-          </div>
-        </section>
-
-        <div style="background:#f7f7f7;padding:20px 0;margin:40px 0;text-align:center;border-radius:12px;">
-          <p style="font-size:18px;margin-bottom:6px;color:#555;">📍 Vị trí hiện tại: TP. Hội An, Quảng Nam</p>
-          <p style="font-size:18px;margin-bottom:20px;color:#555;">☁️ Thời tiết: Có mây, 28°C</p>
-
-          <h2 style="margin-bottom:12px; text-align: left; padding: 0 20px;">Các sản phẩm tìm thấy</h2>
-
-          <div class="products" id="product-list"></div>
-        </div>
-      </section>
-    </main>
-
-    <div id="cart-popup">
-      <h3 style="margin-top:0;">🛒 Giỏ hàng của bạn</h3>
-      <div class="cart-list" id="cart-list">
-        <div style="color:#888">Giỏ hàng trống</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-        <div>Tổng:</div>
-        <div style="font-weight:700" id="cart-total">0₫</div>
-      </div>
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <button class="cart-btn" id="checkout">Thanh toán</button>
-        <button class="small-btn" id="clear-cart">Xóa</button>
-        <button class="small-btn" id="close-cart" style="margin-left:auto;">Đóng</button>
       </div>
     </div>
 
-    <footer>
-      <div class="footer">
-        <div class="footer-section">
-          <div class="footer-logo">
-            <h2 style="color:#00aaff; font-size:28px;">SHOPPY</h2>
-            <p style="color:#ccc;">Web bán hàng hàng đầu Việt Nam.</p>
-          </div>
-          <h3>Đối tác thanh toán</h3>
-          <div class="partners">
-            <img src="images/payment/visa.png" alt="Visa">
-            <img src="images/payment/mastercard.png" alt="Mastercard">
-            <img src="images/payment/momo.png" alt="MoMo">
-            <img src="images/payment/vnpay.jpg" alt="VNPay">
-            <img src="images/payment/vietqr.png" alt="VietQR">
-            <img src="images/payment/mbbank.png" alt="MB Bank">
-            <img src="images/payment/viettinbank.png" alt="Viettinbank">
-          </div>
-        </div>
-
-        <div class="footer-sect
-          <h3>Về Shoppy</h3>
-          <ul>
-            <li><a href="#">Giới thiệu</a></li>
-            <li><a href="#">Liên hệ</a></li>
-            <li><a href="#">Tuyển dụng</a></li>
-            <li><a href="#">Trợ giúp</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-section">
-          <h3>Sản phẩm</h3>
-          <ul>
-            <li><a href="#">Đồ dùng học tập</a></li>
-            <li><a href="#">Đồ điện tử</a></li>
-            <li><a href="#">Thời trang</a></li>
-            <li><a href="#">Đồ gia dụng</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-section">
-          <h3>Chính sách</h3>
-          <ul>
-            <li><a href="#">Chính sách bảo mật</a></li>
-            <li><a href="#">Điều khoản sử dụng</a></li>
-            <li><a href="#">Đổi trả & Hoàn tiền</a></li>
-          </ul>
-
-          <h3 style="margin-top:20px;">Theo dõi chúng tôi</h3>
-          <div class="social-icons">
-            <a href="https://www.facebook.com" target="_blank">
-              <img src="/images/icons/fb.jpg" alt="Facebook">
-            </a>
-            <a href="https://www.instagram.com" target="_blank">
-              <img src="/images/icons/ins.jpg" alt="Instagram">
-            </a>
-            <a href="https://www.tiktok.com" target="_blank">
-              <img src="/images/icons/tiktok.jpg" alt="TikTok">
-            </a>
-            <a href="https://www.youtube.com" target="_blank">
-              <img src="/images/icons/youtube.png" alt="YouTube">
-            </a>
-          </div>
-        </div>
+    <div class="navbar-main">
+      <div class="nav-left">
+        <a href="index.html" class="brand-link">
+          <img src="images/logo/logo1.png" alt="Logo" class="brand-logo">
+          <div class="brand">SHOPPY</div>
+        </a>
       </div>
 
-      <div class="footer-bottom">
-        @ 2025 Shoppy — Khoa CNTT, HCMUS
-      </div>
-    </footer>
+      <div class="nav-center-search">
+        <form id="search_form" onsubmit="event.preventDefault();">
 
-    <div id="voice_popup" style="display:none;">
-      <div class="voice-popup-content">
-        <h5>🎙️ Đang nghe...</h5>
-        <p>Hãy nói từ khóa tìm kiếm của bạn</p>
-        <p id="transcript_display" style="min-height: 25px; color: #1867f8; font-weight: bold; margin: 15px 0;"></p>
-        <div class="listening-dot">•</div>
-        <button type="button" onclick="cancelVoiceSearch()" style="padding:10px 20px; background:#666; color:white; border:none; border-radius:8px; cursor:pointer; margin-top:10px;">
-          Hủy
+          <div class="search-icon-left" title="Bộ lọc tìm kiếm" onclick="toggleFilterMenu()">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+              <path
+                d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
+            </svg>
+          </div>
+
+          <input type="text" name="search" id="search_input" placeholder="Tìm kiếm trên Shoppy..." autocomplete="off" />
+
+          <div class="search-actions-right">
+            <button type="button" onclick="startVoiceSearch()" class="icon-btn" title="Tìm bằng giọng nói">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                fill="#5f6368">
+                <path
+                  d="M480-400q-50 0-85-35t-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35Zm0-240Zm-40 520v-123q-104-14-172-93t-68-184h80q0 83 58.5 141.5T480-320q83 0 141.5-58.5T680-520h80q0 105-68 184t-172 93v123h-80Zm40-360q17 0 28.5-11.5T520-520v-240q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240q0 17 11.5 28.5T480-480Z" />
+              </svg>
+            </button>
+            <button type="submit" class="icon-btn search-submit" title="Tìm kiếm">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                fill="#1867f8">
+                <path
+                  d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" />
+              </svg>
+            </button>
+          </div>
+
+          <div id="filter-dropdown" class="filter-dropdown-menu">
+            <div class="filter-group">
+              <label>Khoảng cách:</label>
+              <select name="distance_filter" id="distance_filter" class="custom-select">
+                <option value="">Tất cả</option>
+                <option value="1">Dưới 1 km</option>
+                <option value="3">Dưới 3 km</option>
+                <option value="5">Dưới 5 km</option>
+                <option value="10">Dưới 10 km</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Mức giá:</label>
+              <select name="price_filter" id="price_filter" class="custom-select">
+                <option value="">Tất cả</option>
+                <option value="1">Dưới 50k</option>
+                <option value="2">50k - 100k</option>
+                <option value="3">100k - 200k</option>
+                <option value="4">200k - 500k</option>
+                <option value="5">500k - 1tr</option>
+                <option value="6">Trên 1tr</option>
+              </select>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="nav-right">
+        <button class="cart-btn-icon" id="open-cart">
+          <svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="white">
+            <path
+              d="M280-80q-33 0-56.5-23.5T200-160q0-33 23.5-56.5T280-240q33 0 56.5 23.5T360-160q0 33-23.5 56.5T280-80Zm400 0q-33 0-56.5-23.5T600-160q0-33 23.5-56.5T680-240q33 0 56.5 23.5T760-160q0 33-23.5 56.5T680-80ZM246-720l96 200h280l110-200H246Zm-38-80h590q23 0 35 20.5t1 41.5L692-482q-11 20-29.5 31T622-440H324l-44 80h480v80H280q-45 0-68-39.5t-2-78.5l54-98-144-304H40v-80h130l38 80Zm134 280h280-280Z" />
+          </svg>
+          <span class="cart-count-bubble" id="cart-count" style="display: none;">0</span>
         </button>
       </div>
     </div>
+  </header>
 
-    <script src="script.js"></script>
-  </body>
+  <main>
+    <section>
+      <div style="width:100%; text-align:center; margin:20px 0; position: relative;">
+        <img src="images/banner.jpg" alt="Banner quảng cáo"
+          style="width:95%; max-height:300px; object-fit:cover; border-radius:16px; box-shadow:0 2px 6px rgba(0,0,0,0.15); filter: blur(2px); opacity: 0.5;" />
+        <h1
+          style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 50px; font-weight: 700; text-shadow: 2px 2px 8px rgba(0,0,0,0.6); white-space: nowrap;">
+          🛒 Web mua hàng dẫn đầu, một chạm là mua 🛒
+        </h1>
+      </div>
 
-  </html>
+      <section class="why-choose">
+        <h2>Lý do nên chọn mua hàng tại SHOPPY?</h2>
+        <div class="reasons">
+          <div class="reason-card">
+            <img src="images/icons/icon1.jpg" alt="Đa dạng sản phẩm">
+            <h4>Đa dạng sản phẩm</h4>
+            <p>Từ văn phòng phẩm, quần áo đến phụ kiện – tất cả đều có tại Shoppy với giá tốt nhất.</p>
+          </div>
+          <div class="reason-card">
+            <img src="images/icons/icon2.jpg" alt="Giao hàng linh hoạt">
+            <h4>Giao hàng linh hoạt</h4>
+            <p>Chúng tôi hỗ trợ đổi trả miễn phí và giao hàng tận nơi nhanh chóng, tiện lợi.</p>
+          </div>
+          <div class="reason-card">
+            <img src="images/icons/icon3.png" alt="Thanh toán an toàn">
+            <h4>Thanh toán an toàn</h4>
+            <p>Thanh toán qua nhiều phương thức: tiền mặt, thẻ ngân hàng, ví điện tử, đảm bảo bảo mật.</p>
+          </div>
+        </div>
+      </section>
+
+      <div style="background:#f7f7f7;padding:20px 0;margin:40px 0;text-align:center;border-radius:12px;">
+        <p style="font-size:18px;margin-bottom:6px;color:#555;">📍 Vị trí hiện tại: TP. Hội An, Quảng Nam</p>
+        <p style="font-size:18px;margin-bottom:20px;color:#555;">☁️ Thời tiết: Có mây, 28°C</p>
+
+        <h2 style="margin-bottom:12px; text-align: left; padding: 0 20px;">Các sản phẩm tìm thấy</h2>
+
+        <div class="products" id="product-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="cart-popup">
+    <h3 style="margin-top:0;">🛒 Giỏ hàng của bạn</h3>
+    <div class="cart-list" id="cart-list">
+      <div style="color:#888">Giỏ hàng trống</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <div>Tổng:</div>
+      <div style="font-weight:700" id="cart-total">0₫</div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="cart-btn" id="checkout">Thanh toán</button>
+      <button class="small-btn" id="clear-cart">Xóa</button>
+      <button class="small-btn" id="close-cart" style="margin-left:auto;">Đóng</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer">
+      <div class="footer-section">
+        <div class="footer-logo">
+          <h2 style="color:#00aaff; font-size:28px;">SHOPPY</h2>
+          <p style="color:#ccc;">Web bán hàng hàng đầu Việt Nam.</p>
+        </div>
+        <h3>Đối tác thanh toán</h3>
+        <div class="partners">
+          <img src="images/payment/visa.png" alt="Visa">
+          <img src="images/payment/mastercard.png" alt="Mastercard">
+          <img src="images/payment/momo.png" alt="MoMo">
+          <img src="images/payment/vnpay.jpg" alt="VNPay">
+          <img src="images/payment/vietqr.png" alt="VietQR">
+          <img src="images/payment/mbbank.png" alt="MB Bank">
+          <img src="images/payment/viettinbank.png" alt="Viettinbank">
+        </div>
+      </div>
+
+      <div class="footer-section">
+        <h3>Về Shoppy</h3>
+        <ul>
+          <li><a href="#">Giới thiệu</a></li>
+          <li><a href="#">Liên hệ</a></li>
+          <li><a href="#">Tuyển dụng</a></li>
+          <li><a href="#">Trợ giúp</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h3>Sản phẩm</h3>
+        <ul>
+          <li><a href="#">Đồ dùng học tập</a></li>
+          <li><a href="#">Đồ điện tử</a></li>
+          <li><a href="#">Thời trang</a></li>
+          <li><a href="#">Đồ gia dụng</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h3>Chính sách</h3>
+        <ul>
+          <li><a href="#">Chính sách bảo mật</a></li>
+          <li><a href="#">Điều khoản sử dụng</a></li>
+          <li><a href="#">Đổi trả & Hoàn tiền</a></li>
+        </ul>
+
+        <h3 style="margin-top:20px;">Theo dõi chúng tôi</h3>
+        <div class="social-icons">
+          <a href="https://www.facebook.com" target="_blank">
+            <img src="/images/icons/fb.jpg" alt="Facebook">
+          </a>
+          <a href="https://www.instagram.com" target="_blank">
+            <img src="/images/icons/ins.jpg" alt="Instagram">
+          </a>
+          <a href="https://www.tiktok.com" target="_blank">
+            <img src="/images/icons/tiktok.jpg" alt="TikTok">
+          </a>
+          <a href="https://www.youtube.com" target="_blank">
+            <img src="/images/icons/youtube.png" alt="YouTube">
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      @ 2025 Shoppy — Khoa CNTT, HCMUS
+    </div>
+  </footer>
+
+  <div id="voice_popup" style="display:none;">
+    <div class="voice-popup-content">
+      <h5>🎙️ Đang nghe...</h5>
+      <p>Hãy nói từ khóa tìm kiếm của bạn</p>
+      <p id="transcript_display" style="min-height: 25px; color: #1867f8; font-weight: bold; margin: 15px 0;"></p>
+      <div class="listening-dot">•</div>
+      <button type="button" onclick="cancelVoiceSearch()"
+        style="padding:10px 20px; background:#666; color:white; border:none; border-radius:8px; cursor:pointer; margin-top:10px;">
+        Hủy
+      </button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
+

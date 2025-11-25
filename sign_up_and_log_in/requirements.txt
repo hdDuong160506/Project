@@ -1,0 +1,8 @@
+authlib==1.6.5
+Flask==3.1.2
+Flask_Bcrypt==1.0.1
+flask_cors==6.0.1
+Flask_JWT_Extended==4.7.1
+flask_mailman==1.1.1
+itsdangerous==2.2.0
+python-dotenv==1.2.1

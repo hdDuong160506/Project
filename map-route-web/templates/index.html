@@ -2,427 +2,368 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <title>Map Route — Bản đồ & chỉ đường</title>
-
-  <!-- Leaflet CSS -->
+  <title>Smart Shopping Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
-    :root{
-      --bg:#f5f7fb;
-      --card:#ffffff;
-      --accent:#2563eb;
-      --muted:#6b7280;
-      --success:#10b981;
-      --danger:#ef4444;
-      --glass: rgba(255,255,255,0.8);
-      --radius:12px;
-    }
-    html,body{height:100%; margin:0; font-family: Inter, "Segoe UI", Roboto, Arial; background:var(--bg); color:#0f172a;}
-    /* Top bar */
-    .topbar{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      padding:12px;
-      background: linear-gradient(90deg,#ffffff,#f3f6fb);
-      box-shadow: 0 4px 18px rgba(10,20,40,0.06);
-      position:relative;
-      z-index:1000;
-      flex-wrap:wrap;
+    :root {
+      --primary: #3b82f6;
+      --store-bg: #f97316;
+      --text-main: #1e293b;
+      --text-light: #64748b;
+      --bg-panel: rgba(255, 255, 255, 0.95);
+      --radius: 12px;
     }
 
-    .control {
-      display:flex;
-      gap:8px;
-      align-items:center;
+    html, body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; overflow: hidden; }
+    #map { width: 100%; height: 100%; z-index: 0; }
+
+    /* --- 1. Control Panel (Giữ nguyên) --- */
+    .control-panel {
+      position: absolute; top: 20px; left: 20px; width: 320px;
+      background: var(--bg-panel); padding: 20px; border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08); z-index: 1000;
+      backdrop-filter: blur(8px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255,255,255,0.6);
     }
+    .control-panel.collapsed { transform: translateX(calc(-100% - 30px)); }
 
-    label.small { font-size:0.86rem; color:var(--muted); margin-right:6px; }
-
-    input[type="text"]{
-      min-width:220px;
-      padding:8px 10px;
-      border-radius:10px;
-      border:1px solid #d1d5db;
-      background:var(--card);
-      outline:none;
-      font-size:0.93rem;
+    .toggle-btn {
+      position: absolute; right: -28px; top: 20px; width: 28px; height: 32px;
+      background: white; border: 1px solid #e2e8f0; border-left: none;
+      border-radius: 0 8px 8px 0; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); color: var(--text-light);
     }
-    input[type="text"]:focus { box-shadow:0 4px 14px rgba(37,99,235,0.12); border-color:var(--accent); }
+    .toggle-btn:hover { color: var(--primary); }
 
-    select {
-      padding:8px 10px;
-      border-radius:10px;
-      border:1px solid #d1d5db;
-      font-size:0.93rem;
-      background:var(--card);
+    .brand { font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap:8px;}
+    .input-group { margin-bottom: 12px; }
+    .label { font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; display: block;}
+    
+    select, input[type="text"] {
+      width: 100%; padding: 9px 10px; border-radius: 8px; border: 1px solid #cbd5e1;
+      background: #fff; font-size: 0.85rem; color: var(--text-main); outline: none; box-sizing: border-box;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    select:focus, input:focus { border-color: var(--primary); }
+    input[readonly] { background: #f1f5f9; color: #64748b; cursor: default; }
 
-    button.btn {
-      padding:9px 12px;
-      border-radius:10px;
-      border:none;
-      background:var(--accent);
-      color:white;
-      font-weight:600;
-      cursor:pointer;
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      box-shadow: 0 6px 18px rgba(37,99,235,0.12);
+    .btn-draw {
+      width: 100%; background: var(--primary); color: white; border: none; padding: 10px;
+      border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: 0.2s; margin-top: 8px;
     }
-    button.btn:disabled { opacity:0.6; cursor:not-allowed; box-shadow:none; }
+    .btn-draw:hover { background: #2563eb; }
+    
+    .status-bar { margin-top: 10px; font-size: 0.8rem; text-align: center; color: var(--text-light); min-height: 18px;}
+    .route-result { background: #eff6ff; color: #1e40af; padding: 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; text-align: center; margin-top: 8px; display: none; border: 1px solid #bfdbfe;}
 
-    /* Map area */
-    #map { height: calc(100vh - 78px); width:100%; }
-
-    /* Status card */
-    .status {
-      margin-left: auto;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:260px;
-    }
-    .summary {
-      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,250,255,0.9));
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid #e6eefb;
-      box-shadow: 0 6px 24px rgba(14,22,40,0.04);
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-    .summary .big { font-weight:700; color:#0b1220; font-size:1rem; }
-    .summary .small { font-size:0.86rem; color:var(--muted); }
-
-    /* Tag chips */
-    .chip {
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      padding:6px 10px;
-      border-radius:999px;
-      background:#f8fafc;
-      border:1px solid #e6eefb;
-      font-size:0.86rem;
-      color:#0b1220;
-    }
-
-    /* Floating tools */
-    .tools {
+    /* --- 2. Layer Switcher (NEW) --- */
+    .layer-control {
       position: absolute;
-      right: 18px;
-      bottom: 22px;
-      z-index:1100;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .tools button { background:var(--card); border:1px solid #e6eefb; padding:8px; border-radius:10px; cursor:pointer; box-shadow:0 6px 18px rgba(6,8,12,0.04); }
-    .tools button:active { transform:translateY(1px); }
-
-    /* Loading overlay */
-    #loading {
-      display:none;
-      position:fixed;
-      left:50%;
-      top:50%;
-      transform:translate(-50%,-50%);
-      background:var(--card);
-      padding:14px 18px;
-      border-radius:12px;
-      box-shadow:0 12px 36px rgba(12,15,30,0.12);
-      z-index:1200;
-      font-weight:600;
+      bottom: 100px; /* Nằm trên nút Zoom (Zoom thường ở bottom: 20-30px) */
+      right: 10px;
+      z-index: 900;
+      display: flex;
+      flex-direction: row-reverse; /* Icon chính bên phải, menu sổ sang trái */
+      align-items: center;
+      gap: 8px;
     }
 
-    /* Popup style tweak */
-    .leaflet-popup-content-wrapper { border-radius:10px; }
-    /* small responsive */
-    @media (max-width:760px){
-      .status { min-width:160px; margin-top:8px; width:100%; }
-      input[type="text"]{ min-width:140px; }
-      .topbar { gap:8px; padding:10px; }
+    /* Nút chính (Icon Layer) */
+    .layer-btn-main {
+      width: 44px; height: 44px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: #333;
+      border: 2px solid white; /* Border giả để khớp style map */
+      transition: all 0.2s;
     }
+    .layer-btn-main:hover { background: #f8fafc; color: var(--primary); }
+
+    /* Menu chứa các nút chọn (Ẩn mặc định) */
+    .layer-options {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 5px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      
+      /* Animation Sổ Ngang */
+      max-width: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: all 0.3s ease-in-out;
+      transform-origin: right center;
+    }
+
+    /* Khi hover vào container cha thì hiện menu */
+    .layer-control:hover .layer-options {
+      max-width: 300px; /* Đủ rộng để chứa 3 nút */
+      opacity: 1;
+      padding: 5px 8px; /* Trả lại padding */
+    }
+
+    /* Các nút option con */
+    .layer-opt {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--text-light);
+      border: 1px solid transparent;
+    }
+    .layer-opt:hover { background: #f1f5f9; color: var(--primary); }
+    .layer-opt.active { background: #eff6ff; color: var(--primary); border-color: #bfdbfe; }
+
+
+    /* --- 3. Marker Styles --- */
+    .marker-pin {
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.3s ease; border: 1.5px solid white;
+    }
+    .store-marker { background: var(--store-bg); opacity: 0.9; }
+    .map-zoomed-in .store-marker { width: 26px; height: 26px; font-size: 13px; }
+    .map-zoomed-out .store-marker { width: 8px !important; height: 8px !important; font-size: 0; margin-left: 9px; margin-top: 9px; border-width: 1px; opacity: 0.8; }
+    .user-marker { background: var(--primary); z-index: 1000; }
+    .map-zoomed-in .user-marker { width: 28px; height: 28px; font-size: 14px; }
+    .map-zoomed-out .user-marker { width: 10px !important; height: 10px !important; margin-left: 9px; margin-top: 9px; border-width: 2px; }
+
+    /* Popup & Loading */
+    .popup-content { text-align: center; width: 200px; }
+    .popup-content h3 { margin: 0 0 4px 0; font-size: 0.95rem; color: var(--text-main); }
+    .popup-content p { margin: 0 0 10px 0; font-size: 0.8rem; color: var(--text-light); }
+    .btn-select { width: 100%; padding: 6px; background: white; border: 1px solid var(--primary); color: var(--primary); border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: 0.2s;}
+    .btn-select:hover { background: var(--primary); color: white; }
+    #loading { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(255,255,255,0.95); padding:15px 25px; border-radius:50px; box-shadow:0 5px 20px rgba(0,0,0,0.1); z-index:2000; font-weight:600; color: var(--primary); align-items:center; gap:10px; backdrop-filter: blur(4px); border: 1px solid #e2e8f0;}
+    .spin { animation: spin 1s linear infinite; width: 18px; height: 18px; border: 2px solid #cbd5e1; border-top-color: var(--primary); border-radius: 50%; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="topbar" role="region" aria-label="controls">
-    <div class="control">
-      <label class="small">Bắt đầu (<em>Start</em>)</label>
-      <input id="start" type="text" value="106.70098,10.77689" aria-label="start coordinate" />
-    </div>
 
-    <div class="control">
-      <label class="small">Kết thúc (<em>End</em>)</label>
-      <input id="end" type="text" value="106.65897,10.76269" aria-label="end coordinate" />
-    </div>
+  <div class="control-panel" id="panel">
+    <div class="toggle-btn" id="toggle-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></div>
+    <div class="brand"><span style="font-size: 1.2rem;">🏷️</span> Shopping Map</div>
 
-    <div class="control">
-      <label class="small">Di chuyển (<em>Profile</em>)</label>
-      <select id="profile" aria-label="travel profile">
-        <option value="driving-car">🚗 Driving</option>
-        <option value="cycling-regular">🚴 Cycling</option>
-        <option value="foot-walking">🚶 Walking</option>
+    <div class="input-group">
+      <label class="label">Bắt đầu</label>
+      <select id="start-select">
+        <option value="default">🏫 KTX 135B Trần Hưng Đạo</option>
+        <option value="gps">📍 Vị trí hiện tại (GPS)</option>
+      </select>
+      <input type="hidden" id="start-coords" value="106.69367,10.76128">
+    </div>
+    <div class="input-group">
+      <label class="label">Đích đến</label>
+      <input id="end-display" type="text" placeholder="Chọn trên bản đồ..." readonly />
+      <input type="hidden" id="end-coords">
+    </div>
+    <div class="input-group">
+      <label class="label">Phương tiện</label>
+      <select id="profile-select">
+        <option value="driving-car">🚗 Ô tô</option>
+        <option value="cycling-regular">🚴 Xe đạp</option>
+        <option value="foot-walking">🚶 Đi bộ</option>
       </select>
     </div>
+    <button class="btn-draw" id="btn-draw">Vẽ đường đi</button>
+    <div class="status-bar" id="status-text">Sẵn sàng</div>
+    <div class="route-result" id="route-result"></div>
+  </div>
 
-    <div class="control">
-      <button class="btn" id="btn">Vẽ đường (Draw)</button>
+  <div class="layer-control">
+    <div class="layer-btn-main" title="Đổi lớp bản đồ">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
     </div>
-
-    <div class="status" id="status-area">
-      <div class="summary" id="summary">
-        <div>
-          <div class="big" id="distance">—</div>
-          <div class="small" id="duration">—</div>
-        </div>
-        <div style="text-align:right;">
-          <div class="small">Trạng thái (<em>Status</em>)</div>
-          <div id="status-text" class="small" style="font-weight:600;color:var(--muted)">Sẵn sàng (Ready)</div>
-        </div>
-      </div>
+    <div class="layer-options">
+      <div class="layer-opt active" onclick="switchLayer('street', this)">Đường Phố</div>
+      <div class="layer-opt" onclick="switchLayer('satellite', this)">Vệ tinh</div>
+      <div class="layer-opt" onclick="switchLayer('terrain', this)">Địa hình</div>
     </div>
   </div>
 
-  <div id="map" role="application" aria-label="map"></div>
+  <div id="map"></div>
+  <div id="loading"><div class="spin"></div><span>Đang xử lý...</span></div>
 
-  <div class="tools" aria-hidden="false">
-    <button id="geolocate" title="Dùng vị trí hiện tại (Use current location)">📍 Vị trí hiện tại (My location)</button>
-    <button id="zoomHome" title="Zoom đến tuyến (Zoom to route)">🔎 Fit</button>
-  </div>
-
-  <div id="loading">Đang tải tuyến đường…</div>
-
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // --- Map init ---
-    const map = L.map('map', { preferCanvas: true }).setView([10.77, 106.69], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    // --- 1. Map & Layers Setup ---
+    
+    // Định nghĩa các Tiles
+    const layers = {
+        street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '© OpenStreetMap'
+        }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18, attribution: 'Tiles © Esri'
+        }),
+        terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18, attribution: 'Tiles © Esri'
+        })
+    };
 
-    // UI elements
-    const btn = document.getElementById('btn');
-    const startInput = document.getElementById('start');
-    const endInput = document.getElementById('end');
-    const profileEl = document.getElementById('profile');
+    // Khởi tạo Map với layer mặc định là 'street'
+    const map = L.map('map', { zoomControl: false, layers: [layers.street] }).setView([10.762622, 106.660172], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Hàm chuyển đổi Layer
+    window.switchLayer = function(type, el) {
+        // Xóa tất cả layer cũ
+        for (let key in layers) {
+            map.removeLayer(layers[key]);
+        }
+        // Thêm layer mới
+        map.addLayer(layers[type]);
+        
+        // Cập nhật UI active
+        document.querySelectorAll('.layer-opt').forEach(d => d.classList.remove('active'));
+        el.classList.add('active');
+    };
+
+    // --- Zoom UI Logic ---
+    const mapContainer = document.getElementById('map');
+    function updateZoomClass() {
+        const zoom = map.getZoom();
+        if (zoom >= 14) {
+            mapContainer.classList.add('map-zoomed-in');
+            mapContainer.classList.remove('map-zoomed-out');
+        } else {
+            mapContainer.classList.add('map-zoomed-out');
+            mapContainer.classList.remove('map-zoomed-in');
+        }
+    }
+    updateZoomClass();
+    map.on('zoomend', updateZoomClass);
+
+    // --- 2. Toggle Panel ---
+    const panel = document.getElementById('panel');
+    const toggleBtn = document.getElementById('toggle-btn');
+    toggleBtn.onclick = () => {
+        panel.classList.toggle('collapsed');
+        toggleBtn.querySelector('svg').innerHTML = panel.classList.contains('collapsed') 
+            ? '<polyline points="9 18 15 12 9 6"></polyline>' 
+            : '<polyline points="15 18 9 12 15 6"></polyline>';
+    };
+
+    // --- 3. Marker Logic ---
+    function createMarker(type, lat, lng) {
+        const iconClass = type === 'store' ? 'store-marker' : 'user-marker';
+        const emoji = type === 'store' ? '🍜' : '🏠';
+        const icon = L.divIcon({
+            className: 'custom-div-icon', 
+            html: `<div class="marker-pin ${iconClass}">${emoji}</div>`,
+            iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -14]
+        });
+        return L.marker([lat, lng], {icon: icon});
+    }
+
+    // --- 4. Core App Logic ---
+    const startSelect = document.getElementById('start-select');
+    const startCoordsHidden = document.getElementById('start-coords');
+    const endDisplay = document.getElementById('end-display');
+    const endCoordsHidden = document.getElementById('end-coords');
+    const btnDraw = document.getElementById('btn-draw');
     const statusText = document.getElementById('status-text');
-    const distanceEl = document.getElementById('distance');
-    const durationEl = document.getElementById('duration');
+    const routeResult = document.getElementById('route-result');
     const loading = document.getElementById('loading');
-    const geolocateBtn = document.getElementById('geolocate');
-    const zoomHomeBtn = document.getElementById('zoomHome');
 
     let routeLayer = null;
-    let startMarker = null;
-    let endMarker = null;
-    let lastBounds = null;
+    let userMarker = null;
+    const defaultCoords = [10.76128, 106.69367]; 
 
-    function setStatus(text, isError=false){
-      statusText.textContent = text;
-      statusText.style.color = isError ? 'var(--danger)' : 'var(--muted)';
-    }
-    function showLoading(show){ loading.style.display = show ? 'block' : 'none'; }
+    // Marker User
+    userMarker = createMarker('user', defaultCoords[0], defaultCoords[1]).addTo(map);
+    userMarker.bindPopup("<b>Điểm xuất phát</b><br>KTX 135B Trần Hưng Đạo");
 
-    // --- Helpers ---
-    function parseCoord(str){
-      if (!str) return null;
-      const parts = str.split(',').map(s => s.trim());
-      if (parts.length !== 2) return null;
-      const lon = parseFloat(parts[0]);
-      const lat = parseFloat(parts[1]);
-      if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
-      return [lon, lat];
-    }
-    function validLonLat(pair){
-      if (!Array.isArray(pair) || pair.length !== 2) return false;
-      const [lon, lat] = pair;
-      return lon >= -180 && lon <= 180 && lat >= -90 && lat <= 90;
-    }
-
-
-    const startIconUrl = "../static/placeholder-blue.png";
-    const endIconUrl   = "../static/placeholder-red.png";
-
-    function makeDivIconFromUrl(iconUrl, label){
-      return L.divIcon({
-        className: "custom-flag",
-        html: `<div style="display:flex; flex-direction:column; align-items:center;">
-                <img src="${iconUrl}" style="width:34px; height:34px; display:block"/>
-                <div style="background:rgba(255,255,255,0.95); padding:4px 8px; border-radius:8px; margin-top:6px; border:1px solid #e6eefb; font-size:0.82rem;">
-                  ${label}
-                </div>
-              </div>`,
-        iconSize: [46, 60],
-        iconAnchor: [23, 54],
-        popupAnchor: [0, -54]
-      });
-    }
-
-    const startIcon = makeDivIconFromUrl(startIconUrl, 'Start');
-    const endIcon   = makeDivIconFromUrl(endIconUrl,   'End');
-
-    // --- drawRoute ---
-    async function drawRoute(){
-      btn.disabled = true;
-      setStatus('Đang tải (Loading)...');
-      showLoading(true);
-      try {
-        const start = parseCoord(startInput.value);
-        const end = parseCoord(endInput.value);
-        const profile = profileEl.value;
-
-        if (!start || !end){
-          setStatus('Sai định dạng tọa độ (format: lon,lat)', true);
-          return;
+    startSelect.addEventListener('change', (e) => {
+        if(e.target.value === 'default') {
+            startCoordsHidden.value = `${defaultCoords[1]},${defaultCoords[0]}`;
+            userMarker.setLatLng(defaultCoords).bindPopup("<b>Điểm xuất phát</b><br>KTX 135B Trần Hưng Đạo").openPopup();
+            map.setView(defaultCoords, 14);
+        } else {
+            loading.style.display = 'flex';
+            navigator.geolocation.getCurrentPosition(pos => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                startCoordsHidden.value = `${lng},${lat}`;
+                userMarker.setLatLng([lat, lng]).bindPopup("<b>Vị trí của bạn</b>").openPopup();
+                map.setView([lat, lng], 15);
+                loading.style.display = 'none';
+            }, err => {
+                alert("Không lấy được GPS.");
+                startSelect.value = 'default';
+                loading.style.display = 'none';
+            });
         }
-        if (!validLonLat(start) || !validLonLat(end)){
-          setStatus('Tọa độ ngoài phạm vi hợp lệ', true);
-          return;
-        }
+    });
 
-        // POST to Flask route (same server)
-        const payload = { start: start, end: end, profile: profile };
-        const res = await fetch('/route', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok){
-          const text = await res.text().catch(()=> '');
-          console.error('Server error response:', text);
-          setStatus('Lỗi server — xem console (F12)', true);
-          return;
-        }
-
-        const geojson = await res.json();
-
-        if (!geojson || !geojson.features || !geojson.features.length){
-          setStatus('Không có đường trả về (empty geojson)', true);
-          console.warn('Empty geojson:', geojson);
-          return;
-        }
-
-        // remove old
-        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
-        if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
-        if (endMarker) { map.removeLayer(endMarker); endMarker = null; }
-
-        // add route
-        routeLayer = L.geoJSON(geojson, {
-          style: () => ({ color: '#1e40af', weight: 6, opacity: 0.95, dashArray: null }),
-          onEachFeature: (f, layer) => {
-            if (f.properties && f.properties.summary){
-              const s = f.properties.summary;
-              const txt = `Distance: ${(s.distance/1000).toFixed(2)} km • Duration: ${Math.round(s.duration/60)} min`;
-              layer.bindPopup(txt);
-            }
-          }
-        }).addTo(map);
-
-        // markers (Leaflet uses lat,lon)
-        startMarker = L.marker([start[1], start[0]], { icon: startIcon })
-                        .addTo(map).bindPopup(`<b>Start</b><br>${start[1].toFixed(6)}, ${start[0].toFixed(6)}`);
-        endMarker = L.marker([end[1], end[0]], { icon: endIcon })
-                        .addTo(map).bindPopup(`<b>End</b><br>${end[1].toFixed(6)}, ${end[0].toFixed(6)}`);
-
-        // fit to bounds
-        const bounds = routeLayer.getBounds();
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, { padding: [40,40] });
-          lastBounds = bounds;
-        }
-
-        // summary
+    async function loadStores() {
         try {
-          const feat = geojson.features[0];
-          if (feat.properties && feat.properties.summary){
-            const s = feat.properties.summary;
-            distanceEl.textContent = `${(s.distance/1000).toFixed(2)} km`;
-            durationEl.textContent = `${Math.round(s.duration/60)} phút`;
-            setStatus('Route loaded (Tuyến đã tải).');
-          } else {
-            distanceEl.textContent = '—';
-            durationEl.textContent = '—';
-            setStatus('Route loaded.');
-          }
-        } catch(e){
-          distanceEl.textContent = '—';
-          durationEl.textContent = '—';
-          setStatus('Route loaded.');
-        }
-
-      } catch (err){
-        console.error('Exception drawRoute:', err);
-        setStatus('Lỗi (Error). Xem console (F12)', true);
-      } finally {
-        showLoading(false);
-        btn.disabled = false;
-      }
+            const res = await fetch('/api/stores');
+            const stores = await res.json();
+            stores.forEach(s => {
+                if (s.lat && s.long) {
+                    const marker = createMarker('store', s.lat, s.long).addTo(map);
+                    const popupContent = document.createElement('div');
+                    popupContent.className = 'popup-content';
+                    popupContent.innerHTML = `<h3>${s.name}</h3><p>${s.address || ''}</p>`;
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-select';
+                    btn.innerText = '🚩 Đến đây';
+                    btn.onclick = () => {
+                        const displayAddr = s.address ? `${s.name} - ${s.address}` : s.name;
+                        endDisplay.value = displayAddr; endDisplay.title = displayAddr;
+                        endCoordsHidden.value = `${s.long},${s.lat}`;
+                        marker.closePopup();
+                        if(panel.classList.contains('collapsed')) toggleBtn.click();
+                        statusText.innerText = "Đã chọn điểm đến.";
+                    };
+                    popupContent.appendChild(btn);
+                    marker.bindPopup(popupContent);
+                }
+            });
+        } catch(e) {}
     }
 
-    // --- geolocation helper ---
-    geolocateBtn.addEventListener('click', () => {
-      if (!navigator.geolocation){
-        setStatus('Trình duyệt không hỗ trợ vị trí (no geolocation)', true);
-        return;
-      }
-      setStatus('Đang lấy vị trí hiện tại...');
-      showLoading(true);
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        startInput.value = `${lon.toFixed(6)},${lat.toFixed(6)}`;
-        setStatus('Vị trí đã đặt làm Start.');
-        showLoading(false);
-        // auto-draw small route? keep user control; we will not auto draw
-      }, (err) => {
-        console.error(err);
-        setStatus('Không thể lấy vị trí: ' + (err.message || err.code), true);
-        showLoading(false);
-      }, { enableHighAccuracy: true, timeout: 10000 });
-    });
+    btnDraw.onclick = async () => {
+        const start = parseCoord(startCoordsHidden.value);
+        const end = parseCoord(endCoordsHidden.value);
+        const profile = document.getElementById('profile-select').value;
+        if(!start || !end) { alert("Chưa chọn địa điểm!"); return; }
 
-    // zoom to last route bounds
-    zoomHomeBtn.addEventListener('click', () => {
-      if (lastBounds && lastBounds.isValid()) map.fitBounds(lastBounds, { padding: [40,40] });
-      else map.setView([10.77,106.69], 13);
-    });
-
-    // Enter to submit
-    [startInput, endInput].forEach(el => {
-      el.addEventListener('keypress', (e) => { if (e.key === 'Enter') drawRoute(); });
-    });
-    btn.addEventListener('click', drawRoute);
-
-    // nice small UX: click map to set end/start with Shift key
-    map.on('click', function(e){
-      // if user holds shift -> set start; if ctrl/alt -> set end; else nothing
-      if (e.originalEvent.shiftKey){
-        const lat = e.latlng.lat.toFixed(6);
-        const lon = e.latlng.lng.toFixed(6);
-        startInput.value = `${lon},${lat}`;
-        setStatus('Click: đặt Start (Hold Shift để đặt Start).');
-      } else if (e.originalEvent.ctrlKey || e.originalEvent.metaKey){
-        const lat = e.latlng.lat.toFixed(6);
-        const lon = e.latlng.lng.toFixed(6);
-        endInput.value = `${lon},${lat}`;
-        setStatus('Click: đặt End (Ctrl/Cmd để đặt End).');
-      }
-    });
-
-    // initial hint
-    setStatus('Sẵn sàng (Ready). Nhập lon,lat rồi bấm Vẽ đường (Draw).');
-
-    // Expose drawRoute on window for quick manual tests if needed
-    window.drawRoute = drawRoute;
+        loading.style.display = 'flex';
+        routeResult.style.display = 'none';
+        try {
+            const res = await fetch('/route', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ start, end, profile })
+            });
+            const geojson = await res.json();
+            if(routeLayer) map.removeLayer(routeLayer);
+            if(geojson.features && geojson.features.length > 0) {
+                routeLayer = L.geoJSON(geojson, {
+                    style: { color: '#3b82f6', weight: 5, opacity: 0.8, lineCap: 'round' }
+                }).addTo(map);
+                map.fitBounds(routeLayer.getBounds(), {padding:[50,50]});
+                const s = geojson.features[0].properties.summary;
+                routeResult.innerHTML = `${(s.distance/1000).toFixed(1)} km • ${Math.ceil(s.duration/60)} phút`;
+                routeResult.style.display = 'block';
+                statusText.innerText = "Hoàn tất!";
+            } else { statusText.innerText = "Không tìm thấy đường."; }
+        } catch(e) { alert("Lỗi Server"); } 
+        finally { loading.style.display = 'none'; }
+    };
+    function parseCoord(str){ return str ? str.split(',').map(Number) : null; }
+    loadStores();
   </script>
 </body>
 </html>

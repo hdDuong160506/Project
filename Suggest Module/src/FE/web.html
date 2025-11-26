@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Gợi ý sản phẩm theo vị trí</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<header>
+		<h2>Gợi ý sản phẩm theo vị trí</h2>
+	</header>
+
+	<div class="bar">
+		<button id="btn-gps">Click vào đây nếu bạn muốn website lấy GPS</button>
+	</div>
+
+	<div class="bar">
+		<input id="city" placeholder="Nhập tỉnh/thành (VD: Hà Nội, TPHCM)"
+			style="flex:1;min-width:240px;padding:10px;border-radius:10px;border:1px solid #ddd" />
+		<button id="btn-city">Tìm theo tỉnh/thành phố</button>
+	</div>
+
+	<div id="status"></div>
+
+	<div id="view-products">
+		<div id="products" class="grid"></div>
+	</div>
+
+	<div id="view-stores" style="display:none">
+		<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+			<button id="btn-back">← Quay lại</button>
+			<h3 id="store-title" style="margin:0;flex:1;min-width:200px"></h3>
+
+			<div
+				style="display:flex;gap:16px;align-items:center;padding:8px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9">
+				<label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+					<input type="checkbox" id="sort-distance">
+					<span>Gần nhất</span>
+				</label>
+				<label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+					<input type="checkbox" id="sort-price">
+					<span>Rẻ nhất</span>
+				</label>
+			</div>
+		</div>
+		<div id="stores" class="grid"></div>
+	</div>
+
+	<script src="app.js"></script>
+</body>
+
+</html>

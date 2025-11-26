@@ -1,0 +1,14 @@
+1. Luồng hoạt động
+	Luồng 1: user click vào ô lấy GPS 
+		Bước 1: user lấy vị trí GPS (nếu user muốn) | app.js line 297
+		Bước 2: lấy GPS từ trình duyệt | app.js function handleGPS
+		Bước 3: gửi request tới backend | app.js fucntion listProductsByGPS
+		Bước 4: backend xử lý request | app.py @app.post ("/api/products")
+		Bước 5: Frontend hiển thị sản phẩm | app.js function showProducts
+
+	Luồng 2: Click vào sản phẩm để xem cửa hàng
+		Bước 1: user click vào sản phẩm nào đó | app.js line 64
+		Bước 2: gọi hàm showStoresFor | app.js 
+		Bước 3: gửi request lấy stores | app.js function listStores(product_id)
+		Bước 4: backend xử lý request | app.py @app.post("/api/product-stores")
+		Bước 5: Frontend hiển thị các cửa hàng | app.js showStores

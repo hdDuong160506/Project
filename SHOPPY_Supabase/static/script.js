@@ -1,9 +1,6 @@
-// File: script.js
-
 // ======================================================================
-// KHAI BÁO CẦN THIẾT
+// PHẦN 1: HÀM FORMAT TIỀN, LOAD VÀ RENDER SẢN PHẨM
 // ======================================================================
-// BỎ: Khai báo API Thời tiết
 
 // Danh sách sản phẩm lấy từ server
 let PRODUCTS = [];
@@ -18,10 +15,6 @@ const $ = sel => document.querySelector(sel);
 function formatMoney(n) {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '₫';
 }
-
-// ======================================================================
-// PHẦN 1: HÀM FORMAT TIỀN, LOAD VÀ RENDER SẢN PHẨM
-// ======================================================================
 
 // Load sản phẩm từ API với 3 tham số lọc
 async function loadProducts(search = '', distance = '', price = '') {
@@ -146,10 +139,10 @@ function renderProducts() {
 
           <div class="store-price">
               ${
-                store.min_price
-                  ? formatMoney(store.min_price) +
-                    (store.max_price && store.max_price !== store.min_price
-                      ? ' - ' + formatMoney(store.max_price)
+                store.ps_min_price_store
+                  ? formatMoney(store.ps_min_price_store) +
+                    (store.ps_max_price_store && store.ps_max_price_store !== store.ps_min_price_store
+                      ? ' - ' + formatMoney(store.ps_max_price_store)
                       : '')
                   : 'Liên hệ'
               }
@@ -320,6 +313,393 @@ function cancelVoiceSearch() {
   $('#voice_popup').style.display = "none";
 }
 
+// ======================================================================
+// PHẦN 4: TÌM KIẾM BẰNG HÌNH ẢNH (IMAGE SEARCH) - ĐÃ SỬA
+// ======================================================================
+
+let currentImageData = null;
+let currentTab = 'upload';
+
+// Mở popup tìm kiếm bằng hình ảnh
+function openImageSearch() {
+  const popup = document.getElementById('image_search_popup');
+  popup.classList.add('active');
+  popup.style.display = 'flex';
+  
+  // Reset về tab upload
+  switchImageTab('upload');
+  clearAllImages();
+}
+
+// Đóng popup
+function closeImageSearch() {
+  const popup = document.getElementById('image_search_popup');
+  popup.classList.remove('active');
+  setTimeout(() => {
+    popup.style.display = 'none';
+  }, 200);
+  
+  clearAllImages();
+  hideError();
+}
+
+// Chuyển tab
+function switchImageTab(tabName) {
+  currentTab = tabName;
+  
+  // Update tab buttons
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    if (btn.dataset.tab === tabName) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  
+  // Update tab panels
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+  
+  const activePanel = document.getElementById(`${tabName}-tab`);
+  if (activePanel) {
+    activePanel.classList.add('active');
+  }
+  
+  hideError();
+}
+
+// Setup upload area
+function setupImageUpload() {
+  const uploadArea = document.getElementById('imageUploadArea');
+  const fileInput = document.getElementById('imageFileInput');
+  
+  if (!uploadArea || !fileInput) return;
+  
+  // Click to upload
+  document.getElementById('browseBtn').addEventListener('click', (e) => {
+    e.stopPropagation(); // chặn bubble
+    fileInput.click();
+  });
+  
+  // File input change
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleImageFile(file);
+    }
+  });
+  
+  // Drag and drop
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+  });
+  
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleImageFile(file);
+    } else {
+      showError('Vui lòng chọn file ảnh hợp lệ');
+    }
+  });
+}
+
+// Xử lý file ảnh
+function handleImageFile(file) {
+  // Kiểm tra dung lượng (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    showError('Kích thước ảnh vượt quá 5MB');
+    return;
+  }
+  
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    currentImageData = e.target.result;
+    showImagePreview(currentImageData, 'upload');
+    hideError();
+  };
+  
+  reader.onerror = () => {
+    showError('Không thể đọc file ảnh');
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+// Tải ảnh từ paste - ĐÃ SỬA
+function loadPastedImage() {
+  const input = document.getElementById('imagePasteInput');
+  const value = input.value.trim();
+  
+  if (!value) {
+    // Ẩn preview nếu không có giá trị
+    clearPasteImage();
+    return;
+  }
+  
+  // Check if it's a URL
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    // Validate URL format
+    try {
+      new URL(value);
+      currentImageData = value;
+      showImagePreview(value, 'paste');
+      hideError();
+    } catch (e) {
+      showError('URL không hợp lệ');
+    }
+  } 
+  // Check if it's base64
+  else if (value.startsWith('data:image/')) {
+    currentImageData = value;
+    showImagePreview(value, 'paste');
+    hideError();
+  } 
+  // Assume it's raw base64
+  else if (value.length > 100) { // Chỉ xử lý nếu là base64 dài (tránh nhầm với text thường)
+    try {
+      // Thử decode để kiểm tra có phải base64 hợp lệ không
+      atob(value);
+      currentImageData = `data:image/jpeg;base64,${value}`;
+      showImagePreview(currentImageData, 'paste');
+      hideError();
+    } catch (e) {
+      showError('Base64 không hợp lệ');
+    }
+  }
+  // Nếu là text thường, không làm gì
+}
+
+// Hiển thị preview ảnh
+function showImagePreview(imageData, tab) {
+  if (tab === 'upload') {
+    const preview = document.getElementById('imagePreview');
+    const container = document.getElementById('uploadPreviewContainer');
+    
+    preview.src = imageData;
+    preview.style.display = 'block';
+    container.style.display = 'block';
+    
+    // Ẩn upload zone
+    document.getElementById('imageUploadArea').style.display = 'none';
+  } else {
+    const preview = document.getElementById('pastePreview');
+    const container = document.getElementById('pastePreviewContainer');
+    
+    preview.src = imageData;
+    preview.style.display = 'block';
+    container.style.display = 'block';
+  }
+}
+
+// Xóa ảnh upload
+function clearUploadImage() {
+  document.getElementById('imagePreview').style.display = 'none';
+  document.getElementById('uploadPreviewContainer').style.display = 'none';
+  document.getElementById('imageUploadArea').style.display = 'block';
+  document.getElementById('imageFileInput').value = '';
+  
+  if (currentTab === 'upload') {
+    currentImageData = null;
+  }
+}
+
+// Xóa ảnh paste
+function clearPasteImage() {
+  document.getElementById('pastePreview').style.display = 'none';
+  document.getElementById('pastePreviewContainer').style.display = 'none';
+  document.getElementById('imagePasteInput').value = '';
+  
+  if (currentTab === 'paste') {
+    currentImageData = null;
+  }
+}
+
+// Xóa tất cả ảnh
+function clearAllImages() {
+  clearUploadImage();
+  clearPasteImage();
+  currentImageData = null;
+}
+
+// Hiển thị lỗi
+function showError(message) {
+  const errorDiv = document.getElementById('imageSearchError');
+  errorDiv.textContent = message;
+  errorDiv.classList.add('show');
+  errorDiv.style.display = 'block';
+}
+
+// Ẩn lỗi
+function hideError() {
+  const errorDiv = document.getElementById('imageSearchError');
+  errorDiv.classList.remove('show');
+  errorDiv.style.display = 'none';
+}
+
+// Tìm kiếm bằng ảnh
+// Tìm kiếm bằng ảnh - ĐÃ SỬA
+async function searchWithImage() {
+  if (!currentImageData) {
+    showError('Vui lòng chọn hoặc nhập ảnh trước');
+    return;
+  }
+  
+  const searchBtn = document.querySelector('.btn-primary');
+  searchBtn.classList.add('loading');
+  searchBtn.disabled = true;
+  
+  try {
+    // Gọi API
+    const response = await fetch('/api/search-by-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        image: currentImageData
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      // Đóng popup
+      closeImageSearch();
+      
+      // QUAN TRỌNG: Cập nhật danh sách sản phẩm TOÀN CỤC
+      PRODUCTS = data.products || [];
+      
+      // Render lại sản phẩm với kết quả mới
+      renderProducts();
+      
+      // Cập nhật search input với từ khóa tìm được
+      const searchInput = document.getElementById('search_input');
+      if (searchInput && data.search_term) {
+        searchInput.value = data.search_term;
+      }
+      
+      // Cập nhật tiêu đề kết quả tìm kiếm
+      const title = document.querySelector('h2');
+      if (title && data.search_term) {
+        title.textContent = `Kết quả tìm kiếm cho "${data.search_term}"`;
+      }
+      
+      console.log('✅ Image search successful:', data.products.length + ' products found');
+      
+    } else if (data.status === 'not_found') {
+      showError(`❌ ${data.message}`);
+      // Hiển thị danh sách rỗng
+      PRODUCTS = [];
+      renderProducts();
+    } else {
+      showError(`❌ Lỗi: ${data.message}`);
+    }
+      
+  } catch (error) {
+    console.error('Search error:', error);
+    showError('❌ Lỗi kết nối. Vui lòng thử lại');
+  } finally {
+    searchBtn.classList.remove('loading');
+    searchBtn.disabled = false;
+  }
+}
+
+// Thêm vào phần Khởi tạo khi trang load
+document.addEventListener('DOMContentLoaded', () => {
+  setupImageUpload();
+
+  // Tự động tải ảnh khi paste hoặc nhập vào ô URL/Base64
+  const pasteInput = document.getElementById('imagePasteInput');
+  
+  pasteInput.addEventListener('input', (e) => {
+    const value = e.target.value.trim();
+    
+    // Nếu xóa hết text thì ẩn preview
+    if (!value) {
+      clearPasteImage();
+      hideError();
+      return;
+    }
+    
+    // Chờ một chút để người dùng nhập/xong
+    clearTimeout(pasteInput.debounceTimer);
+    pasteInput.debounceTimer = setTimeout(() => {
+      loadPastedImage();
+    }, 0); // Chờ 800ms sau khi ngừng gõ
+  });
+
+  pasteInput.addEventListener('paste', (e) => {
+    const items = e.clipboardData.items;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+        
+        reader.onload = () => {
+          currentImageData = reader.result;
+          showImagePreview(currentImageData, 'paste');
+          hideError();
+        };
+
+        reader.readAsDataURL(blob);
+        e.preventDefault();
+        return;
+      }
+    }
+  });
+  
+  // Close popup khi click outside
+  const popup = document.getElementById('image_search_popup');
+  if (popup) {
+    popup.addEventListener('click', (e) => {
+      if (e.target === popup) {
+        closeImageSearch();
+      }
+    });
+  }
+  
+  // ESC key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const popup = document.getElementById('image_search_popup');
+      if (popup && popup.style.display === 'flex') {
+        closeImageSearch();
+      }
+    }
+  });
+});
+  
+// Close popup khi click outside
+const popup = document.getElementById('image_search_popup');
+if (popup) {
+  popup.addEventListener('click', (e) => {
+    if (e.target === popup) {
+      closeImageSearch();
+    }
+  });
+}
+
+// ESC key to close
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const popup = document.getElementById('image_search_popup');
+    if (popup && popup.style.display === 'flex') {
+      closeImageSearch();
+    }
+  }
+});
 
 
 // ======================================================================

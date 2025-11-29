@@ -2,183 +2,14 @@
 <html lang="vi">
 
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tổng quan sản phẩm - SHOPPY</title>
-    <link rel="stylesheet" href="style.css"> <style>
-        /* CSS dành riêng cho trang Summary */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0
-        }
-
-        body {
-            font-family: Inter, system-ui, "Segoe UI", Roboto, Arial;
-            line-height: 1.4;
-            color: #333;
-            background: #f0f2f5;
-            animation: pageFadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes pageFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .breadcrumb {
-            padding: 15px 60px;
-            font-size: 14px;
-            background: #e9ecef;
-            /* Cần điều chỉnh margin-top để tránh navbar fixed */
-            margin-top: 130px; 
-        }
-
-        .breadcrumb a {
-            color: #00aaff;
-            text-decoration: none;
-        }
-
-        main {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 20px;
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            min-height: 50vh; /* Đảm bảo nội dung không quá ngắn */
-        }
-
-        .product-summary-col {
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .product-detail-summary {
-            flex: 1;
-            min-width: 350px;
-        }
-
-        .store-list-recommend {
-            flex: 1.5;
-            min-width: 500px;
-        }
-
-        .product-detail-summary h2 {
-            font-size: 30px;
-            color: #00aaff;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .product-image-main {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .product-tag {
-            background: #eef3ff;
-            color: #00aaff;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 500;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        .store-list-recommend h3 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .store-item-card {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            text-decoration: none; /* Bỏ gạch chân cho thẻ <a> */
-            color: inherit;
-        }
-
-        .store-item-card:hover {
-            border-color: #00aaff;
-            box-shadow: 0 2px 8px rgba(0, 170, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .store-item-card img {
-            width: 80px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 6px;
-            flex-shrink: 0;
-        }
-
-        .store-info {
-            flex-grow: 1;
-        }
-
-        .store-name {
-            font-weight: 600;
-            font-size: 18px;
-            color: #0b38cc;
-        }
-
-        .store-price {
-            font-size: 15px;
-            color: #ff4444;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-
-        .store-review {
-            font-size: 13px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .store-actions button {
-            background: #0b38cc;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-
-        .store-actions button:hover {
-            background: #5a6fcf;
-        }
-
-        .no-stores {
-            padding: 40px;
-            text-align: center;
-            color: #888;
-            font-size: 16px;
-        }
-    </style>
+    
+    <link rel="stylesheet" href="style.css"> 
+    
+    <link rel="stylesheet" href="product-summary.css"> 
 </head>
 
 <body>
@@ -191,9 +22,7 @@
             </div>
             <div class="nav-links-right" style="display: flex; align-items: center; gap: 12px;">
                 <a href="#">❓ Hỗ Trợ</a>
-
                 <a href="account.html" class="auth-link" id="account-link">Tài Khoản</a>
-
                 <div id="logout-link" title="Đăng Xuất" style="margin-left: 8px; cursor: pointer; display: none;"
                     onclick="handleLogout()">
                     <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px"
@@ -294,6 +123,7 @@
         </div>
     </header>
     <nav class="breadcrumb"><a href="index.html">Trang chủ</a> / <span id="breadcrumb-product-name">Tổng quan sản phẩm</span></nav>
+    
     <main>
         <div class="product-detail-summary product-summary-col">
             <h2 id="summary-product-name">Đang tải tên sản phẩm...</h2>
@@ -313,7 +143,6 @@
             </div>
         </div>
     </main>
-
     <div id="cart-popup">
         <h3 style="margin-top:0;">🛒 Giỏ hàng của bạn</h3>
         <div class="cart-list" id="cart-list">
@@ -329,6 +158,7 @@
             <button class="small-btn" id="close-cart" style="margin-left:auto;">Đóng</button>
         </div>
     </div>
+    
     <div id="voice_popup" style="display:none;">
         <div class="voice-popup-content">
             <h5>🎙️ Đang nghe...</h5>
@@ -341,6 +171,7 @@
             </button>
         </div>
     </div>
+    
     <footer>
         <div class="footer">
             <div class="footer-section">
@@ -411,7 +242,6 @@
         </div>
     </footer>
     <div class="custom-modal-overlay" id="custom-confirm-modal" style="
-            /* CSS TỐI THIỂU để modal hoạt động đúng */
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; 
             align-items: center; z-index: 9000;
@@ -433,384 +263,7 @@
         </div>
     </div>
     <script src="supabase-init.js"></script>
-    <script>
-        const API_BASE = '';
-        const $ = sel => document.querySelector(sel);
-        const $$ = sel => document.querySelectorAll(sel);
-        // Biến lưu trữ sản phẩm (product object) hiện tại
-        let currentProductData = null; 
-        let cart = JSON.parse(localStorage.getItem('cart_v1') || '{}');
-
-
-        function formatMoney(n) { 
-            if (typeof n !== 'number') return '0₫';
-            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '₫'; 
-        }
-
-        // --- Hàm hỗ trợ Cart UI (được copy từ script.js để đảm bảo giỏ hàng hoạt động) ---
-        // Giả lập hàm getCartItemDetails để Cart UI hoạt động
-        function getCartItemDetails(key) {
-            // Logic này cần ALL_PRODUCTS, nhưng vì không load toàn bộ trên trang này, 
-            // chúng ta sẽ cần lấy info từ localStorage hoặc tạm thời dùng giá trị mặc định.
-            // Để đơn giản, ta chỉ cần nó không lỗi khi updateCartUI chạy.
-            const [productId, storeId] = key.split('_');
-
-            // Do không có ALL_PRODUCTS trên trang này, ta trả về giả lập
-            return {
-                name: `SP#${productId} (Tải lại trang)`,
-                store_name: `CH#${storeId}`,
-                price: 0,
-                img: 'images/placeholder.jpg'
-            };
-        }
-
-        function saveCart() { localStorage.setItem('cart_v1', JSON.stringify(cart)); updateCartUI(); }
-        
-        function changeQty(key, delta) {
-            cart[key] = (cart[key] || 0) + delta;
-            if (cart[key] <= 0) delete cart[key];
-            saveCart();
-        }
-
-        function removeItem(key) { 
-            if (confirm("Xóa sản phẩm này khỏi giỏ hàng?")) { 
-                delete cart[key]; 
-                saveCart(); 
-            } 
-        }
-
-        function updateCartUI() {
-            const cartList = $('#cart-list');
-            const cartCount = Object.values(cart).reduce((s, q) => s + q, 0);
-            let total = 0;
-            
-            const cartCountBubble = $('#cart-count');
-            if (cartCountBubble) {
-                cartCountBubble.textContent = cartCount;
-                cartCountBubble.style.display = cartCount > 0 ? 'block' : 'none';
-            }
-
-            if (cartCount === 0) {
-                if (cartList) cartList.innerHTML = '<div style="color:#888">Giỏ hàng trống</div>';
-                if ($('#cart-total')) $('#cart-total').textContent = formatMoney(0);
-                return;
-            }
-
-            if (cartList) {
-                cartList.innerHTML = '';
-
-                Object.entries(cart).forEach(([key, qty]) => {
-                    const itemDetails = getCartItemDetails(key);
-                    const price = itemDetails.price || 0;
-                    total += price * qty;
-
-                    const item = document.createElement('div');
-                    item.className = 'cart-item';
-
-                    item.innerHTML = `
-                        <img src="${itemDetails.img}" />
-
-                        <div style="flex:1">
-                            <div style="font-size:14px">${itemDetails.name}</div>
-                            <div style="font-size:12px;color:#666">${itemDetails.store_name}</div>
-                            <div style="font-size:13px;color:#666">
-                                ${formatMoney(price)} x ${qty} = ${formatMoney(price * qty)}
-                            </div>
-                        </div>
-
-                        <div class="qty">
-                            <button class="small-btn" onclick="changeQty('${key}', -1)">-</button>
-                            <div style="min-width:20px;text-align:center">${qty}</div>
-                            <button class="small-btn" onclick="changeQty('${key}', 1)">+</button>
-
-                            <button class="small-btn" style="margin-left:6px" onclick="removeItem('${key}')">xóa</button>
-                        </div>
-                    `;
-                    cartList.appendChild(item);
-                });
-            }
-            if ($('#cart-total')) $('#cart-total').textContent = formatMoney(total);
-        }
-
-        // --- Hết Hàm hỗ trợ Cart UI ---
-
-        // --- Hàm hỗ trợ Account/Logout (copy từ script.js) ---
-        async function updateAccountLink() {
-            const accountLink = document.getElementById('account-link');
-            const logoutLink = document.getElementById('logout-link');
-
-            const { data: { session } } = await supabase.auth.getSession();
-            let userName = null;
-
-            if (session && session.user) {
-                userName = session.user.user_metadata.name || session.user.email.split('@')[0];
-                localStorage.setItem('userName', userName);
-            } else {
-                localStorage.removeItem('userName');
-            }
-
-            if (userName && accountLink) {
-                accountLink.innerHTML = `👋 Chào, <b>${userName}</b>`;
-                accountLink.href = 'profile.html';
-                if (logoutLink) logoutLink.style.display = 'flex';
-            } else if (accountLink) {
-                accountLink.textContent = 'Tài Khoản';
-                accountLink.href = 'account.html';
-                if (logoutLink) logoutLink.style.display = 'none';
-            }
-        }
-        
-        function showCustomConfirm(message) {
-            return new Promise(resolve => {
-                const modal = document.getElementById('custom-confirm-modal');
-                const messageElement = modal.querySelector('#modal-message');
-                const yesButton = modal.querySelector('#modal-confirm-yes');
-                const noButton = modal.querySelector('#modal-confirm-no');
-
-                if (!modal || !messageElement || !yesButton || !noButton) {
-                    resolve(confirm(message));
-                    return;
-                }
-
-                messageElement.textContent = message;
-                modal.style.display = 'flex';
-
-                const handleYes = () => {
-                    modal.style.display = 'none';
-                    removeListeners();
-                    resolve(true);
-                };
-
-                const handleNo = () => {
-                    modal.style.display = 'none';
-                    removeListeners();
-                    resolve(false);
-                };
-
-                yesButton.addEventListener('click', handleYes, { once: true });
-                noButton.addEventListener('click', handleNo, { once: true });
-
-                const removeListeners = () => {
-                    yesButton.removeEventListener('click', handleYes);
-                    noButton.removeEventListener('click', handleNo);
-                };
-            });
-        }
-        
-        window.handleLogout = async function () {
-            const confirmLogout = await showCustomConfirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?");
-            if (!confirmLogout) return;
-
-            try {
-                const { error } = await supabase.auth.signOut();
-                if (error) throw error;
-
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('userName');
-                localStorage.removeItem('cart_v1');
-
-                window.location.reload();
-
-            } catch (err) {
-                alert("Đăng xuất thất bại. Vui lòng thử lại.");
-            }
-        };
-
-        // --- Hàm hỗ trợ Search/Filter (để Header không lỗi) ---
-        window.toggleFilterMenu = function () { 
-            const menu = $('#filter-dropdown');
-            if (menu) menu.classList.toggle('active'); 
-        }
-        window.startVoiceSearch = function () { alert("Tìm kiếm bằng giọng nói chỉ hỗ trợ trên trang chủ."); }
-        window.openImageSearch = function () { alert("Tìm kiếm bằng hình ảnh chỉ hỗ trợ trên trang chủ."); }
-        
-        // --- Logic hỗ trợ Live Search trên trang này (chỉ ẩn khi gõ) ---
-        let suggestionTimeout;
-        const searchInput = $('#search_input');
-        
-        function hideSuggestions() {
-            const suggestionsDiv = $('#search_suggestions');
-            if (suggestionsDiv) suggestionsDiv.style.display = 'none';
-        }
-
-        searchInput.addEventListener('input', () => {
-            clearTimeout(suggestionTimeout);
-            suggestionTimeout = setTimeout(() => {
-                hideSuggestions(); 
-            }, 300);
-        });
-
-        document.addEventListener('click', function(event) {
-            const form = $('#search_form');
-            const suggestions = $('#search_suggestions');
-            if (form && suggestions && !form.contains(event.target) && !suggestions.contains(event.target)) {
-              hideSuggestions();
-            }
-        });
-        // --- HẾT Logic hỗ trợ Live Search ---
-
-        // ======================================================================
-        // PHẦN LOGIC TRANG SUMMARY (TẢI DỮ LIỆU)
-        // ======================================================================
-        
-        async function loadProductData(productId) {
-            try {
-                // Sử dụng API /api/products (không filter) để tải tất cả sản phẩm
-                const res = await fetch(`/api/products`);
-                const allProducts = await res.json();
-                
-                // Tìm sản phẩm duy nhất
-                const product = allProducts.find(p => p.product_id == productId);
-
-                if (!product) {
-                    $('#summary-product-name').textContent = 'Sản phẩm không tồn tại';
-                    $('#recommended-stores-list').innerHTML = '<div class="no-stores">Không tìm thấy thông tin sản phẩm này.</div>';
-                    return null;
-                }
-                
-                currentProductData = product;
-                return product;
-
-            } catch (err) {
-                console.error("Lỗi khi load Product Data:", err);
-                $('#recommended-stores-list').innerHTML = '<div class="no-stores" style="color:red">Lỗi kết nối server khi tải dữ liệu.</div>';
-                return null;
-            }
-        }
-        
-        function renderProductSummary(product) {
-            
-            // --- 1. Cập nhật thông tin tổng quan sản phẩm ---
-            $('#summary-product-name').textContent = product.product_name;
-            $('#breadcrumb-product-name').textContent = product.product_name;
-            $('#summary-product-tag').textContent = `#${product.tag || 'Chung'}`;
-            $('#summary-product-image').src = product.product_image_url || 'images/placeholder.jpg';
-            $('#summary-product-description').textContent = product.product_des || 'Không có mô tả chi tiết cho sản phẩm này.';
-            
-            const minPrice = product.min_price || product.product_min_cost;
-            const maxPrice = product.max_price || product.product_max_cost;
-
-            let priceText = 'Liên hệ';
-            if (minPrice) {
-                priceText = formatMoney(minPrice);
-                if (maxPrice && maxPrice !== minPrice) {
-                    priceText += ` - ${formatMoney(maxPrice)}`;
-                }
-            }
-            $('#summary-product-price').textContent = priceText;
-
-
-            // --- 2. Cập nhật danh sách cửa hàng ---
-            const storeList = $('#recommended-stores-list');
-            storeList.innerHTML = '';
-            
-            if (!product.stores || product.stores.length === 0) {
-                storeList.innerHTML = '<div class="no-stores">Hiện không có cửa hàng nào cung cấp sản phẩm này.</div>';
-                return;
-            }
-
-            product.stores.forEach(store => {
-                const mainImage = store.product_images ? store.product_images.find(img => img.ps_type === 1) : null;
-                const storeImageUrl = mainImage ? mainImage.ps_image_url : product.product_image_url;
-                
-                const rating = store.ps_average_rating ? store.ps_average_rating.toFixed(1) : 'Chưa có';
-                const reviewCount = store.ps_total_reviews ? store.ps_total_reviews : 0;
-                
-                const storeMinPrice = store.ps_min_price_store || 0;
-                const storeMaxPrice = store.ps_max_price_store || 0;
-
-                let storePriceText = formatMoney(storeMinPrice);
-                if (storeMaxPrice && storeMaxPrice !== storeMinPrice) {
-                     storePriceText += ` - ${formatMoney(storeMaxPrice)}`;
-                }
-
-                const storeCard = document.createElement('a');
-                storeCard.className = 'store-item-card';
-                storeCard.href = `product-detail.html?product_id=${product.product_id}&store_id=${store.store_id}`;
-                
-                storeCard.innerHTML = `
-                    <img src="${storeImageUrl}" alt="${store.store_name}">
-                    <div class="store-info">
-                        <div class="store-name">${store.store_name}</div>
-                        <div style="font-size:14px; color:#555;">Địa chỉ: ${store.store_address || 'Đang cập nhật'}</div>
-                        <div class="store-price">Giá: ${storePriceText}</div>
-                        <div class="store-review">⭐ ${rating} (${reviewCount} đánh giá)</div>
-                    </div>
-                    <div class="store-actions">
-                        <button>Xem Chi Tiết</button>
-                    </div>
-                `;
-
-                storeList.appendChild(storeCard);
-            });
-        }
-
-
-        async function init() {
-            const params = new URLSearchParams(window.location.search);
-            const product_id = params.get('product_id');
-
-            if (!product_id) { 
-                document.body.innerHTML = '<h2 style="padding:50px">Không tìm thấy ID sản phẩm. Vui lòng quay lại trang chủ.</h2>'; 
-                return; 
-            }
-            
-            const product = await loadProductData(product_id);
-            
-            if (product) {
-                renderProductSummary(product);
-            }
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-             updateAccountLink(); 
-             updateCartUI(); // Cập nhật giỏ hàng lần đầu
-             init();
-
-             // Chức năng chuyển hướng Tìm kiếm trên Header
-             $('#search_form').onsubmit = (e) => {
-                e.preventDefault();
-                // Chuyển hướng về index.html kèm theo query
-                window.location.href = `index.html?search=${$('#search_input').value}`; 
-            };
-            
-            // Toggle popup giỏ hàng
-            if ($('#open-cart')) {
-                $('#open-cart').addEventListener('click', () => {
-                    const popup = $('#cart-popup');
-                    popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
-                });
-            }
-
-            if ($('#close-cart')) {
-                $('#close-cart').addEventListener('click', () => {
-                    $('#cart-popup').style.display = 'none';
-                });
-            }
-
-            if ($('#clear-cart')) {
-                $('#clear-cart').addEventListener('click', () => {
-                    if (confirm('Xóa toàn bộ giỏ hàng?')) {
-                        cart = {};
-                        saveCart();
-                    }
-                });
-            }
-            
-            // Nút checkout → chuyển sang cart.html
-            if ($('#checkout')) {
-                $('#checkout').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const count = Object.values(cart).reduce((s, q) => s + q, 0);
-                    if (count === 0) {
-                        alert('Giỏ hàng đang rỗng.');
-                        return;
-                    }
-                    window.location.href = 'cart.html';
-                });
-            }
-        });
-    </script>
+    <script src="product-summary.js"></script>
 </body>
 
 </html>

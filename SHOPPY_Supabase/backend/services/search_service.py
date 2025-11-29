@@ -1,6 +1,6 @@
 from database.fetch_data import fetch_full_data, fetch_rows_by_search
 from utils.haversine_function import haversine_function
-from API.API_gemini_fix_query import gemini_fix_query
+from API.API_groq_fix_query import groq_fix_query
 
 def build_store_info(row, user_lat=None, user_lon=None):
     store_info = dict(row)  # copy tất cả fields
@@ -89,7 +89,7 @@ def search_product(search_text, user_lat=21.0285, user_lon=105.8542):
         return results
     
     # 3. Nếu rỗng → Gemini fix query
-    fixed_query = gemini_fix_query(search_text)
+    fixed_query = groq_fix_query(search_text)
     print(f"[DEBUG] Fixed query after Gemini: {fixed_query}")
     
     # 4. Tìm lại DB bằng fixed_query

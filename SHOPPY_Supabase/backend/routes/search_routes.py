@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 # Import các module từ database và services
 from services.search_service import search_product
-from services.image_search_service import search_product_by_image_data
+from API.API_groq_search_image import groq_search_product_by_image
 
 # 1. Khởi tạo Blueprint thay vì Flask app
 search_bp = Blueprint('search', __name__)
@@ -104,7 +104,7 @@ def handle_image_search_api():
         image_data = data['image']
         
         # Gọi service image search (hàm này đã tự xử lý việc lấy danh sách sản phẩm)
-        recognized_product = search_product_by_image_data(image_data)
+        recognized_product = groq_search_product_by_image(image_data)
         
         if recognized_product:
             # Tìm sản phẩm trong database với tên đã nhận diện

@@ -42,7 +42,7 @@ async function fetchSuggestions(query) {
     // Giả lập gọi API gợi ý tìm kiếm (chỉ lấy 5 sản phẩm đầu tiên)
     const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
     const suggestions = await res.json();
-    
+
     renderSuggestions(suggestions, query);
 
   } catch (err) {
@@ -77,9 +77,9 @@ function renderSuggestions(products, query) {
   products.forEach(product => {
     const item = document.createElement('div');
     item.className = 'suggestion-item';
-    
+
     const imageUrl = product.product_image_url || 'images/placeholder.jpg';
-    
+
     // Tạo HTML cho item gợi ý bao gồm ảnh, tên và vị trí (Không hiện giá)
     item.innerHTML = `
         <img class="suggestion-image" src="${imageUrl}" alt="${product.product_name}">
@@ -88,12 +88,12 @@ function renderSuggestions(products, query) {
             <div class="suggestion-location">📍 ${product.location_name}</div>
         </div>
     `;
-    
+
     item.dataset.productId = product.product_id;
     item.addEventListener('click', () => navigateToProductSummary(product.product_id));
     container.appendChild(item);
   });
-  
+
   showSuggestions();
 }
 
@@ -153,7 +153,7 @@ function renderProducts() {
 
     // Lấy ảnh từ sản phẩm chính, nếu không có thì dùng placeholder
     const imageUrl = product.product_image_url || 'images/placeholder.jpg';
-    
+
     // Lấy giá min/max 
     const minPrice = product.min_price || product.product_min_cost;
     const maxPrice = product.max_price || product.product_max_cost;
@@ -161,15 +161,15 @@ function renderProducts() {
     let priceText = 'Liên hệ';
 
     if (minPrice && minPrice > 0) {
+      priceText = formatMoney(minPrice);
+      // Chỉ hiển thị khoảng giá nếu maxPrice khác minPrice
+      if (maxPrice && maxPrice > minPrice) {
+        priceText += ` - ${formatMoney(maxPrice)}`;
+      } else if (maxPrice && maxPrice === minPrice) {
         priceText = formatMoney(minPrice);
-        // Chỉ hiển thị khoảng giá nếu maxPrice khác minPrice
-        if (maxPrice && maxPrice > minPrice) {
-            priceText += ` - ${formatMoney(maxPrice)}`;
-        } else if (maxPrice && maxPrice === minPrice) {
-            priceText = formatMoney(minPrice);
-        }
+      }
     }
-    
+
     // Khung chứa sản phẩm
     const productContainer = document.createElement('div');
     productContainer.className = 'product-container';
@@ -225,12 +225,12 @@ if (document.getElementById('search_form')) {
     // Load lại sản phẩm với filter
     await loadProducts(searchText, distanceFilter, priceFilter);
   });
-  
+
   // --------------------------------------------------------------------------
   // THÊM MỚI: XỬ LÝ SỰ KIỆN GÕ PHÍM CHO GỢI Ý
   // --------------------------------------------------------------------------
   const searchInput = $('#search_input');
-  
+
   // Lấy gợi ý khi gõ chữ
   searchInput.addEventListener('input', () => {
     clearTimeout(suggestionTimeout);
@@ -249,39 +249,39 @@ if (document.getElementById('search_form')) {
       suggestions[highlightedIndex]?.classList.remove('highlighted');
       highlightedIndex = (highlightedIndex + 1) % suggestions.length;
       suggestions[highlightedIndex].classList.add('highlighted');
-      
+
       // Focus vào item được chọn (cuộn nếu cần)
       suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
-      
-    } 
+
+    }
     else if (e.key === 'ArrowUp') {
       e.preventDefault();
       suggestions[highlightedIndex]?.classList.remove('highlighted');
       highlightedIndex = (highlightedIndex - 1 + suggestions.length) % suggestions.length;
       suggestions[highlightedIndex].classList.add('highlighted');
-      
+
       // Focus vào item được chọn (cuộn nếu cần)
       suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
-    } 
+    }
     else if (e.key === 'Enter') {
       e.preventDefault(); // Chặn form submit mặc định
       const highlighted = suggestions[highlightedIndex];
       if (highlighted) {
         // Tắt submit để tránh gọi 2 lần search
-        e.stopImmediatePropagation(); 
+        e.stopImmediatePropagation();
         highlighted.click(); // Kích hoạt hành động của item được chọn
       } else {
         // Nếu không có item nào được chọn, submit form như bình thường
         document.getElementById('search_form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       }
-    } 
+    }
     else if (e.key === 'Escape') {
       hideSuggestions();
     }
   });
 
   // Ẩn suggestions khi click ra ngoài
-  document.addEventListener('click', function(event) {
+  document.addEventListener('click', function (event) {
     const form = $('#search_form');
     const suggestions = $('#search_suggestions');
     if (form && suggestions && !form.contains(event.target) && !suggestions.contains(event.target)) {
@@ -979,38 +979,51 @@ document.addEventListener('click', function (event) {
 // PHẦN 6: CẬP NHẬT GIAO DIỆN TÀI KHOẢN
 // ======================================================================
 
+// File: script.js - Thay thế hàm updateAccountLink cũ
+
 async function updateAccountLink() {
-  const accountLink = document.getElementById('account-link');
-  const logoutLink = document.getElementById('logout-link');
+    const accountLink = document.getElementById('account-link');
+    const logoutLink = document.getElementById('logout-link');
+    
+    // 1. Lấy thông tin User hiện tại
+    const { data: { session } } = await supabase.auth.getSession();
 
-  // 1. Hỏi trực tiếp Supabase xem có user không
-  const { data: { session } } = await supabase.auth.getSession();
+    let finalName = null;
 
-  let userName = null;
+    if (session && session.user) {
+        // --- [LOGIC MỚI: Ưu tiên lấy tên từ Database] ---
+        
+        // Gọi Supabase lấy tên trong bảng profiles
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', session.user.id)
+            .single();
 
-  if (session && session.user) {
-    // Ưu tiên 1: Lấy tên từ metadata (Lúc đăng ký mình đã lưu vào đây)
-    userName = session.user.user_metadata.name;
-    // Ưu tiên 2: Nếu không có tên, lấy phần đầu email
-    if (!userName) userName = session.user.email.split('@')[0];
+        if (profile && profile.name) {
+            // Nếu trong DB có tên -> Dùng tên DB (Tên cũ)
+            finalName = profile.name;
+        } else {
+            // Nếu chưa có trong DB -> Mới dùng tên từ Google/Email
+            finalName = session.user.user_metadata.name || session.user.email.split('@')[0];
+        }
+        
+        // Lưu lại vào LocalStorage để dùng cho các trang khác
+        localStorage.setItem('userName', finalName);
+    } else {
+        localStorage.removeItem('userName');
+    }
 
-    // Lưu lại vào local để dùng cho các trang khác
-    localStorage.setItem('userName', userName);
-  } else {
-    // Nếu không có session, xóa luôn local cho sạch
-    localStorage.removeItem('userName');
-  }
-
-  // Cập nhật UI
-  if (userName && accountLink) {
-    accountLink.innerHTML = `👋 Chào, <b>${userName}</b>`;
-    accountLink.href = 'profile.html'; // Link tới trang cá nhân
-    if (logoutLink) logoutLink.style.display = 'flex';
-  } else if (accountLink) {
-    accountLink.textContent = 'Tài Khoản';
-    accountLink.href = 'account.html';
-    if (logoutLink) logoutLink.style.display = 'none';
-  }
+    // Cập nhật giao diện Header
+    if (finalName && accountLink) {
+        accountLink.innerHTML = `👋 Chào, <b>${finalName}</b>`;
+        accountLink.href = 'profile.html';
+        if (logoutLink) logoutLink.style.display = 'flex';
+    } else if (accountLink) {
+        accountLink.textContent = 'Tài Khoản';
+        accountLink.href = 'account.html';
+        if (logoutLink) logoutLink.style.display = 'none';
+    }
 }
 
 // ======================================================================

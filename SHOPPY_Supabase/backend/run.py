@@ -1,10 +1,11 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-# [CẬP NHẬT] Thay thế config cũ bằng config mới
 from config import Config
 # [CẬP NHẬT] Import các Blueprint mới từ app.py
 from routes.search_routes import search_bp
 from routes.review_routes import review_bp
+# [BỔ SUNG QUAN TRỌNG] Import Blueprint chứa API kiểm tra email
+from routes.api_routes import api_bp 
 
 
 # Khởi tạo App
@@ -17,7 +18,7 @@ app = Flask(__name__, static_folder='../static', static_url_path='')
 # Load cấu hình
 app.config.from_object(Config)
 
-# [CẬP NHẬT] Cấu hình CORS chi tiết hơn từ app.py
+# Cấu hình CORS chi tiết hơn từ app.py
 CORS(app, resources={r"/*": {
     "origins": "*",
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -26,7 +27,10 @@ CORS(app, resources={r"/*": {
     "supports_credentials": False
 }})
 
-# [CẬP NHẬT] Đăng ký các API Routes mới
+# [BỔ SUNG QUAN TRỌNG] Đăng ký Blueprint chứa API kiểm tra email
+app.register_blueprint(api_bp)
+
+# Đăng ký các API Routes mới
 # API search sẽ chạy tại đường dẫn: /api/products
 app.register_blueprint(search_bp)
 # API reviews sẽ chạy tại đường dẫn: /api/reviews và /api/product_detail
@@ -49,7 +53,7 @@ def serve_static(path):
 if __name__ == '__main__':
     print(f"🚀 Server đang chạy tại: http://127.0.0.1:5000")
     print(f"📂 Đang phục vụ static từ: {app.static_folder}")
-    print(f"🌐 API Blueprints: /api/products, /api/reviews")
+    print(f"🌐 API Blueprints: /api/products, /api/reviews, /api/user/check_email")
 
     # Chạy ứng dụng trên cổng 5000
     app.run(debug=True, host='127.0.0.1', port=5000)

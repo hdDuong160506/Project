@@ -924,3 +924,101 @@ footer { margin-top: 40px; text-align: center; color: #666; font-size: 13px; }
   .upload-icon { font-size: 40px; }
   .preview-container img { max-height: 200px; }
 }
+/* --- 11. THANH SẮP XẾP & LỌC KẾT QUẢ TÌM KIẾM --- */
+
+/* Thẻ div cha bọc cả h2, input địa chỉ và thanh sort/filter */
+main section > div:nth-of-type(2) {
+    /* Đảm bảo style chung cho khối kết quả tìm kiếm */
+    padding: 0 20px;
+}
+
+/* Tiêu đề "Các sản phẩm tìm thấy" */
+main section > div:nth-of-type(2) h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px; /* Tăng khoảng cách dưới */
+    padding: 0; /* Bỏ padding cũ trong index.html */
+    text-align: left;
+}
+
+/* Thanh Sắp xếp */
+#sort-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 25px; /* Tăng khoảng cách giữa các option */
+    flex-wrap: wrap;
+    margin-bottom: 25px !important; /* Tăng khoảng cách dưới */
+    padding: 10px 20px !important; /* Tăng padding */
+    background: #ffffff !important; /* Nền trắng */
+    border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); /* Đổ bóng nhẹ */
+    border: 1px solid #e9ecef;
+}
+
+#sort-filter-bar > span {
+    font-weight: 600;
+    color: #1e3a8a; /* Màu đậm hơn */
+    font-size: 14px;
+    flex-shrink: 0; /* Không co lại */
+}
+
+/* Từng tùy chọn Sắp xếp */
+.sort-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Input Radio (Ẩn radio gốc) */
+.sort-option input[type="radio"] {
+    display: none;
+}
+
+/* Label (Tạo nút bấm tùy chỉnh) */
+.sort-option label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 20px; /* Bo tròn hoàn toàn */
+    font-size: 14px;
+    color: #4b5563;
+    background-color: #f9fafb;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Hiệu ứng hover */
+.sort-option label:hover {
+    border-color: #1867f8;
+    background-color: #eff6ff;
+    color: #1867f8;
+}
+
+/* Khi radio được chọn */
+.sort-option input[type="radio"]:checked + label {
+    background-color: #1867f8;
+    color: white;
+    border-color: #1867f8;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(24, 103, 248, 0.3);
+}
+
+/* Thêm icon chấm tròn cho các option */
+.sort-option label::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #9ca3af;
+    transition: background-color 0.2s;
+}
+
+/* Icon khi được chọn */
+.sort-option input[type="radio"]:checked + label::before {
+    background-color: white;
+}

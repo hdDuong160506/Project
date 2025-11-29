@@ -240,6 +240,94 @@ body.page-fade-out {
 
 .custom-select:focus { border-color: #1867f8; }
 
+/* THÊM MỚI: GỢI Ý TÌM KIẾM */
+#search_suggestions {
+    position: absolute;
+    top: 50px; /* Cách thanh search 4px */
+    left: 0;
+    width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 1500; /* Nằm dưới popup giỏ hàng (2100) nhưng trên các thứ khác */
+    border: 1px solid #ddd;
+    display: none; /* Mặc định ẩn */
+    animation: slideDown 0.2s ease-out;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #333;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #eee;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted { /* Cho phép di chuyển bằng phím */
+    background: #f0f4f8;
+}
+
+.suggestion-item svg {
+    margin-right: 10px;
+    color: #9aa0a6;
+    flex-shrink: 0;
+}
+
+/* CSS cho ảnh gợi ý */
+.suggestion-item .suggestion-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* CSS cho text gợi ý */
+.suggestion-text-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.suggestion-text-container .suggestion-name {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.suggestion-text-container .suggestion-location {
+    font-size: 11px;
+    color: #888;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-item .suggestion-price {
+    margin-left: auto;
+    font-weight: 600;
+    color: #e74c3c;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+/* KẾT THÚC THÊM MỚI */
+
 /* --- 5. NỘI DUNG CHÍNH (MAIN) --- */
 main {
   margin-top: 130px;
@@ -301,7 +389,16 @@ main {
 }
 .product-info img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; }
 .product-info h3 { margin: 0 0 8px 0; font-size: 18px; color: #222; line-height: 1.3; }
-.product-price { color: #e74c3c; font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+
+/* ĐÃ CẬP NHẬT: CSS mới cho khoảng giá */
+.product-price { 
+  color: #e74c3c; /* Màu đỏ nổi bật cho giá */
+  font-size: 18px; /* Tăng cỡ chữ */
+  font-weight: bold; 
+  margin-top: 5px; /* Thêm khoảng cách trên */
+  margin-bottom: 2px; /* Khoảng cách dưới nhỏ */
+}
+
 .product-location { margin: 0; color: #888; font-size: 13px; }
 
 /* Nút Xem Cửa Hàng */
@@ -469,6 +566,13 @@ footer { margin-top: 40px; text-align: center; color: #666; font-size: 13px; }
   .products { grid-template-columns: 1fr; }
   .store-header { flex-direction: column; }
   .store-image { width: 100%; height: 120px; }
+
+  /* Cập nhật vị trí của suggestions trên mobile */
+  #search_suggestions {
+      top: 60px; /* Dưới form tìm kiếm */
+      left: 15px;
+      width: calc(100% - 30px);
+  }
 }
 
 /* --- 10. IMAGE SEARCH --- */

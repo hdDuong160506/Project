@@ -10,11 +10,109 @@ let cart = JSON.parse(localStorage.getItem('cart_v1') || '{}');
 
 // Hàm rút gọn querySelector
 const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel); // Thêm $$
 
 // Format tiền theo dạng 100000 → "100.000₫"
 function formatMoney(n) {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '₫';
 }
+
+// --------------------------------------------------------------------------
+// THÊM MỚI: HÀM LẤY VÀ HIỂN THỊ GỢI Ý TÌM KIẾM
+// --------------------------------------------------------------------------
+let suggestionTimeout;
+let highlightedIndex = -1; // Index của gợi ý đang được highlight
+
+function showSuggestions() {
+  $('#search_suggestions').style.display = 'block';
+}
+
+function hideSuggestions() {
+  $('#search_suggestions').style.display = 'none';
+  highlightedIndex = -1;
+}
+
+async function fetchSuggestions(query) {
+  if (!query || query.length < 2) {
+    hideSuggestions();
+    return;
+  }
+
+  try {
+    // Giả lập gọi API gợi ý tìm kiếm (chỉ lấy 5 sản phẩm đầu tiên)
+    const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
+    const suggestions = await res.json();
+    
+    renderSuggestions(suggestions, query);
+
+  } catch (err) {
+    console.error("Lỗi khi fetch gợi ý tìm kiếm:", err);
+    hideSuggestions();
+  }
+}
+
+function renderSuggestions(products, query) {
+  const container = $('#search_suggestions');
+  container.innerHTML = '';
+  highlightedIndex = -1; // Reset index
+
+  if (!products || products.length === 0) {
+    hideSuggestions();
+    return;
+  }
+
+  // --- 1. Thêm dòng "Tìm kiếm toàn bộ" ---
+  const searchAllItem = document.createElement('div');
+  searchAllItem.className = 'suggestion-item suggestion-search-all';
+  searchAllItem.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#1867f8">
+        <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+      </svg>
+      Tìm kiếm: <b>${query}</b>
+  `;
+  searchAllItem.addEventListener('click', () => submitSearch(query));
+  container.appendChild(searchAllItem);
+
+  // --- 2. Thêm các sản phẩm gợi ý (có ảnh) ---
+  products.forEach(product => {
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    
+    const imageUrl = product.product_image_url || 'images/placeholder.jpg';
+    
+    // Tạo HTML cho item gợi ý bao gồm ảnh, tên và vị trí (Không hiện giá)
+    item.innerHTML = `
+        <img class="suggestion-image" src="${imageUrl}" alt="${product.product_name}">
+        <div class="suggestion-text-container">
+            <div class="suggestion-name">${product.product_name}</div>
+            <div class="suggestion-location">📍 ${product.location_name}</div>
+        </div>
+    `;
+    
+    item.dataset.productId = product.product_id;
+    item.addEventListener('click', () => navigateToProductSummary(product.product_id));
+    container.appendChild(item);
+  });
+  
+  showSuggestions();
+}
+
+function submitSearch(query) {
+  // Đặt giá trị vào ô input và submit form
+  $('#search_input').value = query;
+  hideSuggestions();
+  const searchForm = $('#search_form');
+  // Trigger submit để tải sản phẩm
+  searchForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+}
+
+function navigateToProductSummary(productId) {
+  // Chuyển sang trang tổng quan sản phẩm
+  window.location.href = `product-summary.html?product_id=${productId}`;
+  hideSuggestions();
+}
+// --------------------------------------------------------------------------
+
 
 // Load sản phẩm từ API với 3 tham số lọc
 async function loadProducts(search = '', distance = '', price = '') {
@@ -36,22 +134,7 @@ async function loadProducts(search = '', distance = '', price = '') {
   }
 }
 
-// Hàm mới: Xử lý bật/tắt danh sách cửa hàng
-function toggleStoresList(productId) {
-    const storesList = document.getElementById(`stores-list-${productId}`);
-    const toggleButton = document.getElementById(`toggle-stores-btn-${productId}`);
-    
-    if (storesList.classList.contains('active')) {
-        storesList.classList.remove('active');
-        toggleButton.textContent = 'Xem Cửa Hàng ▼';
-    } else {
-        storesList.classList.add('active');
-        toggleButton.textContent = 'Ẩn Cửa Hàng ▲';
-    }
-}
-
-
-// Render danh sách sản phẩm theo cấu trúc mới
+// Render danh sách sản phẩm theo cấu trúc mới: HIỂN THỊ KHOẢNG GIÁ
 function renderProducts() {
   const wrap = $('#product-list');
   wrap.innerHTML = '';
@@ -65,110 +148,58 @@ function renderProducts() {
   // Lặp qua từng sản phẩm
   PRODUCTS.forEach(product => {
 
+    // *** THAY ĐỔI: Dùng product_id để trỏ đến trang tổng quan (product-summary.html) ***
+    let detailUrl = `product-summary.html?product_id=${product.product_id}`;
+
+    // Lấy ảnh từ sản phẩm chính, nếu không có thì dùng placeholder
+    const imageUrl = product.product_image_url || 'images/placeholder.jpg';
+    
+    // Lấy giá min/max 
+    const minPrice = product.min_price || product.product_min_cost;
+    const maxPrice = product.max_price || product.product_max_cost;
+
+    let priceText = 'Liên hệ';
+
+    if (minPrice && minPrice > 0) {
+        priceText = formatMoney(minPrice);
+        // Chỉ hiển thị khoảng giá nếu maxPrice khác minPrice
+        if (maxPrice && maxPrice > minPrice) {
+            priceText += ` - ${formatMoney(maxPrice)}`;
+        } else if (maxPrice && maxPrice === minPrice) {
+            priceText = formatMoney(minPrice);
+        }
+    }
+    
     // Khung chứa sản phẩm
     const productContainer = document.createElement('div');
     productContainer.className = 'product-container';
 
-    // ==== Khối thông tin sản phẩm chính ====
+    // ==== Khối thông tin sản phẩm chính (ĐÃ CẬP NHẬT: Thay thế nút bằng khoảng giá) ====
     const productInfo = document.createElement('div');
     productInfo.className = 'product-info';
 
     productInfo.innerHTML = `
-      <img src="${product.product_image_url}" alt="${product.product_name}">
+      <a href="${detailUrl}">
+        <img src="${imageUrl}" alt="${product.product_name}">
+      </a>
       <div>
-          <h3>${product.product_name}</h3>
-          <div class="product-price">
-              ${
-                product.min_price 
-                  ? formatMoney(product.min_price) +
-                    (
-                      product.max_price && product.max_price !== product.min_price
-                        ? ' - ' + formatMoney(product.max_price)
-                        : ''
-                    )
-                  : 'Liên hệ'
-              }
-          </div>
+          <a href="${detailUrl}" style="text-decoration:none; color:inherit;">
+            <h3>${product.product_name}</h3>
+          </a>
           <p class="product-location">📍 ${product.location_name}</p>
       </div>
-      <div class="product-actions-main">
-          ${product.stores && product.stores.length > 0 
-            ? `<button 
-                 class="btn-toggle-stores" 
-                 id="toggle-stores-btn-${product.product_id}"
-                 onclick="toggleStoresList(${product.product_id})">
-                 Xem Cửa Hàng ▼
-               </button>`
-            : '<span style="color:#888; font-size:13px;">Không có cửa hàng bán</span>'
-          }
+      <div class="product-actions-main" style="margin-top: 5px;">
+          <a href="${detailUrl}" style="text-decoration:none; color:inherit;">
+            <p class="product-price">${priceText}</p>
+            <p style="font-size:12px; color:#555;">(Giá trung bình từ các cửa hàng)</p>
+          </a>
       </div>
     `;
 
-    // ==== Danh sách cửa hàng bán sản phẩm ====
-    // Thêm ID để dễ dàng truy cập bằng JS
-    const storesList = document.createElement('div');
-    storesList.id = `stores-list-${product.product_id}`; 
-    storesList.className = 'stores-list';
-
-    if (product.stores && product.stores.length > 0) {
-      product.stores.forEach(store => {
-
-        // Lấy ảnh chính của cửa hàng (ps_type = 1), nếu không có thì dùng ảnh sản phẩm
-        const mainImage = store.product_images.find(img => img.ps_type === 1);
-        const storeImageUrl = mainImage ? mainImage.ps_image_url : product.product_image_url;
-        
-        // Tạo đường dẫn chi tiết
-        const detailUrl = `product-detail.html?product_id=${product.product_id}&store_id=${store.store_id}`;
-
-
-        const storeCard = document.createElement('div');
-        storeCard.className = 'store-card';
-
-        // HTML hiển thị từng cửa hàng
-        storeCard.innerHTML = `
-          <a href="${detailUrl}" class="store-header-link">
-              <div class="store-header">
-                  <img src="${storeImageUrl}" alt="${store.store_name}" class="store-image">
-                  <div class="store-info">
-                      <h4 class="store-name">${store.store_name}</h4>
-                      <p class="store-address">${store.store_address}</p>
-                      <p class="store-distance">📍 ${store.distance_km ? store.distance_km + ' km' : 'Không xác định'}</p>
-                  </div>
-              </div>
-          </a>
-
-          <div class="store-price">
-              ${
-                store.ps_min_price_store
-                  ? formatMoney(store.ps_min_price_store) +
-                    (store.ps_max_price_store && store.ps_max_price_store !== store.ps_min_price_store
-                      ? ' - ' + formatMoney(store.ps_max_price_store)
-                      : '')
-                  : 'Liên hệ'
-              }
-          </div>
-
-          <div class="store-actions">
-              <button class="btn-add-cart" onclick="addToCart(${product.product_id}, ${store.store_id})">Thêm vào giỏ</button>
-              
-              <a href="${detailUrl}"
-                 class="btn-view">
-                 Xem Chi Tiết
-              </a>
-          </div>
-        `;
-
-        storesList.appendChild(storeCard);
-      });
-
-    } else {
-      // Không có cửa hàng bán (sẽ không chạy vì đã kiểm tra bên trên, nhưng giữ lại phòng trường hợp lỗi)
-      storesList.innerHTML = '<p style="color:#888; text-align:center; padding:10px;">Không có cửa hàng nào bán sản phẩm này.</p>';
-    }
+    // Loại bỏ hoàn toàn phần storesList (danh sách cửa hàng)
 
     // Gắn vào DOM
     productContainer.appendChild(productInfo);
-    productContainer.appendChild(storesList);
     wrap.appendChild(productContainer);
   });
 }
@@ -183,6 +214,7 @@ if (document.getElementById('search_form')) {
 
   document.getElementById('search_form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    hideSuggestions(); // Ẩn gợi ý khi submit
 
     const searchText = $('#search_input').value;
     const distanceFilter = $('#distance_filter').value;
@@ -193,8 +225,70 @@ if (document.getElementById('search_form')) {
     // Load lại sản phẩm với filter
     await loadProducts(searchText, distanceFilter, priceFilter);
   });
-}
+  
+  // --------------------------------------------------------------------------
+  // THÊM MỚI: XỬ LÝ SỰ KIỆN GÕ PHÍM CHO GỢI Ý
+  // --------------------------------------------------------------------------
+  const searchInput = $('#search_input');
+  
+  // Lấy gợi ý khi gõ chữ
+  searchInput.addEventListener('input', () => {
+    clearTimeout(suggestionTimeout);
+    suggestionTimeout = setTimeout(() => {
+      fetchSuggestions(searchInput.value);
+    }, 300); // Debounce 300ms
+  });
 
+  // Xử lý phím ESC (ẩn gợi ý), ArrowDown/Up (chọn), Enter (chọn/tìm kiếm)
+  searchInput.addEventListener('keydown', (e) => {
+    const suggestions = $$('#search_suggestions .suggestion-item');
+    if (suggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      suggestions[highlightedIndex]?.classList.remove('highlighted');
+      highlightedIndex = (highlightedIndex + 1) % suggestions.length;
+      suggestions[highlightedIndex].classList.add('highlighted');
+      
+      // Focus vào item được chọn (cuộn nếu cần)
+      suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
+      
+    } 
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      suggestions[highlightedIndex]?.classList.remove('highlighted');
+      highlightedIndex = (highlightedIndex - 1 + suggestions.length) % suggestions.length;
+      suggestions[highlightedIndex].classList.add('highlighted');
+      
+      // Focus vào item được chọn (cuộn nếu cần)
+      suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
+    } 
+    else if (e.key === 'Enter') {
+      e.preventDefault(); // Chặn form submit mặc định
+      const highlighted = suggestions[highlightedIndex];
+      if (highlighted) {
+        // Tắt submit để tránh gọi 2 lần search
+        e.stopImmediatePropagation(); 
+        highlighted.click(); // Kích hoạt hành động của item được chọn
+      } else {
+        // Nếu không có item nào được chọn, submit form như bình thường
+        document.getElementById('search_form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      }
+    } 
+    else if (e.key === 'Escape') {
+      hideSuggestions();
+    }
+  });
+
+  // Ẩn suggestions khi click ra ngoài
+  document.addEventListener('click', function(event) {
+    const form = $('#search_form');
+    const suggestions = $('#search_suggestions');
+    if (form && suggestions && !form.contains(event.target) && !suggestions.contains(event.target)) {
+      hideSuggestions();
+    }
+  });
+}
 
 
 // ======================================================================
@@ -234,12 +328,12 @@ function startVoiceSearch() {
   popup.style.display = "flex";
 
   // Khi bắt đầu nghe
-  recognition.onstart = function() {
+  recognition.onstart = function () {
     transcriptDisplay.textContent = "Đang nghe... Hãy nói gì đó!";
   };
 
   // Nhận kết quả
-  recognition.onresult = function(event) {
+  recognition.onresult = function (event) {
     let finalTranscript = '';
     let interimTranscript = '';
 
@@ -273,7 +367,7 @@ function startVoiceSearch() {
   };
 
   // Khi xảy ra lỗi micro / không nói
-  recognition.onerror = function(event) {
+  recognition.onerror = function (event) {
     console.error("Lỗi nhận diện:", event.error);
 
     let msg = "Lỗi: ";
@@ -289,7 +383,7 @@ function startVoiceSearch() {
   };
 
   // Khi kết thúc
-  recognition.onend = function() {
+  recognition.onend = function () {
     currentRecognition = null;
 
     if ($('#transcript_display').textContent === "Đang nghe...") {
@@ -325,7 +419,7 @@ function openImageSearch() {
   const popup = document.getElementById('image_search_popup');
   popup.classList.add('active');
   popup.style.display = 'flex';
-  
+
   // Reset về tab upload
   switchImageTab('upload');
   clearAllImages();
@@ -338,7 +432,7 @@ function closeImageSearch() {
   setTimeout(() => {
     popup.style.display = 'none';
   }, 200);
-  
+
   clearAllImages();
   hideError();
 }
@@ -346,7 +440,7 @@ function closeImageSearch() {
 // Chuyển tab
 function switchImageTab(tabName) {
   currentTab = tabName;
-  
+
   // Update tab buttons
   document.querySelectorAll('.tab-button').forEach(btn => {
     if (btn.dataset.tab === tabName) {
@@ -355,17 +449,17 @@ function switchImageTab(tabName) {
       btn.classList.remove('active');
     }
   });
-  
+
   // Update tab panels
   document.querySelectorAll('.tab-panel').forEach(panel => {
     panel.classList.remove('active');
   });
-  
+
   const activePanel = document.getElementById(`${tabName}-tab`);
   if (activePanel) {
     activePanel.classList.add('active');
   }
-  
+
   hideError();
 }
 
@@ -373,15 +467,15 @@ function switchImageTab(tabName) {
 function setupImageUpload() {
   const uploadArea = document.getElementById('imageUploadArea');
   const fileInput = document.getElementById('imageFileInput');
-  
+
   if (!uploadArea || !fileInput) return;
-  
+
   // Click to upload
   document.getElementById('browseBtn').addEventListener('click', (e) => {
     e.stopPropagation(); // chặn bubble
     fileInput.click();
   });
-  
+
   // File input change
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -389,21 +483,21 @@ function setupImageUpload() {
       handleImageFile(file);
     }
   });
-  
+
   // Drag and drop
   uploadArea.addEventListener('dragover', (e) => {
     e.preventDefault();
     uploadArea.classList.add('dragover');
   });
-  
+
   uploadArea.addEventListener('dragleave', () => {
     uploadArea.classList.remove('dragover');
   });
-  
+
   uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadArea.classList.remove('dragover');
-    
+
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
       handleImageFile(file);
@@ -420,19 +514,19 @@ function handleImageFile(file) {
     showError('Kích thước ảnh vượt quá 5MB');
     return;
   }
-  
+
   const reader = new FileReader();
-  
+
   reader.onload = (e) => {
     currentImageData = e.target.result;
     showImagePreview(currentImageData, 'upload');
     hideError();
   };
-  
+
   reader.onerror = () => {
     showError('Không thể đọc file ảnh');
   };
-  
+
   reader.readAsDataURL(file);
 }
 
@@ -440,13 +534,13 @@ function handleImageFile(file) {
 function loadPastedImage() {
   const input = document.getElementById('imagePasteInput');
   const value = input.value.trim();
-  
+
   if (!value) {
     // Ẩn preview nếu không có giá trị
     clearPasteImage();
     return;
   }
-  
+
   // Check if it's a URL
   if (value.startsWith('http://') || value.startsWith('https://')) {
     // Validate URL format
@@ -458,13 +552,13 @@ function loadPastedImage() {
     } catch (e) {
       showError('URL không hợp lệ');
     }
-  } 
+  }
   // Check if it's base64
   else if (value.startsWith('data:image/')) {
     currentImageData = value;
     showImagePreview(value, 'paste');
     hideError();
-  } 
+  }
   // Assume it's raw base64
   else if (value.length > 100) { // Chỉ xử lý nếu là base64 dài (tránh nhầm với text thường)
     try {
@@ -485,17 +579,17 @@ function showImagePreview(imageData, tab) {
   if (tab === 'upload') {
     const preview = document.getElementById('imagePreview');
     const container = document.getElementById('uploadPreviewContainer');
-    
+
     preview.src = imageData;
     preview.style.display = 'block';
     container.style.display = 'block';
-    
+
     // Ẩn upload zone
     document.getElementById('imageUploadArea').style.display = 'none';
   } else {
     const preview = document.getElementById('pastePreview');
     const container = document.getElementById('pastePreviewContainer');
-    
+
     preview.src = imageData;
     preview.style.display = 'block';
     container.style.display = 'block';
@@ -508,7 +602,7 @@ function clearUploadImage() {
   document.getElementById('uploadPreviewContainer').style.display = 'none';
   document.getElementById('imageUploadArea').style.display = 'block';
   document.getElementById('imageFileInput').value = '';
-  
+
   if (currentTab === 'upload') {
     currentImageData = null;
   }
@@ -519,7 +613,7 @@ function clearPasteImage() {
   document.getElementById('pastePreview').style.display = 'none';
   document.getElementById('pastePreviewContainer').style.display = 'none';
   document.getElementById('imagePasteInput').value = '';
-  
+
   if (currentTab === 'paste') {
     currentImageData = null;
   }
@@ -554,11 +648,11 @@ async function searchWithImage() {
     showError('Vui lòng chọn hoặc nhập ảnh trước');
     return;
   }
-  
+
   const searchBtn = document.querySelector('.btn-primary');
   searchBtn.classList.add('loading');
   searchBtn.disabled = true;
-  
+
   try {
     // Gọi API
     const response = await fetch('/api/search-by-image', {
@@ -570,33 +664,33 @@ async function searchWithImage() {
         image: currentImageData
       })
     });
-    
+
     const data = await response.json();
-    
+
     if (data.status === 'success') {
       // Đóng popup
       closeImageSearch();
-      
+
       // QUAN TRỌNG: Cập nhật danh sách sản phẩm TOÀN CỤC
       PRODUCTS = data.products || [];
-      
+
       // Render lại sản phẩm với kết quả mới
       renderProducts();
-      
+
       // Cập nhật search input với từ khóa tìm được
       const searchInput = document.getElementById('search_input');
       if (searchInput && data.search_term) {
         searchInput.value = data.search_term;
       }
-      
+
       // Cập nhật tiêu đề kết quả tìm kiếm
       const title = document.querySelector('h2');
       if (title && data.search_term) {
-        title.textContent = `Kết quả tìm kiếm cho "${data.search_term}"`;
+        title.textContent = `Các sản phẩm tìm thấy cho "${data.search_term}"`;
       }
-      
+
       console.log('✅ Image search successful:', data.products.length + ' products found');
-      
+
     } else if (data.status === 'not_found') {
       showError(`❌ ${data.message}`);
       // Hiển thị danh sách rỗng
@@ -605,7 +699,7 @@ async function searchWithImage() {
     } else {
       showError(`❌ Lỗi: ${data.message}`);
     }
-      
+
   } catch (error) {
     console.error('Search error:', error);
     showError('❌ Lỗi kết nối. Vui lòng thử lại');
@@ -621,17 +715,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tự động tải ảnh khi paste hoặc nhập vào ô URL/Base64
   const pasteInput = document.getElementById('imagePasteInput');
-  
+
   pasteInput.addEventListener('input', (e) => {
     const value = e.target.value.trim();
-    
+
     // Nếu xóa hết text thì ẩn preview
     if (!value) {
       clearPasteImage();
       hideError();
       return;
     }
-    
+
     // Chờ một chút để người dùng nhập/xong
     clearTimeout(pasteInput.debounceTimer);
     pasteInput.debounceTimer = setTimeout(() => {
@@ -646,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (item.type.startsWith('image/')) {
         const blob = item.getAsFile();
         const reader = new FileReader();
-        
+
         reader.onload = () => {
           currentImageData = reader.result;
           showImagePreview(currentImageData, 'paste');
@@ -659,7 +753,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
-  
+
   // Close popup khi click outside
   const popup = document.getElementById('image_search_popup');
   if (popup) {
@@ -669,7 +763,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  
+
   // ESC key to close
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -680,7 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-  
+
 // Close popup khi click outside
 const popup = document.getElementById('image_search_popup');
 if (popup) {
@@ -703,7 +797,7 @@ document.addEventListener('keydown', (e) => {
 
 
 // ======================================================================
-// PHẦN 4: GIỎ HÀNG
+// PHẦN 4: GIỎ HÀNG (GIỮ NGUYÊN LOGIC)
 // Hỗ trợ sản phẩm theo từng cửa hàng (productId_storeId)
 // ======================================================================
 
@@ -733,7 +827,8 @@ function updateCartUI() {
 
     if (product) {
       const store = product.stores.find(s => s.store_id == storeId);
-      if (store) return sum + ((store.min_price || store.cost || 0) * qty);
+      // Lấy giá min_price_store nếu có, nếu không thì dùng cost (hoặc 0)
+      if (store) return sum + ((store.ps_min_price_store || store.cost || 0) * qty);
     }
     return sum;
   }, 0);
@@ -759,13 +854,17 @@ function updateCartUI() {
       const store = product.stores.find(s => s.store_id == storeId);
       if (!store) return;
 
-      const price = store.min_price || store.cost || 0;
+      // Lấy ảnh chính của cửa hàng (ps_type = 1), nếu không có thì dùng ảnh sản phẩm
+      const mainImage = store.product_images.find(img => img.ps_type === 1);
+      const storeImageUrl = mainImage ? mainImage.ps_image_url : product.product_image_url;
+
+      const price = store.ps_min_price_store || store.cost || 0;
 
       const item = document.createElement('div');
       item.className = 'cart-item';
 
       item.innerHTML = `
-        <img src="${product.product_image_url}" />
+        <img src="${storeImageUrl}" />
 
         <div style="flex:1">
           <div style="font-size:14px">${product.product_name}</div>
@@ -790,11 +889,9 @@ function updateCartUI() {
 }
 
 // Thêm vào giỏ với key dạng "productId_storeId"
+// BỊ LOẠI BỎ HÀM ADD TO CART CỦA SẢN PHẨM CHÍNH TRÊN TRANG INDEX
 function addToCart(productId, storeId) {
-  const key = `${productId}_${storeId}`;
-  cart[key] = (cart[key] || 0) + 1;
-  saveCart();
-  alert('Đã thêm vào giỏ hàng!');
+  alert("Vui lòng vào trang Chi Tiết Sản Phẩm để thêm vào giỏ hàng!");
 }
 
 // Tăng/giảm số lượng
@@ -806,8 +903,10 @@ function changeQty(key, delta) {
 
 // Xóa khỏi giỏ
 function removeItem(key) {
-  delete cart[key];
-  saveCart();
+  if (confirm('Xóa sản phẩm này khỏi giỏ hàng?')) {
+    delete cart[key];
+    saveCart();
+  }
 }
 
 // Nút xóa toàn bộ giỏ
@@ -866,7 +965,7 @@ function toggleFilterMenu() {
 }
 
 // Ẩn menu khi click ra ngoài
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
   const form = $('#search_form');
   const menu = $('#filter-dropdown');
 
@@ -881,37 +980,37 @@ document.addEventListener('click', function(event) {
 // ======================================================================
 
 async function updateAccountLink() {
-    const accountLink = document.getElementById('account-link');
-    const logoutLink = document.getElementById('logout-link');
-    
-    // 1. Hỏi trực tiếp Supabase xem có user không
-    const { data: { session } } = await supabase.auth.getSession();
+  const accountLink = document.getElementById('account-link');
+  const logoutLink = document.getElementById('logout-link');
 
-    let userName = null;
+  // 1. Hỏi trực tiếp Supabase xem có user không
+  const { data: { session } } = await supabase.auth.getSession();
 
-    if (session && session.user) {
-        // Ưu tiên 1: Lấy tên từ metadata (Lúc đăng ký mình đã lưu vào đây)
-        userName = session.user.user_metadata.name;
-        // Ưu tiên 2: Nếu không có tên, lấy phần đầu email
-        if (!userName) userName = session.user.email.split('@')[0];
-        
-        // Lưu lại vào local để dùng cho các trang khác
-        localStorage.setItem('userName', userName);
-    } else {
-        // Nếu không có session, xóa luôn local cho sạch
-        localStorage.removeItem('userName');
-    }
+  let userName = null;
 
-    // Cập nhật UI
-    if (userName && accountLink) {
-        accountLink.innerHTML = `👋 Chào, <b>${userName}</b>`;
-        accountLink.href = 'profile.html'; // Link tới trang cá nhân
-        if (logoutLink) logoutLink.style.display = 'flex';
-    } else if (accountLink) {
-        accountLink.textContent = 'Tài Khoản';
-        accountLink.href = 'account.html';
-        if (logoutLink) logoutLink.style.display = 'none';
-    }
+  if (session && session.user) {
+    // Ưu tiên 1: Lấy tên từ metadata (Lúc đăng ký mình đã lưu vào đây)
+    userName = session.user.user_metadata.name;
+    // Ưu tiên 2: Nếu không có tên, lấy phần đầu email
+    if (!userName) userName = session.user.email.split('@')[0];
+
+    // Lưu lại vào local để dùng cho các trang khác
+    localStorage.setItem('userName', userName);
+  } else {
+    // Nếu không có session, xóa luôn local cho sạch
+    localStorage.removeItem('userName');
+  }
+
+  // Cập nhật UI
+  if (userName && accountLink) {
+    accountLink.innerHTML = `👋 Chào, <b>${userName}</b>`;
+    accountLink.href = 'profile.html'; // Link tới trang cá nhân
+    if (logoutLink) logoutLink.style.display = 'flex';
+  } else if (accountLink) {
+    accountLink.textContent = 'Tài Khoản';
+    accountLink.href = 'account.html';
+    if (logoutLink) logoutLink.style.display = 'none';
+  }
 }
 
 // ======================================================================
@@ -922,9 +1021,9 @@ async function updateAccountLink() {
 
 // Lắng nghe sự kiện real-time (Để đồng bộ Tab A và Tab B)
 supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        updateAccountLink();
-    }
+  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+    updateAccountLink();
+  }
 });
 
 // ======================================================================
@@ -935,109 +1034,109 @@ supabase.auth.onAuthStateChange((event, session) => {
  * Hàm dịch ngược tọa độ thành tên địa điểm (chỉ Thành phố và Quốc gia).
  */
 async function reverseGeocode(latitude, longitude) {
-    // Chỉ cần zoom thấp (ví dụ 10) để ưu tiên thông tin tổng quát hơn
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`; 
-    
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        const address = data.address;
-        
-        // Lấy các trường Thành phố (City) và Quốc gia (Country)
-        const city = address.city || address.town || address.village || address.state || address.province || '';
-        const country = address.country || '';
+  // Chỉ cần zoom thấp (ví dụ 10) để ưu tiên thông tin tổng quát hơn
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`;
 
-        // Xây dựng chuỗi kết quả: City, Country
-        const result = [city, country].filter(Boolean).join(', ');
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
 
-        // Sử dụng tọa độ nếu không lấy được thông tin cơ bản
-        return result || `Tọa độ: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    const address = data.address;
 
-    } catch (error) {
-        console.error("Lỗi khi dịch ngược tọa độ:", error);
-        return "Vị trí không khả dụng (Lỗi API)";
-    }
+    // Lấy các trường Thành phố (City) và Quốc gia (Country)
+    const city = address.city || address.town || address.village || address.state || address.province || '';
+    const country = address.country || '';
+
+    // Xây dựng chuỗi kết quả: City, Country
+    const result = [city, country].filter(Boolean).join(', ');
+
+    // Sử dụng tọa độ nếu không lấy được thông tin cơ bản
+    return result || `Tọa độ: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+
+  } catch (error) {
+    console.error("Lỗi khi dịch ngược tọa độ:", error);
+    return "Vị trí không khả dụng (Lỗi API)";
+  }
 }
 
 /**
  * Lấy vị trí Geolocation và cập nhật lên UI (index.html).
  */
 function updateCurrentLocationDisplay() {
-    const locationElement = document.getElementById('current-location'); 
+  const locationElement = document.getElementById('current-location');
 
-    if (!locationElement) return;
+  if (!locationElement) return;
 
-    if (!navigator.geolocation) {
-        locationElement.textContent = "📍 Trình duyệt không hỗ trợ Geolocation.";
-        return;
-    }
+  if (!navigator.geolocation) {
+    locationElement.textContent = "📍 Trình duyệt không hỗ trợ Geolocation.";
+    return;
+  }
 
-    locationElement.textContent = "📍 Đang tìm vị trí...";
+  locationElement.textContent = "📍 Đang tìm vị trí...";
 
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const lat = position.coords.latitude;
-            const long = position.coords.longitude;
-            
-            // 1. Lấy tên địa điểm (City, Country) từ tọa độ
-            const locationName = await reverseGeocode(lat, long);
-            locationElement.textContent = `📍 Vị trí hiện tại: ${locationName}`;
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const long = position.coords.longitude;
 
-        },
-        (error) => {
-            let errorMessage = "Không lấy được vị trí";
-            if (error.code === error.PERMISSION_DENIED) {
-                errorMessage = "Vui lòng cấp quyền vị trí cho trình duyệt.";
-            }
-            locationElement.textContent = `📍 ${errorMessage}`;
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-    );
+      // 1. Lấy tên địa điểm (City, Country) từ tọa độ
+      const locationName = await reverseGeocode(lat, long);
+      locationElement.textContent = `📍 Vị trí hiện tại: ${locationName}`;
+
+    },
+    (error) => {
+      let errorMessage = "Không lấy được vị trí";
+      if (error.code === error.PERMISSION_DENIED) {
+        errorMessage = "Vui lòng cấp quyền vị trí cho trình duyệt.";
+      }
+      locationElement.textContent = `📍 ${errorMessage}`;
+    },
+    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+  );
 }
 // ======================================================================
 // PHẦN MỚI: HÀM CUSTOM MODAL (DÙNG CHO ĐĂNG XUẤT)
 // ======================================================================
 function showCustomConfirm(message) {
-    return new Promise(resolve => {
-        const modal = document.getElementById('custom-confirm-modal');
-        const messageElement = modal.querySelector('#modal-message');
-        const yesButton = modal.querySelector('#modal-confirm-yes');
-        const noButton = modal.querySelector('#modal-confirm-no');
-        
-        // Đảm bảo các phần tử modal tồn tại trước khi thao tác
-        if (!modal || !messageElement || !yesButton || !noButton) {
-            console.error("Lỗi: Không tìm thấy các phần tử Custom Modal trong index.html.");
-            // Quay về dùng confirm() gốc nếu modal bị lỗi
-            resolve(confirm(message)); 
-            return;
-        }
+  return new Promise(resolve => {
+    const modal = document.getElementById('custom-confirm-modal');
+    const messageElement = modal.querySelector('#modal-message');
+    const yesButton = modal.querySelector('#modal-confirm-yes');
+    const noButton = modal.querySelector('#modal-confirm-no');
 
-        messageElement.textContent = message;
-        modal.style.display = 'flex';
+    // Đảm bảo các phần tử modal tồn tại trước khi thao tác
+    if (!modal || !messageElement || !yesButton || !noButton) {
+      console.error("Lỗi: Không tìm thấy các phần tử Custom Modal trong index.html.");
+      // Quay về dùng confirm() gốc nếu modal bị lỗi
+      resolve(confirm(message));
+      return;
+    }
 
-        const handleYes = () => {
-            modal.style.display = 'none';
-            removeListeners();
-            resolve(true); // Trả về true (Đồng ý)
-        };
+    messageElement.textContent = message;
+    modal.style.display = 'flex';
 
-        const handleNo = () => {
-            modal.style.display = 'none';
-            removeListeners();
-            resolve(false); // Trả về false (Hủy)
-        };
+    const handleYes = () => {
+      modal.style.display = 'none';
+      removeListeners();
+      resolve(true); // Trả về true (Đồng ý)
+    };
 
-        // Gắn sự kiện (đảm bảo chỉ gắn một lần)
-        yesButton.addEventListener('click', handleYes, { once: true });
-        noButton.addEventListener('click', handleNo, { once: true });
+    const handleNo = () => {
+      modal.style.display = 'none';
+      removeListeners();
+      resolve(false); // Trả về false (Hủy)
+    };
 
-        // Hàm gỡ bỏ listeners dự phòng
-        const removeListeners = () => {
-            yesButton.removeEventListener('click', handleYes);
-            noButton.removeEventListener('click', handleNo);
-        };
-    });
+    // Gắn sự kiện (đảm bảo chỉ gắn một lần)
+    yesButton.addEventListener('click', handleYes, { once: true });
+    noButton.addEventListener('click', handleNo, { once: true });
+
+    // Hàm gỡ bỏ listeners dự phòng
+    const removeListeners = () => {
+      yesButton.removeEventListener('click', handleYes);
+      noButton.removeEventListener('click', handleNo);
+    };
+  });
 }
 // ======================================================================
 
@@ -1047,83 +1146,83 @@ function showCustomConfirm(message) {
 // ======================================================================
 
 // Khi trang load → tải toàn bộ sản phẩm + cập nhật giỏ hàng
-window.onload = async function() {
+window.onload = async function () {
   await loadProducts();
   updateCartUI();
-  
+
   // === 1. Cập nhật tên người dùng ===
   updateAccountLink();
-  
+
   // === 2. Cập nhật vị trí hiển thị lên UI ===
   updateCurrentLocationDisplay();
-  
+
   // === 3. KIỂM TRA SESSION & CẬP NHẬT VỊ TRÍ LÊN DB ===
   // Đoạn này sẽ chạy mỗi khi vào trang chủ (sau khi login/register/google login xong)
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   if (session && session.user) {
-      // Nếu đã đăng nhập -> Cập nhật vị trí lên Database (hàm này có trong script1.js)
-      updateUserLocation(session.user.id);
+    // Nếu đã đăng nhập -> Cập nhật vị trí lên Database (hàm này có trong script1.js)
+    updateUserLocation(session.user.id);
   }
-  
+
   // 4. Hiệu ứng hiển thị trang
-  document.body.classList.remove('page-fade-out'); 
+  document.body.classList.remove('page-fade-out');
 };
 
 // Hàm đăng xuất toàn cục (gắn vào window để html gọi được)
-window.handleLogout = async function() {
-    
-    // SỬ DỤNG CUSTOM MODAL THAY CHO CONFIRM()
-    const confirmLogout = await showCustomConfirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?"); 
-    
-    if (!confirmLogout) return;
-    
-    // Nếu người dùng đồng ý (confirmLogout là true)
-    try {
-        // 1. Gọi Supabase đăng xuất
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+window.handleLogout = async function () {
 
-        // 2. Xóa sạch LocalStorage
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('cart_v1'); 
+  // SỬ DỤNG CUSTOM MODAL THAY CHO CONFIRM()
+  const confirmLogout = await showCustomConfirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?");
 
-        // 3. Tải lại trang để cập nhật giao diện
-        window.location.reload();
-        
-    } catch (err) {
-        console.error("Lỗi đăng xuất:", err);
-        alert("Đăng xuất thất bại. Vui lòng thử lại.");
-    }
+  if (!confirmLogout) return;
+
+  // Nếu người dùng đồng ý (confirmLogout là true)
+  try {
+    // 1. Gọi Supabase đăng xuất
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+
+    // 2. Xóa sạch LocalStorage
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('cart_v1');
+
+    // 3. Tải lại trang để cập nhật giao diện
+    window.location.reload();
+
+  } catch (err) {
+    console.error("Lỗi đăng xuất:", err);
+    alert("Đăng xuất thất bại. Vui lòng thử lại.");
+  }
 };
 
 // --- HÀM CẬP NHẬT VỊ TRÍ & THỜI GIAN (LƯU VÀO DB) ---
 async function updateUserLocation(userId) {
-    if (!navigator.geolocation) return;
+  if (!navigator.geolocation) return;
 
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const { latitude, longitude } = position.coords;
-            
-            // Gọi Supabase update
-            const { error } = await supabase
-                .from('profiles')
-                .update({ 
-                    lat: latitude, 
-                    long: longitude,
-                    updated_at: new Date()
-                })
-                .eq('id', userId);
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
 
-            if (!error) {
-                console.log(`✅ Đã cập nhật vị trí lên DB: ${latitude}, ${longitude}`);
-            } else {
-                console.warn("⚠️ Lỗi update vị trí (có thể do mạng hoặc RLS):", error.message);
-            }
-        },
-        (err) => {
-            console.warn("⚠️ Không lấy được vị trí (User từ chối hoặc lỗi):", err.message);
-        }
-    );
+      // Gọi Supabase update
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          lat: latitude,
+          long: longitude,
+          updated_at: new Date()
+        })
+        .eq('id', userId);
+
+      if (!error) {
+        console.log(`✅ Đã cập nhật vị trí lên DB: ${latitude}, ${longitude}`);
+      } else {
+        console.warn("⚠️ Lỗi update vị trí (có thể do mạng hoặc RLS):", error.message);
+      }
+    },
+    (err) => {
+      console.warn("⚠️ Không lấy được vị trí (User từ chối hoặc lỗi):", err.message);
+    }
+  );
 }

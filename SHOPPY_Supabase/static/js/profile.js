@@ -153,11 +153,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // --- HÀM LOAD DỮ LIỆU VÀO FORM ---
-function loadUserProfile(user) {
+async function loadUserProfile(user) { // Thêm async để dùng await
     const defaultName = user.email.split('@')[0];
+    let displayName = defaultName;
     
+    // 1. Lấy tên từ profiles table (ưu tiên)
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+        
+    if (profile && profile.name) {
+        displayName = profile.name;
+    } 
+    // 2. Nếu không có trong profiles, lấy từ user_metadata (tên lúc đăng ký/Google)
+    else if (user.user_metadata.name) {
+        displayName = user.user_metadata.name;
+    }
+
     document.getElementById('profile-email').value = user.email;
-    document.getElementById('profile-name').value = user.user_metadata.name || defaultName;
+    // Gán displayName đã ưu tiên
+    document.getElementById('profile-name').value = displayName; 
 
     const createdAt = new Date(user.created_at);
     document.getElementById('profile-created').value = createdAt.toLocaleDateString('vi-VN');

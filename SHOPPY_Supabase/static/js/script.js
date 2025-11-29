@@ -980,37 +980,48 @@ document.addEventListener('click', function (event) {
 // ======================================================================
 
 async function updateAccountLink() {
-  const accountLink = document.getElementById('account-link');
-  const logoutLink = document.getElementById('logout-link');
+    const accountLink = document.getElementById('account-link');
+    const logoutLink = document.getElementById('logout-link');
+    
+    // 1. Lấy thông tin User hiện tại
+    const { data: { session } } = await supabase.auth.getSession();
 
-  // 1. Hỏi trực tiếp Supabase xem có user không
-  const { data: { session } } = await supabase.auth.getSession();
+    let finalName = null;
 
-  let userName = null;
+    if (session && session.user) {
+        // --- [LOGIC MỚI: Ưu tiên lấy tên từ Database] ---
+        
+        // Gọi Supabase lấy tên trong bảng profiles
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', session.user.id)
+            .single();
 
-  if (session && session.user) {
-    // Ưu tiên 1: Lấy tên từ metadata (Lúc đăng ký mình đã lưu vào đây)
-    userName = session.user.user_metadata.name;
-    // Ưu tiên 2: Nếu không có tên, lấy phần đầu email
-    if (!userName) userName = session.user.email.split('@')[0];
+        if (profile && profile.name) {
+            // Nếu trong DB có tên -> Dùng tên DB (Tên cũ)
+            finalName = profile.name;
+        } else {
+            // Nếu chưa có trong DB -> Mới dùng tên từ Google/Email
+            finalName = session.user.user_metadata.name || session.user.email.split('@')[0];
+        }
+        
+        // Lưu lại vào LocalStorage để dùng cho các trang khác
+        localStorage.setItem('userName', finalName);
+    } else {
+        localStorage.removeItem('userName');
+    }
 
-    // Lưu lại vào local để dùng cho các trang khác
-    localStorage.setItem('userName', userName);
-  } else {
-    // Nếu không có session, xóa luôn local cho sạch
-    localStorage.removeItem('userName');
-  }
-
-  // Cập nhật UI
-  if (userName && accountLink) {
-    accountLink.innerHTML = `👋 Chào, <b>${userName}</b>`;
-    accountLink.href = 'profile.html'; // Link tới trang cá nhân
-    if (logoutLink) logoutLink.style.display = 'flex';
-  } else if (accountLink) {
-    accountLink.textContent = 'Tài Khoản';
-    accountLink.href = 'account.html';
-    if (logoutLink) logoutLink.style.display = 'none';
-  }
+    // Cập nhật giao diện Header
+    if (finalName && accountLink) {
+        accountLink.innerHTML = `👋 Chào, <b>${finalName}</b>`;
+        accountLink.href = 'profile.html';
+        if (logoutLink) logoutLink.style.display = 'flex';
+    } else if (accountLink) {
+        accountLink.textContent = 'Tài Khoản';
+        accountLink.href = 'account.html';
+        if (logoutLink) logoutLink.style.display = 'none';
+    }
 }
 
 // ======================================================================

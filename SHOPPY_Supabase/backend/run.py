@@ -35,6 +35,8 @@ CORS(
 )
 
 # [CẬP NHẬT] Đăng ký các API Routes mới
+# API check_email sẽ chạy tại đường dẫn: /api/user/check_email (do Blueprint không có url_prefix)
+app.register_blueprint(api_bp) 
 # API search sẽ chạy tại đường dẫn: /api/products
 app.register_blueprint(search_bp)
 # API reviews sẽ chạy tại đường dẫn: /api/reviews và /api/product_detail

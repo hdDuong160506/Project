@@ -19,6 +19,10 @@ from map import map_bp
 # location
 from routes.location_routes import location_bp
 
+from routes.cart_routes import cart_bp
+# Import Blueprint cho Product Summary
+from routes.product_summary_routes import product_summary_bp
+
 # -----------------------------------------------------
 # KHỞI TẠO APP
 # -----------------------------------------------------
@@ -65,6 +69,11 @@ app.register_blueprint(map_bp, url_prefix='/map')
 # [MỚI] API hứng tọa độ GPS và lưu vào Session
 # API này sẽ chạy tại: /api/set_location
 app.register_blueprint(location_bp)
+
+# API cart sẽ chạy tại đường dẫn: /api/cart/details (trong file cart_routes cần định nghĩa route con)
+app.register_blueprint(cart_bp)
+# API product summary sẽ chạy tại đường dẫn: /api/product_summary
+app.register_blueprint(product_summary_bp)
 
 
 # -----------------------------------------------------

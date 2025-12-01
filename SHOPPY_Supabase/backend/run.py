@@ -16,6 +16,9 @@ from routes.api_routes import api_bp
 # Python sẽ tìm file __init__.py trong folder 'backend/map'
 from map import map_bp 
 
+# location
+from routes.location_routes import location_bp
+
 # -----------------------------------------------------
 # KHỞI TẠO APP
 # -----------------------------------------------------
@@ -24,6 +27,10 @@ app = Flask(__name__, static_folder="../static", static_url_path="")
 
 # Load cấu hình
 app.config.from_object(Config)
+
+# [MỚI QUAN TRỌNG] Cấu hình Secret Key để dùng được Session (Lưu tọa độ GPS)
+# Nếu trong file config.py chưa có SECRET_KEY thì dòng này sẽ cứu bạn
+app.secret_key = 'shoppy_secret_key_2024_bao_mat_vkl'
 
 # Cấu hình CORS
 CORS(
@@ -34,7 +41,7 @@ CORS(
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "expose_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": False,
+            "supports_credentials": True, # Đổi thành True để Session/Cookie hoạt động ổn định hơn
         }
     },
 )
@@ -54,6 +61,10 @@ app.register_blueprint(review_bp)
 # - Trang web bản đồ sẽ là: http://localhost:5000/map/
 # - API của bản đồ sẽ là: http://localhost:5000/map/api/stores
 app.register_blueprint(map_bp, url_prefix='/map')
+
+# [MỚI] API hứng tọa độ GPS và lưu vào Session
+# API này sẽ chạy tại: /api/set_location
+app.register_blueprint(location_bp)
 
 
 # -----------------------------------------------------

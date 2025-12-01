@@ -1105,34 +1105,22 @@ async function reverseGeocode(latitude, longitude) {
  */
 function updateCurrentLocationDisplay() {
   const locationElement = document.getElementById('current-location');
-
   if (!locationElement) return;
 
-  if (!navigator.geolocation) {
-    locationElement.textContent = "📍 Trình duyệt không hỗ trợ Geolocation.";
-    return;
-  }
-
-  locationElement.textContent = "📍 Đang tìm vị trí...";
-
+  // Chỉ lấy tọa độ để hiển thị TÊN ĐƯỜNG cho đẹp (UI)
+  // Không cần gọi fetch('/api/set_location') nữa vì file gps-fast.js đã làm rồi
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const lat = position.coords.latitude;
       const long = position.coords.longitude;
-
-      // 1. Lấy tên địa điểm (City, Country) từ tọa độ
+      
+      // Chỉ làm nhiệm vụ hiển thị UI
       const locationName = await reverseGeocode(lat, long);
       locationElement.textContent = `📍 Vị trí hiện tại: ${locationName}`;
-
     },
-    (error) => {
-      let errorMessage = "Không lấy được vị trí";
-      if (error.code === error.PERMISSION_DENIED) {
-        errorMessage = "Vui lòng cấp quyền vị trí cho trình duyệt.";
-      }
-      locationElement.textContent = `📍 ${errorMessage}`;
-    },
-    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    (err) => { 
+        locationElement.textContent = "📍 Không thể xác định vị trí";
+    }
   );
 }
 // ======================================================================

@@ -473,6 +473,11 @@ main {
   animation: fadeIn 0.3s ease;
 }
 
+/* THÊM MỚI: Hiển thị popup khi có class này */
+#cart-popup.cart-hover-active {
+    display: block;
+}
+
 .cart-list {
   display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;
   max-height: 300px; overflow-y: auto;

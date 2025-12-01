@@ -40,6 +40,7 @@ async function fetchSuggestions(query) {
 
   try {
     // Giả lập gọi API gợi ý tìm kiếm (chỉ lấy 5 sản phẩm đầu tiên)
+    // CẦN THAY THẾ bằng API thật khi triển khai
     const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
     const suggestions = await res.json();
     
@@ -118,6 +119,7 @@ function navigateToProductSummary(productId) {
 async function loadProducts(search = '', distance = '', price = '') {
   try {
     // Gọi API kèm query filter
+    // CẦN THAY THẾ bằng API thật khi triển khai
     const res = await fetch(`/api/products?search=${encodeURIComponent(search)}&distance=${distance}&price=${price}`);
 
     // Kết quả JSON chứa danh sách sản phẩm
@@ -655,6 +657,7 @@ async function searchWithImage() {
 
   try {
     // Gọi API
+    // CẦN THAY THẾ bằng API thật khi triển khai
     const response = await fetch('/api/search-by-image', {
       method: 'POST',
       headers: {
@@ -919,9 +922,9 @@ if ($('#clear-cart')) {
   });
 }
 
-// Nút checkout → chuyển sang cart.html
-if ($('#checkout')) {
-  $('#checkout').addEventListener('click', (e) => {
+// Nút Xem giỏ hàng → chuyển sang cart.html (ĐÃ CẬP NHẬT ID)
+if ($('#view-cart-detail')) {
+  $('#view-cart-detail').addEventListener('click', (e) => {
     e.preventDefault();
 
     const count = Object.values(cart).reduce((s, q) => s + q, 0);
@@ -938,18 +941,44 @@ if ($('#checkout')) {
   });
 }
 
-// Toggle popup giỏ hàng
-if ($('#open-cart')) {
-  $('#open-cart').addEventListener('click', () => {
-    const popup = $('#cart-popup');
-    popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
-  });
-}
+// Toggle popup giỏ hàng (ĐÃ THAY ĐỔI: Chuyển sang dùng Hover/JS class)
+const cartBtn = $('#open-cart');
+const cartPopup = $('#cart-popup');
 
-if ($('#close-cart')) {
-  $('#close-cart').addEventListener('click', () => {
-    $('#cart-popup').style.display = 'none';
+if (cartBtn && cartPopup) {
+  // Bật popup khi di chuột vào nút
+  cartBtn.addEventListener('mouseenter', () => {
+    // Chỉ bật class, CSS lo phần display: block
+    cartPopup.classList.add('cart-hover-active');
   });
+
+  // Tắt popup khi di chuột ra khỏi nút VÀ ra khỏi popup
+  cartBtn.addEventListener('mouseleave', (e) => {
+    // Nếu chuột ra khỏi nút nhưng lại vào popup, KHÔNG làm gì
+    if (!cartPopup.contains(e.relatedTarget) && e.relatedTarget !== cartPopup) {
+      // Dùng timeout để cho phép di chuyển chuột qua lại giữa button và popup
+      setTimeout(() => {
+        if (!cartPopup.matches(':hover')) {
+          cartPopup.classList.remove('cart-hover-active');
+        }
+      }, 50); 
+    }
+  });
+
+  // Tắt popup khi di chuột ra khỏi popup
+  cartPopup.addEventListener('mouseleave', (e) => {
+    // Nếu chuột ra khỏi popup và không vào lại button, tắt popup
+    if (!cartBtn.contains(e.relatedTarget) && e.relatedTarget !== cartBtn) {
+      cartPopup.classList.remove('cart-hover-active');
+    }
+  });
+
+  // Nút Đóng trong popup
+  if ($('#close-cart')) {
+    $('#close-cart').addEventListener('click', () => {
+      cartPopup.classList.remove('cart-hover-active');
+    });
+  }
 }
 
 
@@ -1044,6 +1073,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 /**
  * Hàm dịch ngược tọa độ thành tên địa điểm (chỉ Thành phố và Quốc gia).
  */
+
 async function reverseGeocode(latitude, longitude) {
   // Chỉ cần zoom thấp (ví dụ 10) để ưu tiên thông tin tổng quát hơn
   const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`;

@@ -88,8 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                     msg.className = "message success";
 
-                    if (data.user) updateUserLocation(data.user.id);
-
                     registerForm.reset();
                 }
 
@@ -137,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const userName = data.user.user_metadata.name || email.split('@')[0];
                     localStorage.setItem('userName', userName);
                 }
-                if (data.user) updateUserLocation(data.user.id);
+                
                 setTimeout(() => window.location.href = 'index.html', 1000);
             }
         });
@@ -267,38 +265,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
-
-// --- HÀM CẬP NHẬT VỊ TRÍ NGƯỜI DÙNG ---
-async function updateUserLocation(userId) {
-    if (!navigator.geolocation) {
-        console.warn("Trình duyệt không hỗ trợ Geolocation.");
-        return;
-    }
-
-    console.log("📍 Đang xin quyền truy cập vị trí...");
-    
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const lat = position.coords.latitude;
-            const long = position.coords.longitude;
-            
-            console.log(`✅ Đã lấy được tọa độ: ${lat}, ${long}`);
-
-            // Cập nhật vào bảng profiles trong Supabase
-            const { error } = await supabase
-                .from('profiles')
-                .update({ 
-                    lat: lat, 
-                    long: long,
-                    updated_at: new Date() // Cập nhật luôn giờ
-                })
-                .eq('id', userId);
-
-            if (error) console.error("❌ Lỗi cập nhật vị trí lên DB:", error.message);
-            else console.log("✅ Đã lưu vị trí vào Database!");
-        },
-        (error) => {
-            console.warn("⚠️ Người dùng từ chối cấp vị trí hoặc lỗi:", error.message);
-        }
-    );
-}

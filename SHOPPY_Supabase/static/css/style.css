@@ -1027,3 +1027,30 @@ main section > div:nth-of-type(2) h2 {
 .sort-option input[type="radio"]:checked + label::before {
     background-color: white;
 }
+
+/* Tiêu đề kết quả tìm kiếm */
+#search-results-title {
+    margin: 20px 0;
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+    display: none;
+}
+
+/* Không có kết quả */
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    grid-column: 1/-1;
+    color: #666;
+}
+
+.no-results h3 {
+    margin: 20px 0 10px;
+    color: #333;
+}
+
+.no-results p {
+    color: #888;
+    font-size: 14px;
+}

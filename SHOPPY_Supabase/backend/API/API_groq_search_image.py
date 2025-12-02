@@ -282,33 +282,109 @@ def groq_search_product_by_image(image_data: str):
     else:
         product_list = "\n".join([f"• {p}" for p in products])
     
-    prompt = f"""You are a highly accurate product recognition AI. Analyze the image and identify the product.
+        # PROMPT TỐI ƯU - XỬ LÝ CẢ ĐỒ ĂN VÀ SẢN PHẨM KHÁC
+    prompt = f"""Bạn là chuyên gia nhận diện hình ảnh với khả năng xác định sản phẩm chính xác.
 
-PRODUCT DATABASE:
+### DANH SÁCH SẢN PHẨM TRONG CỬA HÀNG (PHÂN LOẠI):
 {product_list}
 
-TASK:
-1. Carefully examine the image
-2. Identify the main object/product
-3. Match it to the MOST ACCURATE product name from the list above
-4. Return ONLY the exact product name (preserve spelling)
+### QUY TẮC XỬ LÝ ĐẶC BIỆT QUAN TRỌNG:
 
-MATCHING RULES:
-• Food/beverages → Match to corresponding dish/drink
-• Objects/tools → Match to best describing product
-• Electronics → Match to similar device
-• Clothing → Match to similar apparel
-• Stationery → Match to similar item
-• If multiple items visible, focus on the central/main item
+1. **TRƯỜNG HỢP 1: NHẬN DIỆN RÕ RÀNG**
+   - Nếu hình ảnh rõ ràng, nhận diện được sản phẩm CỤ THỂ trong danh sách
+   - → Trả về tên sản phẩm CỤ THỂ đó
 
-OUTPUT FORMAT:
-Return ONLY the product name, nothing else. No explanations, no markdown, no extra text.
+2. **TRƯỜNG HỢP 2: KHÓ PHÂN BIỆT GIỮA 2+ SẢN PHẨM TÊN GẦN GIỐNG**
+   - Nếu hình ảnh món ăn khó phân biệt giữa các biến thể
+   - HOẶC nhận diện chung chung một loại sản phẩm
+   - → Trả về tên CHUNG/TỔNG QUÁT (để match với nhiều sản phẩm)
 
-Example outputs:
-Cơm gà xối mỡ
-Bún bò Huế
-Trà sữa trân châu
-Áo thun basic"""
+   **VÍ DỤ:**
+   - Ảnh cơm không rõ loại → "cơm" (match với: cơm tấm, cơm cháy, cơm gà...)
+   - Ảnh bún không rõ loại → "bún" (match với: bún bò, bún riêu, bún chả...)
+   - Ảnh phở không rõ loại → "phở" (match với: phở bò, phở gà...)
+   - Ảnh áo thun chung → "áo thun" (match với: áo thun nam, áo thun nữ...)
+
+3. **TRƯỜNG HỢP 3: ẢNH CÓ NHIỀU SẢN PHẨM**
+   - Nếu ảnh có nhiều món/sản phẩm khác nhau
+   - → Trả về danh sách "sản phẩm 1, sản phẩm 2, ..." (tên chung)
+   - Giới hạn tối đa 3 sản phẩm chính
+
+4. **TRƯỜNG HỢP 4: KHÔNG NHẬN DIỆN ĐƯỢC**
+   - Nếu không chắc chắn với bất kỳ sản phẩm nào
+   - → Trả về từ khóa mô tả chung nhất
+
+### PHÂN TÍCH HÌNH ẢNH THEO CẤP ĐỘ:
+
+**CẤP 1: PHÂN LOẠI CHÍNH**
+- ĐỒ ĂN/THỨC UỐNG hay SẢN PHẨM KHÁC?
+- Nếu đồ ăn: Cơm/Bún/Phở/Mì/Bánh/Thức uống?
+- Nếu sản phẩm khác: Văn phòng phẩm/Đồ dùng/Quần áo?
+
+**CẤP 2: PHÂN BIỆT CHI TIẾT (CHỈ KHI RÕ RÀNG)**
+- Với đồ ăn: Loại cụ thể? Có thịt gà/bò/heo?
+- Với sản phẩm: Kiểu dáng/màu sắc/chất liệu?
+
+**CẤP 3: ĐỘ CHÍNH XÁC**
+- Rất rõ (90-100%): Trả tên cụ thể
+- Tương đối rõ (70-90%): Trả tên chung
+- Không rõ (<70%): Trả từ khóa chung
+
+### QUY TẮC ƯU TIÊN CHO ĐỒ ĂN VIỆT NAM:
+
+**NHẬN BIẾT LOẠI THỰC PHẨM:**
+- HẠT CƠM → "cơm" (không phải bún/phở)
+- SỢI TRẮNG TRÒN → "bún"
+- SỢI TRẮNG DẸT → "phở"
+- SỢI VÀNG → "mì"
+- NƯỚC DÙNG → xác định loại (trong/đỏ/đậm)
+
+**PHÂN BIỆT MÓN TƯƠNG TỰ:**
+- CƠM GÀ vs BÚN GÀ: Có nước dùng không? Sợi hay hạt?
+- BÚN BÒ vs PHỞ BÒ: Sợi tròn hay dẹt? Nước dùng màu gì?
+- CƠM TẤM vs CƠM THƯỜNG: Gạo tấm vỡ hay nguyên hạt?
+
+### XỬ LÝ TÊN GẦN GIỐNG TRONG DATABASE:
+
+Nếu database có các sản phẩm:
+- "Cơm tấm sườn"
+- "Cơm tấm trứng"
+- "Cơm tấm chả"
+- "Cơm gà xối mỡ"
+- "Cơm bò lúc lắc"
+
+**KHI ẢNH KHÔNG RÕ:**
+- Ảnh cơm chung → "cơm" (match với TẤT CẢ món cơm)
+- Ảnh cơm tấm không rõ loại → "cơm tấm" (match với cơm tấm sườn/trứng/chả)
+- Ảnh cơm có thịt gà → "cơm gà" (match với cơm gà xối mỡ/...)
+
+### ĐẦU RA LỊNH HOẠT THEO TÌNH HUỐNG:
+
+**TÌNH HUỐNG 1: 1 sản phẩm rõ ràng**
+→ "Tên sản phẩm cụ thể"
+
+**TÌNH HUỐNG 2: 1 sản phẩm không rõ loại**
+→ "Tên chung" (vd: "cơm", "bún", "áo thun")
+
+**TÌNH HUỐNG 3: Nhiều sản phẩm**
+→ "sản phẩm 1, sản phẩm 2, sản phẩm 3" (tên chung)
+
+**TÌNH HUỐNG 4: Không chắc chắn**
+→ "từ khóa mô tả" (vd: "đồ ăn", "thức uống", "văn phòng phẩm")
+
+### CUỐI CÙNG - QUYẾT ĐỊNH:
+1. Quan sát ảnh kỹ
+2. So sánh với danh sách sản phẩm
+3. Áp dụng quy tắc xử lý phù hợp
+4. Trả về kết quả theo đúng format
+
+### ĐẦU RA BẮT BUỘC:
+Chỉ trả về:
+- Tên sản phẩm CỤ THỂ (nếu rõ)
+- HOẶC Tên CHUNG (nếu không rõ)
+- HOẶC "sản phẩm 1, sản phẩm 2" (nếu nhiều sản phẩm)
+KHÔNG thêm bất kỳ chữ nào khác, không giải thích.
+"""
     
     # Bước 4: Gọi Groq Llama 4 Scout Vision API
     print(f"\n🤖 [4/7] Đang gọi Groq API với model: {VISION_MODEL}...")

@@ -4,6 +4,7 @@ from flask import request, jsonify, send_from_directory, current_app
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pathlib import Path
+from flask import session
 
 # Import blueprint đã tạo ở __init__.py
 from . import map_bp
@@ -121,3 +122,11 @@ def map_index():
 @map_bp.route('/<path:filename>')
 def serve_map_static(filename):
     return send_from_directory(map_bp.static_folder, filename)
+
+@map_bp.route('/api/get-current-location')
+def get_current_location():
+    # Lấy từ session trả về dạng JSON
+    return jsonify({
+        "lat": session.get('user_lat'),
+        "long": session.get('user_long')
+    })

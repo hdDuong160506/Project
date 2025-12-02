@@ -21,6 +21,7 @@ const DOM = {
   layerMenu: document.getElementById('layer-menu')
 };
 
+
 const DEFAULT_COORDS = [10.76279, 106.68258];
 
 // Cấu hình thời gian cập nhật real-time (ms)
@@ -212,54 +213,65 @@ async function reverseGeocode(latitude, longitude) {
   }
 }
 
-// Hàm khởi tạo vị trí người dùng (Auto chạy khi load trang)
+// Hàm khởi tạo vị trí người dùng (Load từ Session Server)
 async function initUserLocation() {
-  if (!navigator.geolocation) {
-    console.warn("Trình duyệt không hỗ trợ Geolocation");
-    return;
-  }
-
   const gpsOption = DOM.startSelect.querySelector('option[value="gps"]');
-  if (gpsOption) gpsOption.textContent = "📍 Đang tìm vị trí...";
 
-  // Tạm thời hiển thị loading 
+  // 1. Cập nhật UI: Đang tải
+  if (gpsOption) gpsOption.textContent = "📍 Đang đồng bộ vị trí...";
 
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
+  try {
+    const response = await fetch('/map/api/get-current-location');
 
-      // Cập nhật giá trị
+    if (!response.ok) {
+      throw new Error('Lỗi kết nối tới Server');
+    }
+
+    const data = await response.json();
+
+    // 3. Kiểm tra dữ liệu trả về
+    if (data.lat && data.long) {
+      const lat = parseFloat(data.lat);
+      const lng = parseFloat(data.long);
+
+      console.log("📍 Đã lấy toạ độ từ Session:", lat, lng);
+
+      // Cập nhật giá trị input hidden (nếu có)
       DOM.startCoords.value = `${lng},${lat}`;
 
       // Di chuyển Marker
       userMarker.setLatLng([lat, lng]);
-      // map.flyTo([lat, lng], 20, {
-      //   animate: true,
-      //   duration: 1.5 // Thời gian bay (giây)
-      // });
-      map.setView([lat, lng], 25);
 
-      // Lấy tên địa chỉ
+      // Zoom map tới vị trí
+      map.setView([lat, lng], 18);
+
+      // Lấy tên địa chỉ (Reverse Geocoding)
       const addressName = await reverseGeocode(lat, lng);
 
-      // Cập nhật UI
+      // Cập nhật Select box
       if (gpsOption) {
         gpsOption.textContent = `📍 ${addressName}`;
         DOM.startSelect.value = 'gps'; // Tự động chọn option GPS
       }
+
       userMarker.bindPopup(`<b>Vị trí của bạn</b><br>${addressName}`).openPopup();
 
-      DOM.loading.style.display = 'none';
-    },
-    (error) => {
-      console.error("Lỗi GPS:", error);
-      DOM.loading.style.display = 'none';
-      if (gpsOption) gpsOption.textContent = "📍 Không lấy được vị trí";
-      DOM.startSelect.value = 'default'; // Fallback
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
+    } else {
+      // Trường hợp Session trả về null
+      throw new Error("Session chưa có dữ liệu vị trí");
+    }
+
+  } catch (error) {
+    console.warn("⚠️ Không lấy được vị trí từ Session:", error);
+
+    // Xử lý lỗi giao diện
+    if (gpsOption) gpsOption.textContent = "📍 Không xác định được vị trí";
+    DOM.startSelect.value = 'default'; // Quay về mặc định
+
+  } finally {
+    // Tắt loading
+    if (DOM.loading) DOM.loading.style.display = 'none';
+  }
 }
 
 // Sự kiện khi người dùng đổi Dropdown "Bắt đầu"
@@ -324,7 +336,56 @@ async function performRouting(start, end, profile) {
       map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
 
       const s = geojson.features[0].properties.summary;
-      DOM.routeResult.innerHTML = `${(s.distance / 1000).toFixed(1)} km • ${Math.ceil(s.duration / 60)} phút`;
+      // time scaling + human-friendly formatting
+      const timeSec = s.duration; // seconds (giây)
+      const distanceKm = (s.distance / 1000).toFixed(1); // km (kilomet)
+
+      // Nếu profile là xe đạp -> chia cho 120, còn lại (ô tô, đi bộ...) chia cho 60
+      const divisor = (profile === 'cycling-regular') ? 120 : 60; // divisor (mẫu số)
+      const minutesScaled = timeSec / divisor; // scaled minutes (phút đã điều chỉnh)
+
+      // Chuyển đổi hiển thị: phút -> giờ -> ngày
+      let timeDisplay;
+      const totalMinutes = Math.ceil(minutesScaled); // Tổng phút đã làm tròn lên (rounded up)
+
+      // Số phút trong 1 ngày và 1 giờ (constants)
+      const MINUTES_PER_HOUR = 60;
+      const MINUTES_PER_DAY = 60 * 24;
+
+      if (totalMinutes >= MINUTES_PER_DAY) {
+        // Tính days, hours, minutes (ngày, giờ, phút)
+        const days = Math.floor(totalMinutes / MINUTES_PER_DAY);
+        let remAfterDays = totalMinutes - days * MINUTES_PER_DAY;
+
+        const hours = Math.floor(remAfterDays / MINUTES_PER_HOUR);
+        const minutes = remAfterDays - hours * MINUTES_PER_HOUR;
+
+        // Tạo mảng phần hiển thị, bỏ phần = 0 để tối ưu
+        const parts = [];
+        if (days > 0) parts.push(`${days} ngày`); // days
+        if (hours > 0) parts.push(`${hours} giờ`); // hours
+        if (minutes > 0) parts.push(`${minutes} phút`); // minutes
+
+        timeDisplay = parts.join(' ');
+      } else if (totalMinutes >= MINUTES_PER_HOUR) {
+        // Tính hours, minutes (giờ, phút)
+        const hours = Math.floor(totalMinutes / MINUTES_PER_HOUR);
+        const minutes = totalMinutes - hours * MINUTES_PER_HOUR;
+
+        if (minutes === 0) {
+          timeDisplay = `${hours} giờ`; // exact hours only
+        } else {
+          timeDisplay = `${hours} giờ ${minutes} phút`; // hours + minutes
+        }
+      } else {
+        // Chỉ phút (minutes)
+        timeDisplay = `${totalMinutes} phút`;
+      }
+
+
+      // Ghi ra UI
+      DOM.routeResult.innerHTML = `${distanceKm} km • ${timeDisplay}`;
+
       DOM.routeResult.style.display = 'block';
       DOM.statusText.innerText = 'Hoàn tất!';
     } else {

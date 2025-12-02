@@ -2,13 +2,13 @@
 <html lang="vi">
 
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tổng quan sản phẩm - SHOPPY</title>
-    
-    <link rel="stylesheet" href="css/style.css"> 
-    <link rel="stylesheet" href="css/product-summary.css"> 
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/product-summary.css">
 </head>
 
 <body>
@@ -121,8 +121,9 @@
             </div>
         </div>
     </header>
-    <nav class="breadcrumb"><a href="index.html">Trang chủ</a> / <span id="breadcrumb-product-name">Tổng quan sản phẩm</span></nav>
-    
+    <nav class="breadcrumb"><a href="index.html">Trang chủ</a> / <span id="breadcrumb-product-name">Tổng quan sản
+            phẩm</span></nav>
+
     <main>
         <div class="product-detail-summary product-summary-col">
             <h2 id="summary-product-name">Đang tải tên sản phẩm...</h2>
@@ -137,6 +138,34 @@
 
         <div class="store-list-recommend product-summary-col">
             <h3>🛒 Các cửa hàng đang cung cấp món này</h3>
+
+            <div id="store-sort-bar" style="
+        display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; 
+        background: #f9fafb; padding: 10px; border-radius: 8px; border: 1px solid #eee;
+    ">
+                <span style="font-weight: 600; color: #555; align-self: center; font-size: 14px;">Sắp xếp theo:</span>
+
+                <div class="sort-option">
+                    <input type="radio" id="sort_default" name="store_sort_filter" value="default" checked
+                        onchange="sortAndRenderStores()">
+                    <label for="sort_default">Mặc định</label>
+                </div>
+                <div class="sort-option">
+                    <input type="radio" id="sort_near" name="store_sort_filter" value="dist_asc"
+                        onchange="sortAndRenderStores()">
+                    <label for="sort_near">Gần nhất</label>
+                </div>
+                <div class="sort-option">
+                    <input type="radio" id="sort_price_low" name="store_sort_filter" value="price_asc"
+                        onchange="sortAndRenderStores()">
+                    <label for="sort_price_low">Giá thấp</label>
+                </div>
+                <div class="sort-option">
+                    <input type="radio" id="sort_rating" name="store_sort_filter" value="rating_desc"
+                        onchange="sortAndRenderStores()">
+                    <label for="sort_rating">Đánh giá cao</label>
+                </div>
+            </div>
             <div id="recommended-stores-list">
                 <div style="text-align:center; padding:50px 0;">Đang tải danh sách cửa hàng...</div>
             </div>
@@ -157,7 +186,7 @@
             <button class="small-btn" id="close-cart" style="margin-left:auto;">Đóng</button>
         </div>
     </div>
-    
+
     <div id="voice_popup" style="display:none;">
         <div class="voice-popup-content">
             <h5>🎙️ Đang nghe...</h5>
@@ -170,7 +199,7 @@
             </button>
         </div>
     </div>
-    
+
     <footer>
         <div class="footer">
             <div class="footer-section">
@@ -261,7 +290,7 @@
             </div>
         </div>
     </div>
-    <script src="js/supabase-init.js"></script> 
+    <script src="js/supabase-init.js"></script>
     <script src="js/product-summary.js"></script>
 </body>
 

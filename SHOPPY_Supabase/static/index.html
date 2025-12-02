@@ -179,6 +179,36 @@
             </div>
           </section>
 
+          <h2 style="margin-bottom:12px; text-align: left; padding: 0 20px;">Các sản phẩm tìm thấy</h2>
+
+          <div id="sort-filter-bar"
+            style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; text-align: left; padding: 10px; background: white; border-radius: 6px;">
+            <span style="font-weight: 600; color: #555; align-self: center;">Sắp xếp theo:</span>
+
+            <div class="sort-option">
+              <input type="radio" id="sort_default_result" name="sort_result_filter" value="" checked
+                onclick="applySortFilter()">
+              <label for="sort_default_result">Mặc định</label>
+            </div>
+            <div class="sort-option">
+              <input type="radio" id="sort_near" name="sort_result_filter" value="dist_asc" onclick="applySortFilter()">
+              <label for="sort_near">Gần nhất</label>
+            </div>
+            <div class="sort-option">
+              <input type="radio" id="sort_far" name="sort_result_filter" value="dist_desc" onclick="applySortFilter()">
+              <label for="sort_far">Xa nhất</label>
+            </div>
+            <div class="sort-option">
+              <input type="radio" id="sort_price_low" name="sort_result_filter" value="price_asc"
+                onclick="applySortFilter()">
+              <label for="sort_price_low">Giá thấp</label>
+            </div>
+            <div class="sort-option">
+              <input type="radio" id="sort_price_high" name="sort_result_filter" value="price_desc"
+                onclick="applySortFilter()">
+              <label for="sort_price_high">Giá cao</label>
+            </div>
+          </div>
         </div>
 
         <div class="products" id="product-list"></div>

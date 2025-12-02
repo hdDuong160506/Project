@@ -2,32 +2,32 @@
 // 1. KHAI BÁO & CẤU HÌNH
 // ============================================================
 const DOM = {
-  panel: document.getElementById('panel'),
-  toggleBtn: document.getElementById('toggle-btn'),
-  map: document.getElementById('map'),
-  startSelect: document.getElementById('start-select'),
-  startCoords: document.getElementById('start-coords'),
-  endDisplay: document.getElementById('end-display'),
-  endCoords: document.getElementById('end-coords'),
-  btnDraw: document.getElementById('btn-draw'),
-  statusText: document.getElementById('status-text'),
-  routeResult: document.getElementById('route-result'),
-  loading: document.getElementById('loading'),
-  realtimeToggle: document.getElementById('realtime-toggle'),
-  profileSelect: document.getElementById('profile-select'),
-  legend: document.getElementById('legend'),
-  btnLocate: document.getElementById('btn-locate'),
-  btnLayerToggle: document.getElementById('btn-layer-toggle'),
-  layerMenu: document.getElementById('layer-menu')
+	panel : document.getElementById('panel'),
+	toggleBtn : document.getElementById('toggle-btn'),
+	map : document.getElementById('map'),
+	startSelect : document.getElementById('start-select'),
+	startCoords : document.getElementById('start-coords'),
+	endDisplay : document.getElementById('end-display'),
+	endCoords : document.getElementById('end-coords'),
+	btnDraw : document.getElementById('btn-draw'),
+	statusText : document.getElementById('status-text'),
+	routeResult : document.getElementById('route-result'),
+	loading : document.getElementById('loading'),
+	realtimeToggle : document.getElementById('realtime-toggle'),
+	profileSelect : document.getElementById('profile-select'),
+	legend : document.getElementById('legend'),
+	btnLocate : document.getElementById('btn-locate'),
+	btnLayerToggle : document.getElementById('btn-layer-toggle'),
+	layerMenu : document.getElementById('layer-menu')
 };
 
-const DEFAULT_COORDS = [10.76279, 106.68258];
+const DEFAULT_COORDS = [ 10.76279, 106.68258 ];
 
 // Cấu hình thời gian cập nhật real-time (ms)
 const REALTIME_INTERVALS = {
-  'driving-car': 30000,    // 30s
-  'cycling-regular': 60000, // 60s
-  'foot-walking': 90000     // 90s
+	'driving-car' : 30000,	   // 30s
+	'cycling-regular' : 60000, // 60s
+	'foot-walking' : 90000	   // 90s
 };
 
 // Biến toàn cục theo dõi trạng thái
@@ -35,155 +35,154 @@ let routeLayer = null;
 let userMarker = null;
 let realtimeTimer = null;
 
-
 // ============================================================
 // 2. KHỞI TẠO BẢN ĐỒ
 // ============================================================
 const layers = {
-  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }),
-  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Tiles © Esri' }),
-  terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Tiles © Esri' })
+	street : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom : 19, attribution : '© OpenStreetMap'}),
+	satellite : L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom : 18, attribution : 'Tiles © Esri'}),
+	terrain : L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {maxZoom : 18, attribution : 'Tiles © Esri'})
 };
 
-const map = L.map('map', { zoomControl: false, layers: [layers.street] }).setView([10.762622, 106.660172], 13);
-L.control.zoom({ position: 'bottomright' }).addTo(map);
+const map = L.map('map', {zoomControl : false, layers : [ layers.street ]}).setView([ 10.762622, 106.660172 ], 13);
+L.control.zoom({position : 'bottomright'}).addTo(map);
 
 // Khởi tạo marker người dùng mặc định
-userMarker = createMarker('user', DEFAULT_COORDS[0], DEFAULT_COORDS[1], { emoji: '🏠', color: '#2563eb' }).addTo(map);
+userMarker = createMarker('user', DEFAULT_COORDS[0], DEFAULT_COORDS[1], {emoji : '🏠', color : '#2563eb'}).addTo(map);
 userMarker.bindPopup("<b>Điểm xuất phát</b><br>Trường ĐH Khoa học Tự nhiên - ĐHQG TP.HCM");
-
 
 // ============================================================
 // 3. TIỆN ÍCH GIAO DIỆN
 // ============================================================
 
 // Đổi lớp bản đồ (Cập nhật logic đóng menu)
-window.switchLayer = function (type, el) {
-  // 1. Logic đổi map của Leaflet (Giữ nguyên)
-  Object.values(layers).forEach(l => map.removeLayer(l));
-  map.addLayer(layers[type]);
+window.switchLayer = function(type, el) {
+	// 1. Logic đổi map của Leaflet (Giữ nguyên)
+	Object.values(layers).forEach(l => map.removeLayer(l));
+	map.addLayer(layers[type]);
 
-  // 2. Logic đổi màu nút active (Giữ nguyên)
-  document.querySelectorAll('.layer-opt').forEach(d => d.classList.remove('active'));
-  el.classList.add('active');
+	// 2. Logic đổi màu nút active (Giữ nguyên)
+	document.querySelectorAll('.layer-opt').forEach(d => d.classList.remove('active'));
+	el.classList.add('active');
 
-  if (DOM.layerMenu) {
-    DOM.layerMenu.classList.remove('show');
-  }
+	if (DOM.layerMenu) {
+		DOM.layerMenu.classList.remove('show');
+	}
 };
 
 // 1. Sự kiện Click nút "Giao diện" -> Bật/Tắt menu
 if (DOM.btnLayerToggle && DOM.layerMenu) {
-  DOM.btnLayerToggle.onclick = (e) => {
-    e.stopPropagation(); // Ngăn không cho sự kiện click lan ra ngoài (để tránh bị đóng ngay lập tức)
-    DOM.layerMenu.classList.toggle('show'); // Thêm/Xóa class .show để hiện/ẩn
-  };
+	DOM.btnLayerToggle.onclick = (e) => {
+		e.stopPropagation();					// Ngăn không cho sự kiện click lan ra ngoài (để tránh bị đóng ngay lập tức)
+		DOM.layerMenu.classList.toggle('show'); // Thêm/Xóa class .show để hiện/ẩn
+	};
 }
 
 // 2. Sự kiện Click bất kỳ đâu trên màn hình -> Đóng menu (nếu đang mở)
 document.addEventListener('click', (e) => {
-  // Chỉ chạy nếu menu đang mở (có class show)
-  if (DOM.layerMenu && DOM.layerMenu.classList.contains('show')) {
+	// Chỉ chạy nếu menu đang mở (có class show)
+	if (DOM.layerMenu && DOM.layerMenu.classList.contains('show')) {
 
-    // Nếu chỗ vừa click KHÔNG PHẢI là nút bấm VÀ KHÔNG PHẢI là menu
-    if (!DOM.btnLayerToggle.contains(e.target) && !DOM.layerMenu.contains(e.target)) {
-      DOM.layerMenu.classList.remove('show'); // Đóng menu
-    }
-  }
+		// Nếu chỗ vừa click KHÔNG PHẢI là nút bấm VÀ KHÔNG PHẢI là menu
+		if (!DOM.btnLayerToggle.contains(e.target) && !DOM.layerMenu.contains(e.target)) {
+			DOM.layerMenu.classList.remove('show'); // Đóng menu
+		}
+	}
 });
 
 // Cập nhật CSS class khi zoom
 function updateZoomClass() {
-  const zoom = map.getZoom();
-  if (zoom >= 14) {
-    DOM.map.classList.add('map-zoomed-in');
-    DOM.map.classList.remove('map-zoomed-out');
-  } else {
-    DOM.map.classList.add('map-zoomed-out');
-    DOM.map.classList.remove('map-zoomed-in');
-  }
+	const zoom = map.getZoom();
+	if (zoom >= 14) {
+		DOM.map.classList.add('map-zoomed-in');
+		DOM.map.classList.remove('map-zoomed-out');
+	} else {
+		DOM.map.classList.add('map-zoomed-out');
+		DOM.map.classList.remove('map-zoomed-in');
+	}
 }
 map.on('zoomend', updateZoomClass);
 updateZoomClass();
 
 // Đóng/Mở Panel bên trái
 DOM.toggleBtn.onclick = () => {
-  DOM.panel.classList.toggle('collapsed');
-  const isCollapsed = DOM.panel.classList.contains('collapsed');
-  DOM.toggleBtn.querySelector('svg').innerHTML = isCollapsed
-    ? '<polyline points="9 18 15 12 9 6"></polyline>'
-    : '<polyline points="15 18 9 12 15 6"></polyline>';
+	DOM.panel.classList.toggle('collapsed');
+	const isCollapsed = DOM.panel.classList.contains('collapsed');
+	DOM.toggleBtn.querySelector('svg').innerHTML = isCollapsed
+													   ? '<polyline points="9 18 15 12 9 6"></polyline>'
+													   : '<polyline points="15 18 9 12 15 6"></polyline>';
 };
 
 // Tạo Marker Custom
 function createMarker(type, lat, lng, opts = {}) {
-  const emoji = opts.emoji || (type === 'store' ? '🏬' : '🏠');
-  const bg = opts.color || '#2563eb';
-  const border = opts.borderColor || '#ffffff';
+	const emoji = opts.emoji || (type === 'store' ? '🏬' : '🏠');
+	const bg = opts.color || '#2563eb';
+	const border = opts.borderColor || '#ffffff';
 
-  const style = `
+	const style = `
     background:${bg}; border-color:${border};
     width:var(--marker-size); height:var(--marker-size);
     display:flex; align-items:center; justify-content:center;
     border-radius:50%; font-size:14px; color:white;
   `;
 
-  const html = `<div class="marker-pin" style="${style}">${emoji}</div>`;
-  const icon = L.divIcon({ className: 'custom-div-icon', html, iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -14] });
-  return L.marker([lat, lng], { icon: icon });
+	const html = `<div class="marker-pin" style="${style}">${emoji}</div>`;
+	const icon = L.divIcon({className : 'custom-div-icon', html, iconSize : [ 28, 28 ], iconAnchor : [ 14, 14 ], popupAnchor : [ 0, -14 ]});
+	return L.marker([ lat, lng ], {icon : icon});
 }
-
 
 // ============================================================
 // 4. HỆ THỐNG TAG & LEGEND
 // ============================================================
 const tagMap = {
-  "street food": { emoji: '🍜', label: 'Đồ ăn đường phố', color: '#F4C7AB' },
-  "main course": { emoji: '🍽️', label: 'Món chính', color: '#F8AFA6' },
-  "dessert": { emoji: '🍰', label: 'Đồ ăn vặt', color: '#F7D6E0' },
-  "drink": { emoji: '🥤', label: 'Nước uống', color: '#CDE7F0' },
-  "edible souvenir": { emoji: '🍯', label: 'Quà', color: '#E6D8F5' },
-  "souvenir": { emoji: '🎁', label: 'Quà lưu niệm', color: '#F9E8C9' },
-  "default": { emoji: '🏬', label: 'Khác', color: '#D6DEE5' }
+	"street food" : {emoji : '🍜', label : 'Đồ ăn đường phố', color : '#F4C7AB'},
+	"main course" : {emoji : '🍽️', label : 'Món chính', color : '#F8AFA6'},
+	"dessert" : {emoji : '🍰', label : 'Đồ ăn vặt', color : '#F7D6E0'},
+	"drink" : {emoji : '🥤', label : 'Nước uống', color : '#CDE7F0'},
+	"edible souvenir" : {emoji : '🍯', label : 'Quà', color : '#E6D8F5'},
+	"souvenir" : {emoji : '🎁', label : 'Quà lưu niệm', color : '#F9E8C9'},
+	"default" : {emoji : '🏬', label : 'Khác', color : '#D6DEE5'}
 };
 
 function colorForTag(tag) {
-  let h = 0;
-  for (let i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) >>> 0;
-  return '#' + ('00000' + (h & 0xFFFFFF).toString(16)).slice(-6);
+	let h = 0;
+	for (let i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) >>> 0;
+	return '#' + ('00000' + (h & 0xFFFFFF).toString(16)).slice(-6);
 }
 
 function normalizeTag(t) {
-  if (!t) return '';
-  let s = String(t).trim().toLowerCase().replace(/[_-]/g, ' ');
-  const synonyms = { 'maincourse': 'main course', 'streetfood': 'street food', 'ediblesouvenir': 'edible souvenir' };
-  return synonyms[s] || s;
+	if (!t) return '';
+	let s = String(t).trim().toLowerCase().replace(/[_-]/g, ' ');
+	const synonyms = {'maincourse' : 'main course', 'streetfood' : 'street food', 'ediblesouvenir' : 'edible souvenir'};
+	return synonyms[s] || s;
 }
 
 function getTagIcon(tag) {
-  if (!tag) return tagMap['default'];
-  const key = normalizeTag(tag);
-  if (tagMap[key]) return tagMap[key];
+	if (!tag) return tagMap['default'];
+	const key = normalizeTag(tag);
+	if (tagMap[key]) return tagMap[key];
 
-  let emoji = '📍';
-  if (key.includes('food') || key.includes('meal')) emoji = '🍽️';
-  else if (key.includes('drink') || key.includes('coffee')) emoji = '🥤';
-  else if (key.includes('souvenir')) emoji = '🎁';
+	let emoji = '📍';
+	if (key.includes('food') || key.includes('meal'))
+		emoji = '🍽️';
+	else if (key.includes('drink') || key.includes('coffee'))
+		emoji = '🥤';
+	else if (key.includes('souvenir'))
+		emoji = '🎁';
 
-  return { emoji, label: key, color: colorForTag(key) };
+	return {emoji, label : key, color : colorForTag(key)};
 }
 
 (function renderLegend() {
-  ['street food', 'main course', 'dessert', 'drink', 'edible souvenir', 'souvenir', 'default'].forEach(key => {
-    if (!tagMap[key]) return;
-    const t = tagMap[key];
-    const item = document.createElement('div');
-    item.className = 'legend-item';
-    item.innerHTML = `<div>${t.emoji} ${t.label}</div>`;
-    DOM.legend.appendChild(item);
-  });
+	['street food', 'main course', 'dessert', 'drink', 'edible souvenir', 'souvenir', 'default'].forEach(key => {
+		if (!tagMap[key]) return;
+		const t = tagMap[key];
+		const item = document.createElement('div');
+		item.className = 'legend-item';
+		item.innerHTML = `<div>${t.emoji} ${t.label}</div>`;
+		DOM.legend.appendChild(item);
+	});
 })();
-
 
 // ============================================================
 // 5. LOGIC GPS & ĐỊNH VỊ
@@ -191,106 +190,106 @@ function getTagIcon(tag) {
 
 // Hàm dịch ngược tọa độ -> Tên địa điểm
 async function reverseGeocode(latitude, longitude) {
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`;
+	const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`;
 
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    const address = data.address;
+	try {
+		const response = await fetch(url);
+		const data = await response.json();
+		const address = data.address;
 
-    const shortName = address.road || address.building || address.hamlet || '';
-    const city = address.city || address.town || address.district || '';
+		const shortName = address.road || address.building || address.hamlet || '';
+		const city = address.city || address.town || address.district || '';
 
-    let result = '';
-    if (shortName && city) result = `${shortName}, ${city}`;
-    else result = data.display_name.split(',').slice(0, 3).join(',');
+		let result = '';
+		if (shortName && city)
+			result = `${shortName}, ${city}`;
+		else
+			result = data.display_name.split(',').slice(0, 3).join(',');
 
-    return result || `Tọa độ: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-  } catch (error) {
-    console.error("Lỗi Geocode:", error);
-    return "Vị trí hiện tại";
-  }
+		return result || `Tọa độ: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+	} catch (error) {
+		console.error("Lỗi Geocode:", error);
+		return "Vị trí hiện tại";
+	}
 }
 
 // Hàm khởi tạo vị trí người dùng (Auto chạy khi load trang)
 async function initUserLocation() {
-  if (!navigator.geolocation) {
-    console.warn("Trình duyệt không hỗ trợ Geolocation");
-    return;
-  }
+	if (!navigator.geolocation) {
+		console.warn("Trình duyệt không hỗ trợ Geolocation");
+		return;
+	}
 
-  const gpsOption = DOM.startSelect.querySelector('option[value="gps"]');
-  if (gpsOption) gpsOption.textContent = "📍 Đang tìm vị trí...";
+	const gpsOption = DOM.startSelect.querySelector('option[value="gps"]');
+	if (gpsOption) gpsOption.textContent = "📍 Đang tìm vị trí...";
 
-  // Tạm thời hiển thị loading 
+	// Tạm thời hiển thị loading
 
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
+	navigator.geolocation.getCurrentPosition(
+		async (position) => {
+			const lat = position.coords.latitude;
+			const lng = position.coords.longitude;
 
-      // Cập nhật giá trị
-      DOM.startCoords.value = `${lng},${lat}`;
+			// Cập nhật giá trị
+			DOM.startCoords.value = `${lng},${lat}`;
 
-      // Di chuyển Marker
-      userMarker.setLatLng([lat, lng]);
-      // map.flyTo([lat, lng], 20, {
-      //   animate: true,
-      //   duration: 1.5 // Thời gian bay (giây)
-      // });
-      map.setView([lat, lng], 25);
+			// Di chuyển Marker
+			userMarker.setLatLng([ lat, lng ]);
+			// map.flyTo([lat, lng], 20, {
+			//   animate: true,
+			//   duration: 1.5 // Thời gian bay (giây)
+			// });
+			map.setView([ lat, lng ], 25);
 
-      // Lấy tên địa chỉ
-      const addressName = await reverseGeocode(lat, lng);
+			// Lấy tên địa chỉ
+			const addressName = await reverseGeocode(lat, lng);
 
-      // Cập nhật UI
-      if (gpsOption) {
-        gpsOption.textContent = `📍 ${addressName}`;
-        DOM.startSelect.value = 'gps'; // Tự động chọn option GPS
-      }
-      userMarker.bindPopup(`<b>Vị trí của bạn</b><br>${addressName}`).openPopup();
+			// Cập nhật UI
+			if (gpsOption) {
+				gpsOption.textContent = `📍 ${addressName}`;
+				DOM.startSelect.value = 'gps'; // Tự động chọn option GPS
+			}
+			userMarker.bindPopup(`<b>Vị trí của bạn</b><br>${addressName}`).openPopup();
 
-      DOM.loading.style.display = 'none';
-    },
-    (error) => {
-      console.error("Lỗi GPS:", error);
-      DOM.loading.style.display = 'none';
-      if (gpsOption) gpsOption.textContent = "📍 Không lấy được vị trí";
-      DOM.startSelect.value = 'default'; // Fallback
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
+			DOM.loading.style.display = 'none';
+		},
+		(error) => {
+			console.error("Lỗi GPS:", error);
+			DOM.loading.style.display = 'none';
+			if (gpsOption) gpsOption.textContent = "📍 Không lấy được vị trí";
+			DOM.startSelect.value = 'default'; // Fallback
+		},
+		{enableHighAccuracy : true, timeout : 10000});
 }
 
 // Sự kiện khi người dùng đổi Dropdown "Bắt đầu"
 DOM.startSelect.addEventListener('change', (e) => {
-  if (e.target.value === 'default') {
-    DOM.startCoords.value = `${DEFAULT_COORDS[1]},${DEFAULT_COORDS[0]}`;
-    userMarker.setLatLng(DEFAULT_COORDS).bindPopup("<b>Điểm xuất phát</b><br>Trường ĐH Khoa học Tự nhiên - ĐHQG TP.HCM").openPopup();
-    map.setView(DEFAULT_COORDS, 14);
-  } else {
-    // Nếu chọn GPS thủ công -> Gọi lại hàm định vị
-    DOM.loading.style.display = 'flex';
-    initUserLocation();
-  }
+	if (e.target.value === 'default') {
+		DOM.startCoords.value = `${DEFAULT_COORDS[1]},${DEFAULT_COORDS[0]}`;
+		userMarker.setLatLng(DEFAULT_COORDS).bindPopup("<b>Điểm xuất phát</b><br>Trường ĐH Khoa học Tự nhiên - ĐHQG TP.HCM").openPopup();
+		map.setView(DEFAULT_COORDS, 14);
+	} else {
+		// Nếu chọn GPS thủ công -> Gọi lại hàm định vị
+		DOM.loading.style.display = 'flex';
+		initUserLocation();
+	}
 });
 
 // Sự kiện click nút GPS
 if (DOM.btnLocate) {
-  DOM.btnLocate.onclick = () => {
-    // Gọi lại hàm định vị
-    initUserLocation();
+	DOM.btnLocate.onclick = () => {
+		// Gọi lại hàm định vị
+		initUserLocation();
 
-    // Thêm hiệu ứng xoay nhẹ icon để báo đang load
-    const icon = DOM.btnLocate.querySelector('svg');
-    if (icon) {
-      icon.style.transition = 'transform 0.5s';
-      icon.style.transform = 'rotate(360deg)';
-      setTimeout(() => icon.style.transform = 'rotate(0deg)', 500);
-    }
-  };
+		// Thêm hiệu ứng xoay nhẹ icon để báo đang load
+		const icon = DOM.btnLocate.querySelector('svg');
+		if (icon) {
+			icon.style.transition = 'transform 0.5s';
+			icon.style.transform = 'rotate(360deg)';
+			setTimeout(() => icon.style.transform = 'rotate(0deg)', 500);
+		}
+	};
 }
-
 
 // ============================================================
 // 6. LOGIC TÌM ĐƯỜNG
@@ -298,89 +297,103 @@ if (DOM.btnLocate) {
 function parseCoord(str) { return str ? str.split(',').map(Number) : null; }
 
 async function performRouting(start, end, profile) {
-  if (!start || !end) return;
+	if (!start || !end) return;
 
-  try {
-    DOM.loading.style.display = 'flex';
-    DOM.statusText.innerText = 'Đang tính đường...';
+	try {
+		DOM.loading.style.display = 'flex';
+		DOM.statusText.innerText = 'Đang tính đường...';
 
-    // Gọi API qua Blueprint
-    const res = await fetch('/map/route', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ start, end, profile })
-    });
+		// Gọi API qua Blueprint
+		const res = await fetch('/map/route', {
+			method : 'POST',
+			headers : {'Content-Type' : 'application/json'},
+			body : JSON.stringify({start, end, profile})
+		});
 
-    if (!res.ok) throw new Error(`Lỗi Server: ${res.status}`);
-    const geojson = await res.json();
+		if (!res.ok) throw new Error(`Lỗi Server: ${res.status}`);
+		const geojson = await res.json();
 
-    if (routeLayer) map.removeLayer(routeLayer);
+		if (routeLayer) map.removeLayer(routeLayer);
 
-    if (geojson?.features?.length > 0) {
-      routeLayer = L.geoJSON(geojson, {
-        style: { color: '#3b82f6', weight: 5, opacity: 0.9, lineCap: 'round' }
-      }).addTo(map);
+		if (geojson?.features?.length > 0) {
+			routeLayer = L.geoJSON(geojson, {
+							  style : {color : '#3b82f6', weight : 5, opacity : 0.9, lineCap : 'round'}
+						  }).addTo(map);
 
-      map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+			map.fitBounds(routeLayer.getBounds(), {padding : [ 50, 50 ]});
 
-      const s = geojson.features[0].properties.summary;
-      DOM.routeResult.innerHTML = `${(s.distance / 1000).toFixed(1)} km • ${Math.ceil(s.duration / 60)} phút`;
-      DOM.routeResult.style.display = 'block';
-      DOM.statusText.innerText = 'Hoàn tất!';
-    } else {
-      DOM.statusText.innerText = 'Không tìm thấy đường.';
-    }
-  } catch (e) {
-    console.error(e);
-    DOM.statusText.innerText = 'Lỗi dịch vụ.';
-  } finally {
-    DOM.loading.style.display = 'none';
-  }
+			const s = geojson.features[0].properties.summary;
+			DOM.routeResult.innerHTML = `${(s.distance / 1000).toFixed(1)} km • ${Math.ceil(s.duration / 60)} phút`;
+			DOM.routeResult.style.display = 'block';
+			DOM.statusText.innerText = 'Hoàn tất!';
+		} else {
+			DOM.statusText.innerText = 'Không tìm thấy đường.';
+		}
+	} catch (e) {
+		console.error(e);
+		DOM.statusText.innerText = 'Lỗi dịch vụ.';
+	} finally {
+		DOM.loading.style.display = 'none';
+	}
 }
 
 // Logic Realtime
 function clearRealtime() {
-  if (realtimeTimer) { clearInterval(realtimeTimer); realtimeTimer = null; }
-  DOM.statusText.innerText = 'Real-time tắt';
+	if (realtimeTimer) {
+		clearInterval(realtimeTimer);
+		realtimeTimer = null;
+	}
+	DOM.statusText.innerText = 'Real-time tắt';
 }
 
 function startRealtimeIfNeeded() {
-  if (!DOM.realtimeToggle.checked) { clearRealtime(); return; }
+	if (!DOM.realtimeToggle.checked) {
+		clearRealtime();
+		return;
+	}
 
-  const start = parseCoord(DOM.startCoords.value);
-  const end = parseCoord(DOM.endCoords.value);
-  if (!start || !end) { DOM.statusText.innerText = 'Chưa đủ thông tin real-time'; return; }
+	const start = parseCoord(DOM.startCoords.value);
+	const end = parseCoord(DOM.endCoords.value);
+	if (!start || !end) {
+		DOM.statusText.innerText = 'Chưa đủ thông tin real-time';
+		return;
+	}
 
-  if (realtimeTimer) clearInterval(realtimeTimer);
+	if (realtimeTimer) clearInterval(realtimeTimer);
 
-  const profile = DOM.profileSelect.value;
-  const interval = REALTIME_INTERVALS[profile] || 60000;
+	const profile = DOM.profileSelect.value;
+	const interval = REALTIME_INTERVALS[profile] || 60000;
 
-  // Chạy ngay lần đầu
-  performRouting(start, end, profile);
+	// Chạy ngay lần đầu
+	performRouting(start, end, profile);
 
-  // Lên lịch chạy định kỳ
-  realtimeTimer = setInterval(() => {
-    const s = parseCoord(DOM.startCoords.value);
-    const e = parseCoord(DOM.endCoords.value);
-    if (s && e) performRouting(s, e, profile);
-    else clearRealtime();
-  }, interval);
+	// Lên lịch chạy định kỳ
+	realtimeTimer = setInterval(() => {
+		const s = parseCoord(DOM.startCoords.value);
+		const e = parseCoord(DOM.endCoords.value);
+		if (s && e)
+			performRouting(s, e, profile);
+		else
+			clearRealtime();
+	}, interval);
 
-  DOM.statusText.innerText = `Real-time ON (${Math.round(interval / 1000)}s)`;
+	DOM.statusText.innerText = `Real-time ON (${Math.round(interval / 1000)}s)`;
 }
 
 // Sự kiện UI: Nút Tìm Đường
 DOM.btnDraw.onclick = () => {
-  const start = parseCoord(DOM.startCoords.value);
-  const end = parseCoord(DOM.endCoords.value);
-  const profile = DOM.profileSelect.value;
+	const start = parseCoord(DOM.startCoords.value);
+	const end = parseCoord(DOM.endCoords.value);
+	const profile = DOM.profileSelect.value;
 
-  if (!start || !end) { alert('Vui lòng chọn đủ điểm đi và đến!'); return; }
+	if (!start || !end) {
+		alert('Vui lòng chọn đủ điểm đi và đến!');
+		return;
+	}
 
-  performRouting(start, end, profile).then(() => {
-    if (DOM.realtimeToggle.checked) startRealtimeIfNeeded();
-  });
+	performRouting(start, end, profile).then(() => {
+		if (DOM.realtimeToggle.checked) startRealtimeIfNeeded();
+	});
 };
 
 DOM.realtimeToggle.addEventListener('change', startRealtimeIfNeeded);
@@ -389,127 +402,129 @@ DOM.profileSelect.addEventListener('change', () => { if (DOM.realtimeToggle.chec
 // 7. LOGIC CỬA HÀNG
 // ============================================================
 async function loadStores() {
-  try {
-    console.log("🚀 Bắt đầu tải danh sách cửa hàng...");
+	try {
+		console.log("🚀 Bắt đầu tải danh sách cửa hàng...");
 
-    // 1. Gọi API
-    const res = await fetch('/map/api/stores');
-    if (!res.ok) throw new Error('API Error');
-    const stores = await res.json();
+		// 1. Gọi API
+		const res = await fetch('/map/api/stores');
+		if (!res.ok) throw new Error('API Error');
+		const stores = await res.json();
 
-    // 2. Kiểm tra LocalStorage
-    const targetData = localStorage.getItem('TARGET_STORE');
-    let targetStoreId = null;
+		// 2. Kiểm tra LocalStorage
+		const targetData = localStorage.getItem('TARGET_STORE');
+		let targetStoreId = null;
 
-    if (targetData) {
-      try {
-        const parsed = JSON.parse(targetData);
-        targetStoreId = parsed.id;
-        console.log("📦 ID mục tiêu:", targetStoreId);
+		if (targetData) {
+			try {
+				const parsed = JSON.parse(targetData);
+				targetStoreId = parsed.id;
+				console.log("📦 ID mục tiêu:", targetStoreId);
 
-        localStorage.removeItem('TARGET_STORE');
-      } catch (e) { console.error("❌ Lỗi đọc TARGET_STORE", e); }
-    }
+				localStorage.removeItem('TARGET_STORE');
+			} catch (e) {
+				console.error("❌ Lỗi đọc TARGET_STORE", e);
+			}
+		}
 
-    // 3. Duyệt danh sách và vẽ Marker
-    stores.forEach(s => {
-      let lat = Number(s.lat ?? s.latitude ?? s.lat_str);
-      let lng = Number(s.long ?? s.longitude ?? s.long_str);
-      if (!lat || !lng) return;
+		// 3. Duyệt danh sách và vẽ Marker
+		stores.forEach(s => {
+			let lat = Number(s.lat ?? s.latitude ?? s.lat_str);
+			let lng = Number(s.long ?? s.longitude ?? s.long_str);
+			if (!lat || !lng) return;
 
-      // Xử lý Tags
-      let tags = Array.isArray(s.tags) ? s.tags : (s.tags ? s.tags.split(',') : []);
-      tags = tags.map(normalizeTag).filter(Boolean);
-      let primary = normalizeTag(s.primary_tag);
-      if (!primary) {
-        const priority = ['street food', 'main course', 'dessert', 'drink', 'edible souvenir', 'souvenir'];
-        primary = priority.find(p => tags.includes(p)) || tags[0] || 'default';
-      }
+			// Xử lý Tags
+			let tags = Array.isArray(s.tags) ? s.tags : (s.tags ? s.tags.split(',') : []);
+			tags = tags.map(normalizeTag).filter(Boolean);
+			let primary = normalizeTag(s.primary_tag);
+			if (!primary) {
+				const priority = [ 'street food', 'main course', 'dessert', 'drink', 'edible souvenir', 'souvenir' ];
+				primary = priority.find(p => tags.includes(p)) || tags[0] || 'default';
+			}
 
-      const iconData = getTagIcon(primary);
-      const marker = createMarker('store', lat, lng, { emoji: iconData.emoji, color: iconData.color }).addTo(map);
+			const iconData = getTagIcon(primary);
+			const marker = createMarker('store', lat, lng, {emoji : iconData.emoji, color : iconData.color}).addTo(map);
 
-      // --- KIỂM TRA XEM CÓ PHẢI LÀ CỬA HÀNG MỤC TIÊU KHÔNG ---
-      let isTargetStore = false;
-      const currentId = s.store_id;
+			// --- KIỂM TRA XEM CÓ PHẢI LÀ CỬA HÀNG MỤC TIÊU KHÔNG ---
+			let isTargetStore = false;
+			const currentId = s.store_id;
 
-      if (targetStoreId !== null && String(currentId) === String(targetStoreId)) {
-        isTargetStore = true; // Đánh dấu đây là đích đến
-        console.log(`✅ Đã tìm thấy đích đến: ${s.name}`);
+			if (targetStoreId !== null && String(currentId) === String(targetStoreId)) {
+				isTargetStore = true; // Đánh dấu đây là đích đến
+				console.log(`✅ Đã tìm thấy đích đến: ${s.name}`);
 
-        // 1. Điền thông tin vào ô Input
-        DOM.endDisplay.value = s.address ? `${s.name} - ${s.address}` : s.name;
-        DOM.endCoords.value = `${lng},${lat}`;
-        DOM.statusText.innerText = "Đã chọn điểm đến.";
+				// 1. Điền thông tin vào ô Input
+				DOM.endDisplay.value = s.address ? `${s.name} - ${s.address}` : s.name;
+				DOM.endCoords.value = `${lng},${lat}`;
+				DOM.statusText.innerText = "Đã chọn điểm đến.";
 
-        // 2. Zoom sâu vào địa điểm (Mức 18 là rất gần)
-        setTimeout(() => {
-          map.setView([lat, lng], 18);
-          marker.openPopup();
-        }, 800);
+				// 2. Zoom sâu vào địa điểm (Mức 18 là rất gần)
+				setTimeout(() => {
+					map.setView([ lat, lng ], 18);
+					marker.openPopup();
+				}, 800);
 
-        // 3. Tự động vẽ đường nếu đã có GPS
-        if (DOM.startCoords.value) {
-          DOM.btnDraw.click();
-        }
-      }
+				// 3. Tự động vẽ đường nếu đã có GPS
+				if (DOM.startCoords.value) {
+					DOM.btnDraw.click();
+				}
+			}
 
-      // --- TẠO POPUP ---
-      const popupContent = document.createElement('div');
-      popupContent.className = 'popup-content';
+			// --- TẠO POPUP ---
+			const popupContent = document.createElement('div');
+			popupContent.className = 'popup-content';
 
-      let tagsHtml = '';
-      if (tags.length) {
-        tagsHtml = `<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:8px;">
+			let tagsHtml = '';
+			if (tags.length) {
+				tagsHtml = `<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:8px;">
           ${tags.map(t => {
-          const ic = getTagIcon(t);
-          return `<span class="tag-badge" style="background:${ic.color}">${ic.emoji} <span style="text-transform:capitalize">${ic.label || t}</span></span>`;
-        }).join('')}
+					const ic = getTagIcon(t);
+					return `<span class="tag-badge" style="background:${ic.color}">${ic.emoji} <span style="text-transform:capitalize">${ic.label || t}</span></span>`;
+				}).join('')}
         </div>`;
-      }
+			}
 
-      const safeName = s.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      popupContent.innerHTML = `<h3>${safeName}</h3><p>${s.address || ''}</p>${tagsHtml}`;
+			const safeName = s.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			popupContent.innerHTML = `<h3>${safeName}</h3><p>${s.address || ''}</p>${tagsHtml}`;
 
-      // ẨN NÚT NẾU LÀ ĐÍCH ĐẾN ---
-      if (!isTargetStore) {
-        // Nếu KHÔNG phải đích đến -> Hiện nút chọn bình thường
-        const btnSet = document.createElement('button');
-        btnSet.className = 'btn-select';
-        btnSet.innerText = '🚩 Đến đây';
-        btnSet.onclick = () => {
-          DOM.endDisplay.value = s.address ? `${s.name} - ${s.address}` : s.name;
-          DOM.endCoords.value = `${lng},${lat}`;
-          marker.closePopup();
-          if (DOM.panel.classList.contains('collapsed')) DOM.toggleBtn.click();
-          DOM.statusText.innerText = "Đã chọn điểm đến.";
-        };
+			// ẨN NÚT NẾU LÀ ĐÍCH ĐẾN ---
+			if (!isTargetStore) {
+				// Nếu KHÔNG phải đích đến -> Hiện nút chọn bình thường
+				const btnSet = document.createElement('button');
+				btnSet.className = 'btn-select';
+				btnSet.innerText = '🚩 Đến đây';
+				btnSet.onclick = () => {
+					DOM.endDisplay.value = s.address ? `${s.name} - ${s.address}` : s.name;
+					DOM.endCoords.value = `${lng},${lat}`;
+					marker.closePopup();
+					if (DOM.panel.classList.contains('collapsed')) DOM.toggleBtn.click();
+					DOM.statusText.innerText = "Đã chọn điểm đến.";
+				};
 
-        const btnRouteNow = document.createElement('button');
-        btnRouteNow.className = 'btn-route';
-        btnRouteNow.innerText = 'Chỉ đường ngay';
-        btnRouteNow.onclick = () => {
-          btnSet.click();
-          DOM.btnDraw.click();
-        };
+				const btnRouteNow = document.createElement('button');
+				btnRouteNow.className = 'btn-route';
+				btnRouteNow.innerText = 'Chỉ đường ngay';
+				btnRouteNow.onclick = () => {
+					btnSet.click();
+					DOM.btnDraw.click();
+				};
 
-        popupContent.append(btnSet, btnRouteNow);
-      } else {
-        // Nếu LÀ đích đến -> Thêm dòng chữ báo hiệu thay vì nút bấm
-        const infoText = document.createElement('div');
-        infoText.style.color = 'green';
-        infoText.style.fontWeight = 'bold';
-        infoText.style.marginTop = '8px';
-        infoText.innerText = '🎯 Điểm đến của bạn';
-        popupContent.append(infoText);
-      }
-      // ------------------------------------------
+				popupContent.append(btnSet, btnRouteNow);
+			} else {
+				// Nếu LÀ đích đến -> Thêm dòng chữ báo hiệu thay vì nút bấm
+				const infoText = document.createElement('div');
+				infoText.style.color = 'green';
+				infoText.style.fontWeight = 'bold';
+				infoText.style.marginTop = '8px';
+				infoText.innerText = '🎯 Điểm đến của bạn';
+				popupContent.append(infoText);
+			}
+			// ------------------------------------------
 
-      marker.bindPopup(popupContent);
-    });
-  } catch (e) {
-    console.error('🔥 Lỗi load store:', e);
-  }
+			marker.bindPopup(popupContent);
+		});
+	} catch (e) {
+		console.error('🔥 Lỗi load store:', e);
+	}
 }
 // ============================================================
 // 8. KHỞI CHẠY

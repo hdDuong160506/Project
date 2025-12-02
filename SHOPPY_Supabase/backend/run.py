@@ -23,6 +23,9 @@ from routes.cart_routes import cart_bp
 # Import Blueprint cho Product Summary
 from routes.product_summary_routes import product_summary_bp
 
+# Import Blueprint cho Suggest Products
+from routes.suggest_routes import suggest_bp
+
 # -----------------------------------------------------
 # KHỞI TẠO APP
 # -----------------------------------------------------
@@ -74,6 +77,8 @@ app.register_blueprint(location_bp)
 app.register_blueprint(cart_bp)
 # API product summary sẽ chạy tại đường dẫn: /api/product_summary
 app.register_blueprint(product_summary_bp)
+# API suggest products sẽ chạy tại đường dẫn: /api/suggest_products
+app.register_blueprint(suggest_bp)
 
 
 # -----------------------------------------------------

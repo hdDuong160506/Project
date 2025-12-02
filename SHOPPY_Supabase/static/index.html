@@ -11,7 +11,7 @@
   <script src="js/gps-fast.js" async></script>
 
   <link rel="stylesheet" href="css/style.css">
-  
+
 </head>
 
 <body>
@@ -157,19 +157,26 @@
       </section>
 
       <div style="background:#f7f7f7;padding:20px 0;margin:40px 0;text-align:center;border-radius:12px;">
-        <p style="font-size:18px;margin-bottom:20px;color:#555;" id="current-location">📍 Đang lấy vị trí của
-          bạn...
-        </p>
-        <div style="max-width: 1200px; margin-left: 0; padding: 0 20px;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
           <div
             style="margin-bottom: 20px; text-align: left; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
             <label for="search_address_input"
               style="font-weight: 600; display: block; margin-bottom: 5px; color: #333;">
-              Địa chỉ của bạn (Sử dụng để tính khoảng cách):
+              📍 Địa chỉ của bạn (Sử dụng để tính khoảng cách):
             </label>
-            <input type="text" id="search_address_input" placeholder="Ví dụ: 704 Nguyễn Trãi, Quận 5 (Ấn Enter để tìm)"
+            <input type="text" id="search_address_input"
+              placeholder="Ví dụ: Hà Nội, TP. Hồ Chí Minh (Ấn Enter để tìm sản phẩm)"
               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
           </div>
+
+          <!-- PHẦN GỢI Ý SẢN PHẨM -->
+          <section class="suggested-products-section" style="padding:20px 0;">
+            <h2 style="text-align:center; margin-bottom:30px; color:#333;">🛍️ Sản phẩm gợi ý cho bạn</h2>
+            <div class="products" id="suggested-products-list"
+              style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:20px; max-width:1200px; margin:0 auto;">
+              <p style="text-align:center; color:#888; grid-column:1/-1;">Đang tải sản phẩm gợi ý...</p>
+            </div>
+          </section>
 
           <h2 style="margin-bottom:12px; text-align: left; padding: 0 20px;">Các sản phẩm tìm thấy</h2>
 
@@ -413,6 +420,8 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-init.js"></script> <script src="js/script.js"></script> </body>
+  <script src="js/supabase-init.js"></script>
+  <script src="js/script.js"></script>
+</body>
 
 </html>

@@ -127,10 +127,10 @@
 
   <script>
     // ---
-    // JavaScript cho trang cart.html (Đã cập nhật để lấy dữ liệu động)
+    // JavaScript cho trang cart.html (Đã tối ưu hóa API)
     // ---
 
-    let ALL_PRODUCTS = []; // Sẽ chứa dữ liệu tải từ API/File
+    let CART_DATA = {}; // Chứa dữ liệu chi tiết từ API /api/cart/details
     let cart = JSON.parse(localStorage.getItem('cart_v1') || '{}');
     const $ = sel => document.querySelector(sel);
 
@@ -138,16 +138,33 @@
       return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '₫';
     }
 
-    // 1. Hàm tải dữ liệu sản phẩm (Giống script.js ở trang chủ)
-    async function loadProducts() {
+    // 1. Hàm tải dữ liệu chi tiết giỏ hàng (Gọi API Cart Details)
+    async function loadCartData() {
+      const cartKeys = Object.keys(cart);
+      
+      // Nếu giỏ rỗng thì render luôn (trống)
+      if (cartKeys.length === 0) {
+          renderCartPage();
+          return;
+      }
+
       try {
-        // Giả lập gọi API giống trang chủ
-        const res = await fetch('/api/products'); 
-        ALL_PRODUCTS = await res.json();
-        renderCartPage();
+        const res = await fetch('/api/cart/details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cart: cart })
+        });
+        
+        if (res.ok) {
+            CART_DATA = await res.json();
+            renderCartPage();
+        } else {
+            console.error("Lỗi API:", res.status);
+            $('#cart-page-list').innerHTML = '<p style="color:red; text-align:center; padding:20px">Lỗi khi tải thông tin giỏ hàng.</p>';
+        }
       } catch (err) {
-        console.error("Lỗi tải sản phẩm:", err);
-        $('#cart-page-list').innerHTML = '<p style="color:red; text-align:center; padding:20px">Không thể kết nối đến máy chủ dữ liệu.</p>';
+        console.error("Lỗi kết nối:", err);
+        $('#cart-page-list').innerHTML = '<p style="color:red; text-align:center; padding:20px">Không thể kết nối đến máy chủ.</p>';
       }
     }
 
@@ -169,7 +186,7 @@
       }
     }
 
-    // 2. Hàm Render Giỏ hàng (Xử lý khóa phức tạp productId_storeId)
+    // 2. Hàm Render Giỏ hàng (Dùng dữ liệu từ CART_DATA)
     function renderCartPage() {
       const cartList = $('#cart-page-list');
       const cartCount = Object.values(cart).reduce((s, q) => s + q, 0);
@@ -185,25 +202,28 @@
 
       // Duyệt qua từng item trong LocalStorage
       Object.entries(cart).forEach(([key, qty]) => {
-        // Key có dạng "productID_storeID"
-        const [productId, storeId] = key.split('_');
-        
-        // Tìm sản phẩm trong danh sách tổng
-        const product = ALL_PRODUCTS.find(p => p.product_id == productId);
-        if (!product) return; // Nếu không thấy sản phẩm (do lỗi data), bỏ qua
+        // Lấy thông tin chi tiết từ CART_DATA đã fetch
+        const itemDetails = CART_DATA[key];
 
-        // Tìm cửa hàng cụ thể bán sản phẩm đó để lấy giá và tên shop
-        const store = product.stores.find(s => s.store_id == storeId);
-        if (!store) return;
+        if (!itemDetails) {
+            // Trường hợp có trong localStorage nhưng API không trả về (lỗi hoặc sp bị xóa)
+            // Có thể chọn ẩn đi hoặc hiển thị loading
+            return;
+        }
 
-        // Lấy ảnh đại diện (ưu tiên ảnh của store, nếu không có lấy ảnh product)
-        const mainImageObj = store.product_images ? store.product_images.find(img => img.ps_type === 1) : null;
-        const displayImage = mainImageObj ? mainImageObj.ps_image_url : product.product_image_url;
+        // Lấy thông tin cửa hàng (API trả về mảng stores với 1 phần tử)
+        const storeInfo = itemDetails.stores[0];
         
-        // Lấy giá (ưu tiên min_price hoặc cost của store)
-        const price = store.min_price || store.cost || 0;
+        // Giá ưu tiên lấy từ store
+        const price = storeInfo.ps_min_price_store || 0;
         const itemTotal = price * qty;
         total += itemTotal;
+
+        // Xử lý ảnh (Ưu tiên ảnh cửa hàng, fallback ảnh sản phẩm gốc)
+        let displayImage = itemDetails.product_image_url;
+        if (storeInfo.product_images && storeInfo.product_images.length > 0) {
+            displayImage = storeInfo.product_images[0].ps_image_url;
+        }
 
         const item = document.createElement('div');
         item.className = 'cart-page-item';
@@ -211,11 +231,11 @@
         item.innerHTML = `
           <div class="col-product">
             <input type="checkbox" checked style="margin-right: 10px;" />
-            <img src="${displayImage}" alt="${product.product_name}" />
+            <img src="${displayImage}" alt="${itemDetails.product_name}" onerror="this.src='images/placeholder.jpg'" />
             <div class="product-info">
-              <h4>${product.product_name}</h4>
-              <div class="shop-info">🏪 ${store.store_name}</div>
-              <div class="shop-info" style="font-size:12px; color:#888">📍 ${store.store_address}</div>
+              <h4>${itemDetails.product_name}</h4>
+              <div class="shop-info">🏪 ${storeInfo.store_name}</div>
+              <div class="shop-info" style="font-size:12px; color:#888">📍 ${storeInfo.store_address}</div>
             </div>
           </div>
           <div class="col-price" style="text-align:center;">${formatMoney(price)}</div>
@@ -246,11 +266,10 @@
       // Tính lại tổng tiền để hiển thị trong confirm
       let finalTotal = 0;
       Object.entries(cart).forEach(([key, qty]) => {
-          const [productId, storeId] = key.split('_');
-          const product = ALL_PRODUCTS.find(p => p.product_id == productId);
-          if(product) {
-              const store = product.stores.find(s => s.store_id == storeId);
-              if(store) finalTotal += (store.min_price || 0) * qty;
+          const itemDetails = CART_DATA[key];
+          if(itemDetails) {
+             const storeInfo = itemDetails.stores[0];
+             finalTotal += (storeInfo.ps_min_price_store || 0) * qty;
           }
       });
 
@@ -265,7 +284,7 @@
 
     // Khởi chạy khi tải trang
     window.onload = function() {
-        loadProducts();
+        loadCartData();
     };
 
   </script>

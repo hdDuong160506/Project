@@ -69,7 +69,7 @@ body {
 .brand {
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: rgb(0, 174, 255);
   margin-bottom: 15px;
   display: flex;
   align-items: center;
@@ -433,4 +433,11 @@ input[readonly] {
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.brand-logo {
+  background: rgb(255, 255, 255);
+  height: 60px;
+  width: 60px;
+  object-fit: contain;
 }

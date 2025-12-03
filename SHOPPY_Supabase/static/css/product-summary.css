@@ -21,7 +21,7 @@ body {
     font-size: 14px;
     background: #e9ecef;
     /* Cần điều chỉnh margin-top để tránh navbar fixed */
-    margin-top: 130px;
+    margin-top: 90px;
 }
 
 .breadcrumb a {
@@ -175,3 +175,10 @@ main {
         min-width: 100%;
     }
 }
+
+/* Thêm CSS để tạo khu vực cuộn cố định cho danh sách cửa hàng */
+#recommended-stores-list {
+    max-height: 70vh; 
+    overflow-y: auto;
+    padding-right: 15px; 
+}   

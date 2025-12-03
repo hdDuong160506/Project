@@ -69,8 +69,13 @@ function renderCartPage() {
     if (cartCount === 0) {
         cartList.innerHTML = '<div class="empty-cart">Giỏ hàng của bạn đang trống <br><br> <a href="index.html" style="font-size:16px; color:#005FFF">Đi mua sắm ngay</a></div>';
         $('#cart-page-total').innerHTML = `Tổng cộng (0 Sản phẩm): <span>0₫</span>`;
+        // Ẩn nút "Mua ngay" nếu giỏ trống
+        $('#cart-page-checkout').disabled = true;
         return;
     }
+    
+    // Bật nút "Mua ngay"
+    $('#cart-page-checkout').disabled = false;
 
     cartList.innerHTML = '';
 
@@ -132,28 +137,16 @@ function renderCartPage() {
     $('#cart-page-total').innerHTML = `Tổng cộng (${cartCount} Sản phẩm): <span>${formatMoney(total)}</span>`;
 }
 
-// Nút "Mua ngay"
+// THAY ĐỔI LỚN: Nút "Mua ngay" chuyển hướng đến checkout.html
 $('#cart-page-checkout').addEventListener('click', () => {
     const count = Object.values(cart).reduce((s, q) => s + q, 0);
-    if (count === 0) { alert('Giỏ hàng đang rỗng.'); return; }
-
-    // Tính lại tổng tiền để hiển thị trong confirm
-    let finalTotal = 0;
-    Object.entries(cart).forEach(([key, qty]) => {
-        const itemDetails = CART_DATA[key];
-        if (itemDetails) {
-            const storeInfo = itemDetails.stores[0];
-            finalTotal += (storeInfo.ps_min_price_store || 0) * qty;
-        }
-    });
-
-    if (confirm(`Xác nhận thanh toán ${formatMoney(finalTotal)} ?`)) {
-        alert('Thanh toán thành công — cảm ơn bạn!');
-        cart = {};
-        saveCart();
-        // Chuyển hướng về trang chủ sau khi mua
-        window.location.href = 'index.html';
+    if (count === 0) { 
+        alert('Giỏ hàng đang trống!'); 
+        return; 
     }
+
+    // Chuyển hướng đến trang thanh toán
+    window.location.href = 'checkout.html';
 });
 
 // Khởi chạy khi tải trang

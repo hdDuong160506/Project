@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SHOPPY VIỆT NAM</title>
 
-  <!-- Hỏi lấy tọa độ cho nhanh. -->
   <script src="js/gps-fast.js" async></script>
 
   <link rel="stylesheet" href="css/style.css">
@@ -48,13 +47,6 @@
       <div class="nav-center-search">
         <form id="search_form" onsubmit="event.preventDefault();">
 
-          <div class="search-icon-left" title="Bộ lọc tìm kiếm" onclick="toggleFilterMenu()">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-              <path
-                d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
-            </svg>
-          </div>
-
           <input type="text" name="search" id="search_input" placeholder="Tìm kiếm trên Shoppy..." autocomplete="off" />
 
           <div class="search-actions-right">
@@ -82,31 +74,6 @@
               </svg>
             </button>
           </div>
-          <div id="filter-dropdown" class="filter-dropdown-menu">
-            <div class="filter-group">
-              <label>Khoảng cách:</label>
-              <select name="distance_filter" id="distance_filter" class="custom-select">
-                <option value="">Tất cả</option>
-                <option value="1">Dưới 1 km</option>
-                <option value="3">Dưới 3 km</option>
-                <option value="5">Dưới 5 km</option>
-                <option value="10">Dưới 10 km</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label>Mức giá:</label>
-              <select name="price_filter" id="price_filter" class="custom-select">
-                <option value="">Tất cả</option>
-                <option value="1">Dưới 50k</option>
-                <option value="2">50k - 100k</option>
-                <option value="3">100k - 200k</option>
-                <option value="4">200k - 500k</option>
-                <option value="5">500k - 1tr</option>
-                <option value="6">Trên 1tr</option>
-              </select>
-            </div>
-          </div>
-
         </form>
         <div id="search_suggestions"></div>
       </div>
@@ -169,9 +136,9 @@
               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
           </div>
 
-          <!-- PHẦN GỢI Ý SẢN PHẨM -->
           <section class="suggested-products-section" style="padding:20px 0;">
-            <h2 id="suggested-products-title" class="suggested-title" style="text-align:center; margin-bottom:30px; color:#333;">🛍️ Sản phẩm gợi ý cho bạn</h2>
+            <h2 id="suggested-products-title" class="suggested-title"
+              style="text-align:center; margin-bottom:30px; color:#333;">🛍️ Sản phẩm gợi ý cho bạn</h2>
             <h2 id="search-results-title" style="text-align:center; margin-bottom:30px; color:#333; display:none;"></h2>
             <div class="products" id="suggested-products-list"
               style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:20px; max-width:1200px; margin:0 auto;">
@@ -179,40 +146,8 @@
             </div>
           </section>
 
-          <h2 style="margin-bottom:12px; text-align: left; padding: 0 20px;">Các sản phẩm tìm thấy</h2>
-
-          <div id="sort-filter-bar"
-            style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; text-align: left; padding: 10px; background: white; border-radius: 6px;">
-            <span style="font-weight: 600; color: #555; align-self: center;">Sắp xếp theo:</span>
-
-            <div class="sort-option">
-              <input type="radio" id="sort_default_result" name="sort_result_filter" value="" checked
-                onclick="applySortFilter()">
-              <label for="sort_default_result">Mặc định</label>
-            </div>
-            <div class="sort-option">
-              <input type="radio" id="sort_near" name="sort_result_filter" value="dist_asc" onclick="applySortFilter()">
-              <label for="sort_near">Gần nhất</label>
-            </div>
-            <div class="sort-option">
-              <input type="radio" id="sort_far" name="sort_result_filter" value="dist_desc" onclick="applySortFilter()">
-              <label for="sort_far">Xa nhất</label>
-            </div>
-            <div class="sort-option">
-              <input type="radio" id="sort_price_low" name="sort_result_filter" value="price_asc"
-                onclick="applySortFilter()">
-              <label for="sort_price_low">Giá thấp</label>
-            </div>
-            <div class="sort-option">
-              <input type="radio" id="sort_price_high" name="sort_result_filter" value="price_desc"
-                onclick="applySortFilter()">
-              <label for="sort_price_high">Giá cao</label>
-            </div>
-          </div>
+          <div class="products" id="product-list"></div>
         </div>
-
-        <div class="products" id="product-list"></div>
-      </div>
     </section>
   </main>
 
@@ -226,11 +161,10 @@
       <div style="font-weight:700" id="cart-total">0₫</div>
     </div>
     <div style="margin-top:12px;display:flex;gap:8px">
-      <button class="cart-btn" id="checkout">Thanh toán</button>
-      <button class="small-btn" id="clear-cart">Xóa</button>
+      <button class="cart-btn" id="checkout">Xem Giỏ hàng</button>
       <button class="small-btn" id="close-cart" style="margin-left:auto;">Đóng</button>
     </div>
-  </div>
+  </div>>
 
   <footer>
     <div class="footer">

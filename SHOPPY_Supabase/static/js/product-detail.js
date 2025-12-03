@@ -27,6 +27,7 @@ function formatMoney(n) {
 function saveCart() { 
     localStorage.setItem('cart_v1', JSON.stringify(cart)); 
     updateCartUI(); 
+    fetchCartDetails(); // THÊM: Cập nhật cache
 }
 
 // [Doc 3 + Doc 4] Update Account Link with User Info
@@ -59,7 +60,7 @@ function updateAccountLink() {
 }
 
 // ======================================================================
-// 3. LOGIC SẢN PHẨM & GIỎ HÀNG (MERGE)
+// 3. LOGIC SẢN PHẨM & GIỎ HÀNG (MERGE) - ĐÃ CHỈNH SỬA GIỎ HÀNG
 // ======================================================================
 
 // [Doc 4 + 3] Tải thông tin chi tiết sản phẩm
@@ -105,7 +106,8 @@ async function loadMainProduct() {
                 name: storeInfo.store_name,                 
                 sub_name: productData.product_name,          
                 address: storeInfo.store_address,
-                price: storeInfo.ps_min_price_store || 0,
+                // Ưu tiên ps_min_price_store nếu có, nếu không thì dùng cost
+                price: storeInfo.ps_min_price_store || storeInfo.cost || 0, 
                 img: (storeInfo.product_images?.[0]?.ps_image_url) || productData.product_image_url, 
                 description: productData.product_des || "Đang cập nhật...",
                 ps_id: storeInfo.ps_id // [Doc 4]
@@ -146,13 +148,23 @@ async function fetchCartDetails() {
         return; 
     }
 
+    const cartToFetch = {};
+    cartKeys.forEach(key => {
+        if (!CART_CACHE[key]) {
+             cartToFetch[key] = cart[key];
+        }
+    });
+
+    if (Object.keys(cartToFetch).length === 0) return;
+
     try {
         const res = await fetch('/api/cart/details', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cart: cart })
+            body: JSON.stringify({ cart: cartToFetch })
         });
         if (res.ok) { 
-            CART_CACHE = await res.json(); 
+            const newCache = await res.json();
+            CART_CACHE = { ...CART_CACHE, ...newCache };
             updateCartUI(); 
         }
     } catch (err) { console.error(err); }
@@ -184,7 +196,8 @@ function updateCartUI() {
         
         if (details) {
             const storeInfo = details.stores[0];
-            const price = storeInfo.ps_min_price_store || 0;
+            // Lấy giá ưu tiên từ ps_min_price_store, nếu không có thì dùng cost
+            const price = storeInfo.ps_min_price_store || storeInfo.cost || 0; 
             total += price * qty;
             
             let imgUrl = (storeInfo.product_images?.[0]?.ps_image_url) || details.product_image_url;
@@ -219,6 +232,8 @@ function updateCartUI() {
                     </div>
                 </div>`;
             cartList.appendChild(item);
+            // Kích hoạt fetch details nếu item chưa có trong cache
+            fetchCartDetails();
         }
     });
 
@@ -417,7 +432,11 @@ window.changeQty = function (key, delta) {
 }
 
 window.removeItem = function (key) {
-    if (confirm("Xóa sản phẩm này khỏi giỏ hàng?")) { delete cart[key]; saveCart(); } 
+    if (confirm("Xóa sản phẩm này khỏi giỏ hàng?")) { 
+        delete cart[key]; 
+        if (CART_CACHE[key]) delete CART_CACHE[key]; // Xóa khỏi cache
+        saveCart(); 
+    } 
 }
 
 // [Doc 3] Filter & Voice
@@ -460,10 +479,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Popup Events
     if ($('#open-cart')) $('#open-cart').onclick = () => { 
         const popup = $('#cart-popup'); 
+        // Dùng style.display như đã thống nhất
         popup.style.display = (popup.style.display === 'block') ? 'none' : 'block'; 
     };
     if ($('#close-cart')) $('#close-cart').onclick = () => $('#cart-popup').style.display = 'none';
-    if ($('#clear-cart')) $('#clear-cart').onclick = () => { if(confirm("Xóa hết?")) { cart={}; saveCart(); } };
+    
+    // LOẠI BỎ: Logic clear cart
+    
+    // ĐỔI CHỨC NĂNG: Thanh toán -> Xem Giỏ hàng
     if ($('#checkout')) $('#checkout').onclick = () => {
         if(Object.keys(cart).length === 0) return alert("Giỏ hàng trống");
         document.body.classList.add('page-fade-out');

@@ -101,12 +101,16 @@ async function renderOrderSummary(data) {
         // 5. Trả về HTML để render (để sắp xếp đúng thứ tự sau này nếu cần)
         const row = document.createElement('div');
         row.className = 'order-item';
+        
+        // Cấu trúc HTML đã được sửa trong CSS để hiển thị rõ ràng hơn
         row.innerHTML = `
             <div style="display:flex; justify-content:space-between; width:100%">
-                <span><b>${qty}x</b> ${details.product_name}</span>
-                <span>${formatMoney(subtotal)}</span>
+                <span><b>${qty}x ${details.product_name}</b></span>
+                <span style="font-weight: bold;">${formatMoney(subtotal)}</span>
             </div>
-            <div style="font-size:12px; color:#888;">${storeInfo.store_name}</div>
+            <div style="font-size:12px; color:#888; margin-top: 3px;">
+                ${storeInfo.store_name} | ${formatMoney(price)}/sản phẩm
+            </div>
         `;
         return row;
     });
@@ -149,8 +153,6 @@ async function handlePlaceOrder() {
 
     try {
         // GỌI HÀM SQL create_new_order
-        // Hàm này nhận p_items là mảng JSON chứa {ps_id, quantity, price}
-        // Giờ đây ps_id chắc chắn không bị null nữa
         const { data, error } = await supabase.rpc('create_new_order', {
             p_user_name: name,
             p_phone: phone,

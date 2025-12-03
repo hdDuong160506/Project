@@ -16,6 +16,20 @@ function formatMoney(n) {
 }
 
 // ======================================================================
+// HÀM QUẢN LÝ LOADING OVERLAY (THÊM MỚI)
+// ======================================================================
+
+function showLoading() {
+    const loading = $('#full-page-loading');
+    if (loading) loading.style.display = 'flex';
+}
+
+function hideLoading() {
+    const loading = $('#full-page-loading');
+    if (loading) loading.style.display = 'none';
+}
+
+// ======================================================================
 // PHẦN LOGIC CHUNG (ĐƯỢC TÍCH HỢP TỪ script.js)
 // ======================================================================
 
@@ -40,7 +54,7 @@ async function fetchCartDetails() {
     const cartToFetch = {};
     cartKeys.forEach(key => {
         if (!CART_CACHE[key]) {
-             cartToFetch[key] = cart[key];
+            cartToFetch[key] = cart[key];
         }
     });
 
@@ -162,7 +176,7 @@ async function updateAccountLink() {
         // (Không gọi API do Supabase client không có ở đây, tạm dùng LocalStorage như logic gốc của product-summary.js)
         const storedName = localStorage.getItem('userName');
         if (storedName) {
-             userName = storedName;
+            userName = storedName;
         } else {
             // Logic fallback nếu LocalStorage trống
             userName = session.user.user_metadata.name || session.user.email.split('@')[0];
@@ -238,42 +252,42 @@ function hideSuggestions() {
 
 // Hàm chuyển trang tổng quan (từ script.js)
 function navigateToProductSummary(productId) {
-	window.location.href = `product-summary.html?product_id=${productId}`;
-	hideSuggestions();
+    window.location.href = `product-summary.html?product_id=${productId}`;
+    hideSuggestions();
 }
 
 // Hàm render suggestions (từ script.js)
 function renderSuggestions(products, query) {
-	const container = $('#search_suggestions');
-	container.innerHTML = '';
-	highlightedIndex = -1; // Reset index
+    const container = $('#search_suggestions');
+    container.innerHTML = '';
+    highlightedIndex = -1; // Reset index
 
-	if (!products || products.length === 0) {
-		hideSuggestions();
-		return;
-	}
+    if (!products || products.length === 0) {
+        hideSuggestions();
+        return;
+    }
 
-	// --- 1. Thêm dòng "Tìm kiếm toàn bộ" ---
-	const searchAllItem = document.createElement('div');
-	searchAllItem.className = 'suggestion-item suggestion-search-all';
-	searchAllItem.innerHTML = `
+    // --- 1. Thêm dòng "Tìm kiếm toàn bộ" ---
+    const searchAllItem = document.createElement('div');
+    searchAllItem.className = 'suggestion-item suggestion-search-all';
+    searchAllItem.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#1867f8">
         <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
       </svg>
       Tìm kiếm: <b>${query}</b>
   `;
-	searchAllItem.addEventListener('click', () => submitSearch(query));
-	container.appendChild(searchAllItem);
+    searchAllItem.addEventListener('click', () => submitSearch(query));
+    container.appendChild(searchAllItem);
 
-	// --- 2. Thêm các sản phẩm gợi ý (có ảnh) ---
-	products.forEach(product => {
-		const item = document.createElement('div');
-		item.className = 'suggestion-item';
+    // --- 2. Thêm các sản phẩm gợi ý (có ảnh) ---
+    products.forEach(product => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
 
-		const imageUrl = product.product_image_url || 'images/placeholder.jpg';
+        const imageUrl = product.product_image_url || 'images/placeholder.jpg';
 
-		// Tạo HTML cho item gợi ý bao gồm ảnh, tên và vị trí (Không hiện giá)
-		item.innerHTML = `
+        // Tạo HTML cho item gợi ý bao gồm ảnh, tên và vị trí (Không hiện giá)
+        item.innerHTML = `
         <img class="suggestion-image" src="${imageUrl}" alt="${product.product_name}">
         <div class="suggestion-text-container">
             <div class="suggestion-name">${product.product_name}</div>
@@ -281,32 +295,32 @@ function renderSuggestions(products, query) {
         </div>
     `;
 
-		item.dataset.productId = product.product_id;
-		item.addEventListener('click', () => navigateToProductSummary(product.product_id));
-		container.appendChild(item);
-	});
+        item.dataset.productId = product.product_id;
+        item.addEventListener('click', () => navigateToProductSummary(product.product_id));
+        container.appendChild(item);
+    });
 
-	showSuggestions();
+    showSuggestions();
 }
 
 // Hàm fetch suggestions (từ script.js)
 async function fetchSuggestions(query) {
-	if (!query || query.length < 2) {
-		hideSuggestions();
-		return;
-	}
+    if (!query || query.length < 2) {
+        hideSuggestions();
+        return;
+    }
 
-	try {
-		// Giả lập gọi API gợi ý tìm kiếm (chỉ lấy 5 sản phẩm đầu tiên)
-		const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
-		const suggestions = await res.json();
+    try {
+        // Giả lập gọi API gợi ý tìm kiếm (chỉ lấy 5 sản phẩm đầu tiên)
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
+        const suggestions = await res.json();
 
-		renderSuggestions(suggestions, query);
+        renderSuggestions(suggestions, query);
 
-	} catch (err) {
-		console.error("Lỗi khi fetch gợi ý tìm kiếm:", err);
-		hideSuggestions();
-	}
+    } catch (err) {
+        console.error("Lỗi khi fetch gợi ý tìm kiếm:", err);
+        hideSuggestions();
+    }
 }
 
 // Hàm submit search (từ script.js - ĐƯỢC CHỈNH SỬA để redirect về index.html)
@@ -317,7 +331,7 @@ function submitSearch(query) {
         // Chuyển hướng về index.html với query
         window.location.href = `index.html?search=${encodeURIComponent(query)}`;
     }
-	hideSuggestions();
+    hideSuggestions();
 }
 
 
@@ -327,98 +341,98 @@ function submitSearch(query) {
 let currentRecognition = null;
 
 // Bắt đầu ghi âm (từ script.js)
-window.startVoiceSearch = function() {
-	if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
-		alert("Trình duyệt không hỗ trợ tìm kiếm bằng giọng nói! Hãy thử Chrome.");
-		return;
-	}
+window.startVoiceSearch = function () {
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+        alert("Trình duyệt không hỗ trợ tìm kiếm bằng giọng nói! Hãy thử Chrome.");
+        return;
+    }
 
-	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-	const recognition = new SpeechRecognition();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
 
-	if (currentRecognition) {
-		currentRecognition.stop();
-	}
+    if (currentRecognition) {
+        currentRecognition.stop();
+    }
 
-	currentRecognition = recognition;
+    currentRecognition = recognition;
 
-	recognition.continuous = false;
-	recognition.interimResults = true;
-	recognition.lang = "vi-VN";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "vi-VN";
 
-	const popup = $('#voice_popup');
-	const transcriptDisplay = $('#transcript_display');
-	transcriptDisplay.textContent = "Đang nghe...";
-	popup.style.display = "flex";
+    const popup = $('#voice_popup');
+    const transcriptDisplay = $('#transcript_display');
+    transcriptDisplay.textContent = "Đang nghe...";
+    popup.style.display = "flex";
 
-	recognition.onstart = function() {
-		transcriptDisplay.textContent = "Đang nghe... Hãy nói gì đó!";
-	};
+    recognition.onstart = function () {
+        transcriptDisplay.textContent = "Đang nghe... Hãy nói gì đó!";
+    };
 
-	recognition.onresult = function(event) {
-		let finalTranscript = '';
-		let interimTranscript = '';
-		for (let i = event.resultIndex; i < event.results.length; i++) {
-			const transcript = event.results[i][0].transcript;
-			if (event.results[i].isFinal)
-				finalTranscript += transcript;
-			else
-				interimTranscript += transcript;
-		}
+    recognition.onresult = function (event) {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal)
+                finalTranscript += transcript;
+            else
+                interimTranscript += transcript;
+        }
 
-		transcriptDisplay.textContent = finalTranscript || interimTranscript;
+        transcriptDisplay.textContent = finalTranscript || interimTranscript;
 
-		if (finalTranscript) {
-			$('#search_input').value = finalTranscript;
+        if (finalTranscript) {
+            $('#search_input').value = finalTranscript;
 
-			setTimeout(() => {
-				popup.style.display = "none";
-				recognition.stop();
+            setTimeout(() => {
+                popup.style.display = "none";
+                recognition.stop();
                 // CHUYỂN HƯỚNG VỀ index.html để hiển thị kết quả tìm kiếm
                 window.location.href = `index.html?search=${encodeURIComponent(finalTranscript)}`;
 
-			}, 200);
-		}
-	};
+            }, 200);
+        }
+    };
 
-	recognition.onerror = function(event) {
-		console.error("Lỗi nhận diện:", event.error);
-		let msg = "Lỗi: ";
-		if (event.error === "not-allowed")
-			msg += "Bạn chưa cấp quyền micro!";
-		else if (event.error === "no-speech")
-			msg += "Không phát hiện giọng nói!";
-		else
-			msg += event.error;
+    recognition.onerror = function (event) {
+        console.error("Lỗi nhận diện:", event.error);
+        let msg = "Lỗi: ";
+        if (event.error === "not-allowed")
+            msg += "Bạn chưa cấp quyền micro!";
+        else if (event.error === "no-speech")
+            msg += "Không phát hiện giọng nói!";
+        else
+            msg += event.error;
 
-		$('#transcript_display').textContent = msg;
+        $('#transcript_display').textContent = msg;
 
-		setTimeout(() => {
-			popup.style.display = "none";
-		}, 2000); // Tăng thời gian hiển thị lỗi
-	};
+        setTimeout(() => {
+            popup.style.display = "none";
+        }, 2000); // Tăng thời gian hiển thị lỗi
+    };
 
-	recognition.onend = function() {
-		currentRecognition = null;
+    recognition.onend = function () {
+        currentRecognition = null;
 
-		if ($('#transcript_display').textContent === "Đang nghe...") {
-			setTimeout(() => popup.style.display = "none", 200);
-		}
-	};
+        if ($('#transcript_display').textContent === "Đang nghe...") {
+            setTimeout(() => popup.style.display = "none", 200);
+        }
+    };
 
-	try {
-		recognition.start();
-	} catch (error) {
-		console.error("Không thể start recognition:", error);
-		popup.style.display = "none";
-		alert("Không thể bật giọng nói!");
-	}
+    try {
+        recognition.start();
+    } catch (error) {
+        console.error("Không thể start recognition:", error);
+        popup.style.display = "none";
+        alert("Không thể bật giọng nói!");
+    }
 }
 
 // Hủy ghi âm (từ script.js)
-window.cancelVoiceSearch = function() {
-	if (currentRecognition) currentRecognition.abort();
-	$('#voice_popup').style.display = "none";
+window.cancelVoiceSearch = function () {
+    if (currentRecognition) currentRecognition.abort();
+    $('#voice_popup').style.display = "none";
 }
 
 // Biến cho Image Search (từ script.js)
@@ -426,262 +440,260 @@ let currentImageData = null;
 let currentTab = 'upload';
 
 // Mở popup tìm kiếm bằng hình ảnh (từ script.js)
-window.openImageSearch = function() {
-	const popup = document.getElementById('image_search_popup');
-	popup.classList.add('active');
-	popup.style.display = 'flex';
+window.openImageSearch = function () {
+    const popup = document.getElementById('image_search_popup');
+    popup.classList.add('active');
+    popup.style.display = 'flex';
 
-	switchImageTab('upload');
-	clearAllImages();
+    switchImageTab('upload');
+    clearAllImages();
 }
 
 // Đóng popup (từ script.js)
 function closeImageSearch() {
-	const popup = document.getElementById('image_search_popup');
-	popup.classList.remove('active');
-	setTimeout(() => {
-		popup.style.display = 'none';
-	}, 200);
+    const popup = document.getElementById('image_search_popup');
+    popup.classList.remove('active');
+    setTimeout(() => {
+        popup.style.display = 'none';
+    }, 200);
 
-	clearAllImages();
-	hideError();
+    clearAllImages();
+    hideError();
 }
 
 // Chuyển tab (từ script.js)
 function switchImageTab(tabName) {
-	currentTab = tabName;
+    currentTab = tabName;
 
-	document.querySelectorAll('.tab-button').forEach(btn => {
-		if (btn.dataset.tab === tabName) {
-			btn.classList.add('active');
-		} else {
-			btn.classList.remove('active');
-		}
-	});
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 
-	document.querySelectorAll('.tab-panel').forEach(panel => {
-		panel.classList.remove('active');
-	});
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+    });
 
-	const activePanel = document.getElementById(`${tabName}-tab`);
-	if (activePanel) {
-		activePanel.classList.add('active');
-	}
+    const activePanel = document.getElementById(`${tabName}-tab`);
+    if (activePanel) {
+        activePanel.classList.add('active');
+    }
 
-	hideError();
+    hideError();
 }
 
 // Setup upload area (từ script.js)
 function setupImageUpload() {
-	const uploadArea = document.getElementById('imageUploadArea');
-	const fileInput = document.getElementById('imageFileInput');
+    const uploadArea = document.getElementById('imageUploadArea');
+    const fileInput = document.getElementById('imageFileInput');
 
-	if (!uploadArea || !fileInput) return;
+    if (!uploadArea || !fileInput) return;
 
-	document.getElementById('browseBtn').addEventListener('click', (e) => {
-		e.stopPropagation();
-		fileInput.click();
-	});
+    document.getElementById('browseBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
 
-	fileInput.addEventListener('change', (e) => {
-		const file = e.target.files[0];
-		if (file) {
-			handleImageFile(file);
-		}
-	});
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleImageFile(file);
+        }
+    });
 
-	uploadArea.addEventListener('dragover', (e) => {
-		e.preventDefault();
-		uploadArea.classList.add('dragover');
-	});
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
 
-	uploadArea.addEventListener('dragleave', () => {
-		uploadArea.classList.remove('dragover');
-	});
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
 
-	uploadArea.addEventListener('drop', (e) => {
-		e.preventDefault();
-		uploadArea.classList.remove('dragover');
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
 
-		const file = e.dataTransfer.files[0];
-		if (file && file.type.startsWith('image/')) {
-			handleImageFile(file);
-		} else {
-			showError('Vui lòng chọn file ảnh hợp lệ');
-		}
-	});
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            handleImageFile(file);
+        } else {
+            showError('Vui lòng chọn file ảnh hợp lệ');
+        }
+    });
 }
 
 // Xử lý file ảnh (từ script.js)
 function handleImageFile(file) {
-	if (file.size > 5 * 1024 * 1024) {
-		showError('Kích thước ảnh vượt quá 5MB');
-		return;
-	}
+    if (file.size > 5 * 1024 * 1024) {
+        showError('Kích thước ảnh vượt quá 5MB');
+        return;
+    }
 
-	const reader = new FileReader();
+    const reader = new FileReader();
 
-	reader.onload = (e) => {
-		currentImageData = e.target.result;
-		showImagePreview(currentImageData, 'upload');
-		hideError();
-	};
+    reader.onload = (e) => {
+        currentImageData = e.target.result;
+        showImagePreview(currentImageData, 'upload');
+        hideError();
+    };
 
-	reader.onerror = () => {
-		showError('Không thể đọc file ảnh');
-	};
+    reader.onerror = () => {
+        showError('Không thể đọc file ảnh');
+    };
 
-	reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
 }
 
 // Tải ảnh từ paste (từ script.js)
 function loadPastedImage() {
-	const input = document.getElementById('imagePasteInput');
-	const value = input.value.trim();
+    const input = document.getElementById('imagePasteInput');
+    const value = input.value.trim();
 
-	if (!value) {
-		clearPasteImage();
-		return;
-	}
+    if (!value) {
+        clearPasteImage();
+        return;
+    }
 
-	if (value.startsWith('http://') || value.startsWith('https://')) {
-		try {
-			new URL(value);
-			currentImageData = value;
-			showImagePreview(value, 'paste');
-			hideError();
-		} catch (e) {
-			showError('URL không hợp lệ');
-		}
-	}
-	else if (value.startsWith('data:image/')) {
-		currentImageData = value;
-		showImagePreview(value, 'paste');
-		hideError();
-	}
-	else if (value.length > 100) {
-		try {
-			atob(value);
-			currentImageData = `data:image/jpeg;base64,${value}`;
-			showImagePreview(currentImageData, 'paste');
-			hideError();
-		} catch (e) {
-			showError('Base64 không hợp lệ');
-		}
-	}
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+        try {
+            new URL(value);
+            currentImageData = value;
+            showImagePreview(value, 'paste');
+            hideError();
+        } catch (e) {
+            showError('URL không hợp lệ');
+        }
+    }
+    else if (value.startsWith('data:image/')) {
+        currentImageData = value;
+        showImagePreview(value, 'paste');
+        hideError();
+    }
+    else if (value.length > 100) {
+        try {
+            atob(value);
+            currentImageData = `data:image/jpeg;base64,${value}`;
+            showImagePreview(currentImageData, 'paste');
+            hideError();
+        } catch (e) {
+            showError('Base64 không hợp lệ');
+        }
+    }
 }
 
 // Hiển thị preview ảnh (từ script.js)
 function showImagePreview(imageData, tab) {
-	if (tab === 'upload') {
-		const preview = document.getElementById('imagePreview');
-		const container = document.getElementById('uploadPreviewContainer');
+    if (tab === 'upload') {
+        const preview = document.getElementById('imagePreview');
+        const container = document.getElementById('uploadPreviewContainer');
 
-		preview.src = imageData;
-		preview.style.display = 'block';
-		container.style.display = 'block';
+        preview.src = imageData;
+        preview.style.display = 'block';
+        container.style.display = 'block';
 
-		document.getElementById('imageUploadArea').style.display = 'none';
-	} else {
-		const preview = document.getElementById('pastePreview');
-		const container = document.getElementById('pastePreviewContainer');
+        document.getElementById('imageUploadArea').style.display = 'none';
+    } else {
+        const preview = document.getElementById('pastePreview');
+        const container = document.getElementById('pastePreviewContainer');
 
-		preview.src = imageData;
-		preview.style.display = 'block';
-		container.style.display = 'block';
-	}
+        preview.src = imageData;
+        preview.style.display = 'block';
+        container.style.display = 'block';
+    }
 }
 
 // Xóa ảnh upload (từ script.js)
 function clearUploadImage() {
-	document.getElementById('imagePreview').style.display = 'none';
-	document.getElementById('uploadPreviewContainer').style.display = 'none';
-	document.getElementById('imageUploadArea').style.display = 'block';
-	document.getElementById('imageFileInput').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('uploadPreviewContainer').style.display = 'none';
+    document.getElementById('imageUploadArea').style.display = 'block';
+    document.getElementById('imageFileInput').value = '';
 
-	if (currentTab === 'upload') {
-		currentImageData = null;
-	}
+    if (currentTab === 'upload') {
+        currentImageData = null;
+    }
 }
 
 // Xóa ảnh paste (từ script.js)
 function clearPasteImage() {
-	document.getElementById('pastePreview').style.display = 'none';
-	document.getElementById('pastePreviewContainer').style.display = 'none';
-	document.getElementById('imagePasteInput').value = '';
+    document.getElementById('pastePreview').style.display = 'none';
+    document.getElementById('pastePreviewContainer').style.display = 'none';
+    document.getElementById('imagePasteInput').value = '';
 
-	if (currentTab === 'paste') {
-		currentImageData = null;
-	}
+    if (currentTab === 'paste') {
+        currentImageData = null;
+    }
 }
 
 // Xóa tất cả ảnh (từ script.js)
 function clearAllImages() {
-	clearUploadImage();
-	clearPasteImage();
-	currentImageData = null;
+    clearUploadImage();
+    clearPasteImage();
+    currentImageData = null;
 }
 
 // Hiển thị lỗi (từ script.js)
 function showError(message) {
-	const errorDiv = document.getElementById('imageSearchError');
-	errorDiv.textContent = message;
-	errorDiv.classList.add('show');
-	errorDiv.style.display = 'block';
+    const errorDiv = document.getElementById('imageSearchError');
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+    errorDiv.style.display = 'block';
 }
 
 // Ẩn lỗi (từ script.js)
 function hideError() {
-	const errorDiv = document.getElementById('imageSearchError');
-	errorDiv.classList.remove('show');
-	errorDiv.style.display = 'none';
+    const errorDiv = document.getElementById('imageSearchError');
+    errorDiv.classList.remove('show');
+    errorDiv.style.display = 'none';
 }
 
 // Tìm kiếm bằng ảnh (từ script.js - CHỈNH SỬA để redirect về index.html)
 async function searchWithImage() {
-	if (!currentImageData) {
-		showError('Vui lòng chọn hoặc nhập ảnh trước');
-		return;
-	}
+    if (!currentImageData) {
+        showError('Vui lòng chọn hoặc nhập ảnh trước');
+        return;
+    }
 
-	const searchBtn = document.querySelector('.btn-primary');
-	searchBtn.classList.add('loading');
-	searchBtn.disabled = true;
+    const searchBtn = document.querySelector('.btn-primary');
+    searchBtn.classList.add('loading');
+    searchBtn.disabled = true;
 
-	try {
+    try {
         // Giả lập gọi API và lấy từ khóa tìm kiếm
-		const response = await fetch('/api/search-by-image', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ image: currentImageData })
-		});
+        const response = await fetch('/api/search-by-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: currentImageData })
+        });
 
-		const data = await response.json();
+        const data = await response.json();
 
-		if (data.status === 'success') {
-			closeImageSearch();
+        if (data.status === 'success') {
+            closeImageSearch();
             // CHUYỂN HƯỚNG VỀ index.html với từ khóa tìm được
             const searchTerm = data.search_term || 'tìm kiếm hình ảnh';
             window.location.href = `index.html?search=${encodeURIComponent(searchTerm)}`;
 
-		} else if (data.status === 'not_found') {
+        } else if (data.status === 'not_found') {
             closeImageSearch();
             const searchTerm = data.search_term || 'tìm kiếm hình ảnh';
             window.location.href = `index.html?search=${encodeURIComponent(searchTerm)}`;
-		} else {
-			showError(`❌ Lỗi: ${data.message}`);
-		}
+        } else {
+            showError(`❌ Lỗi: ${data.message}`);
+        }
 
-	} catch (error) {
-		console.error('Search error:', error);
-		showError('❌ Lỗi kết nối. Vui lòng thử lại');
-	} finally {
-		searchBtn.classList.remove('loading');
-		searchBtn.disabled = false;
-	}
+    } catch (error) {
+        console.error('Search error:', error);
+        showError('❌ Lỗi kết nối. Vui lòng thử lại');
+    } finally {
+        searchBtn.classList.remove('loading');
+        searchBtn.disabled = false;
+    }
 }
-
-// ĐÃ XÓA: Hàm window.toggleFilterMenu (Không còn cần thiết)
 
 
 // ======================================================================
@@ -689,12 +701,13 @@ async function searchWithImage() {
 // ======================================================================
 
 async function loadProductData(productId) {
-    // ... (logic giữ nguyên)
+    showLoading(); // HIỂN THỊ LOADING
+
     try {
         const res = await fetch(`/api/product_summary?product_id=${productId}`);
 
         if (!res.ok) {
-             throw new Error(`Server returned ${res.status}`);
+            throw new Error(`Server returned ${res.status}`);
         }
 
         const products = await res.json();
@@ -715,6 +728,9 @@ async function loadProductData(productId) {
         console.error("Lỗi khi load Product Data:", err);
         $('#recommended-stores-list').innerHTML = '<div class="no-stores" style="color:red">Lỗi kết nối server khi tải dữ liệu.</div>';
         return null;
+    } finally {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        hideLoading(); // ẨN LOADING
     }
 }
 
@@ -808,8 +824,8 @@ function renderProductSummary(product) {
     storesToRender.forEach(store => {
         // ... (Logic tính giá và ảnh giữ nguyên)
         const mainImage = store.product_images && store.product_images.length > 0
-                          ? (store.product_images.find(img => img.ps_type === 1) || store.product_images[0])
-                          : null;
+            ? (store.product_images.find(img => img.ps_type === 1) || store.product_images[0])
+            : null;
 
         const storeImageUrl = mainImage ? mainImage.ps_image_url : product.product_image_url;
 
@@ -821,7 +837,7 @@ function renderProductSummary(product) {
 
         let storePriceText = formatMoney(storeMinPrice);
         if (storeMaxPrice && storeMaxPrice !== storeMinPrice) {
-             storePriceText += ` - ${formatMoney(storeMaxPrice)}`;
+            storePriceText += ` - ${formatMoney(storeMaxPrice)}`;
         }
 
         // HIỂN THỊ KHOẢNG CÁCH
@@ -912,13 +928,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // THÊM: Click ngoài Image Search Popup để đóng
     const imageSearchPopup = document.getElementById('image_search_popup');
-	if (imageSearchPopup) {
-		imageSearchPopup.addEventListener('click', (e) => {
-			if (e.target === imageSearchPopup) {
-				closeImageSearch();
-			}
-		});
-	}
+    if (imageSearchPopup) {
+        imageSearchPopup.addEventListener('click', (e) => {
+            if (e.target === imageSearchPopup) {
+                closeImageSearch();
+            }
+        });
+    }
 
     // THÊM: Đóng Image Search Popup bằng ESC
     document.addEventListener('keydown', (e) => {
@@ -932,7 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // THÊM: Logic Search Suggestion (từ script.js)
     const searchInput = $('#search_input');
-	if(searchInput) {
+    if (searchInput) {
         // Bắt sự kiện gõ phím để hiển thị gợi ý
         searchInput.addEventListener('input', () => {
             clearTimeout(suggestionTimeout);
@@ -951,14 +967,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 suggestions[highlightedIndex]?.classList.remove('highlighted');
                 highlightedIndex = (highlightedIndex + 1) % suggestions.length;
                 suggestions[highlightedIndex].classList.add('highlighted');
-                suggestions[highlightedIndex].scrollIntoView({block : "nearest"});
+                suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
 
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 suggestions[highlightedIndex]?.classList.remove('highlighted');
                 highlightedIndex = (highlightedIndex - 1 + suggestions.length) % suggestions.length;
                 suggestions[highlightedIndex].classList.add('highlighted');
-                suggestions[highlightedIndex].scrollIntoView({block : "nearest"});
+                suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 const highlighted = suggestions[highlightedIndex];
@@ -967,16 +983,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     highlighted.click();
                 } else {
                     // Nếu không có item nào được chọn, submit form (redirect về index.html)
-                    document.getElementById('search_form').dispatchEvent(new Event('submit', {bubbles : true, cancelable : true}));
+                    document.getElementById('search_form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
                 }
             } else if (e.key === 'Escape') {
                 hideSuggestions();
             }
         });
-	}
+    }
 
     // Bắt sự kiện click ra ngoài để ẩn suggestions
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         const form = $('#search_form');
         const suggestions = $('#search_suggestions');
         if (form && suggestions && !form.contains(event.target) && !suggestions.contains(event.target)) {
@@ -986,21 +1002,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bắt sự kiện submit form (redirect về index.html)
     const searchForm = $('#search_form');
-    if(searchForm) {
+    if (searchForm) {
         searchForm.onsubmit = (e) => {
             e.preventDefault();
             const searchInput = $('#search_input');
-            if(searchInput) {
+            if (searchInput) {
                 // Sử dụng hàm submitSearch để redirect
                 submitSearch(searchInput.value);
             }
         };
-     }
+    }
 
     // THÊM: Fetch chi tiết giỏ hàng ngay khi tải trang
     fetchCartDetails();
     updateCartUI();
 
+    // Logic Khởi tạo trang chính
     init();
 
     // Logic Cart Popup (từ product-summary.js gốc)
@@ -1009,8 +1026,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cartBtn && cartPopup) {
         cartBtn.addEventListener('click', (e) => {
-             e.stopPropagation();
-             cartPopup.style.display = (cartPopup.style.display === 'block') ? 'none' : 'block';
+            e.stopPropagation();
+            cartPopup.style.display = (cartPopup.style.display === 'block') ? 'none' : 'block';
         });
 
         document.addEventListener('click', (e) => {
@@ -1032,9 +1049,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('#checkout')) {
         $('#checkout').addEventListener('click', (e) => {
             e.preventDefault();
-            const count = Object.values(cart).reduce((s, q) => s + q, 0);
-            if (count === 0) { alert('Giỏ hàng đang rỗng.'); return; }
-            window.location.href = 'cart.html';
+
+            // --- ĐOẠN CODE ĐÃ BỊ XÓA ---
+            // const count = Object.values(cart).reduce((s, q) => s + q, 0);
+            // if (count === 0) { alert('Giỏ hàng đang rỗng.'); return; }
+            // -----------------------------
+
+            // Thêm hiệu ứng chuyển trang (Nếu cần, vì đây là trang chủ/tổng quan)
+            document.body.classList.add('page-fade-out');
+            setTimeout(() => {
+                window.location.href = 'cart.html';
+            }, 500);
         });
     }
 });

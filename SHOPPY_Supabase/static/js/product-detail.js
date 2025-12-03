@@ -34,6 +34,63 @@ function saveCart() {
     fetchCartDetails(); // THÊM: Cập nhật cache
 }
 
+// HÀM QUẢN LÝ LOADING OVERLAY (THÊM MỚI)
+function showLoading() {
+    const loading = $('#full-page-loading');
+    if (loading) loading.style.display = 'flex';
+}
+
+function hideLoading() {
+    const loading = $('#full-page-loading');
+    if (loading) loading.style.display = 'none';
+}
+
+// HÀM HIỂN THỊ THÔNG BÁO CUSTOM (THAY THẾ ALERT)
+let notificationTimeout;
+function showNotification(message, icon = '✅') {
+    const toast = $('#notification-toast');
+    const msgEl = $('#toast-message');
+    const iconEl = $('.toast-icon');
+
+    if (!toast || !msgEl || !iconEl) {
+        // Fallback nếu không tìm thấy HTML
+        return alert(message);
+    }
+
+    // 1. Cập nhật nội dung
+    msgEl.textContent = message;
+    iconEl.textContent = icon;
+    
+    // 2. Xóa timeout cũ nếu đang chạy
+    clearTimeout(notificationTimeout);
+
+    // 3. Hiển thị
+    toast.classList.remove('show'); // Reset animation
+    void toast.offsetWidth; // Force reflow/repaint
+    toast.classList.add('show');
+    
+    // 4. Tự động ẩn sau 3 giây (thời gian tương đương animation fadeout)
+    notificationTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000); 
+}
+
+// Hàm kiểm tra đăng nhập và chuyển hướng (KHÔNG HIỂN THỊ POP-UP)
+async function checkLoginAndRedirect(message = "Chuyển hướng đến trang đăng nhập...") {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        // Ghi log vào console (KHÔNG HIỂN THỊ BẤT KỲ GIAO DIỆN NÀO)
+        console.log(message); 
+        // Kích hoạt hiệu ứng chuyển trang và chuyển hướng
+        document.body.classList.add('page-fade-out');
+        setTimeout(() => {
+            window.location.href = 'account.html'; 
+        }, 500);
+        return false;
+    }
+    return user;
+}
+
 // Update Account Link with User Info
 async function updateAccountLink() {
     const accountLink = document.getElementById('account-link');
@@ -83,7 +140,7 @@ async function updateAccountLink() {
     }
 }
 
-// Logic Đăng Xuất
+// Logic Đăng Xuất (ĐÃ CẬP NHẬT: Tải lại trang)
 window.handleLogout = async function() {
     try {
         const {
@@ -95,10 +152,8 @@ window.handleLogout = async function() {
         localStorage.removeItem('userName');
         localStorage.removeItem('cart_v1');
 
-        document.body.classList.add('page-fade-out');
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 500);
+        // Cập nhật: Tải lại trang hiện tại (product-detail.html)
+        window.location.reload(); 
 
     } catch (err) {
         console.error("Lỗi đăng xuất:", err);
@@ -111,7 +166,7 @@ window.handleLogout = async function() {
 // 3. LOGIC SẢN PHẨM & GIỎ HÀNG
 // ======================================================================
 
-// Tải thông tin chi tiết sản phẩm
+// Tải thông tin chi tiết sản phẩm (ĐÃ THÊM LOADING VÀ ĐỘ TRỄ 1S)
 async function loadMainProduct() {
     const params = new URLSearchParams(window.location.search);
     const product_id = params.get('product_id');
@@ -123,6 +178,8 @@ async function loadMainProduct() {
     }
 
     const key = `${product_id}_${store_id}`;
+    
+    showLoading(); // HIỂN THỊ LOADING
 
     try {
         // Gọi API Backend lấy chi tiết
@@ -191,6 +248,11 @@ async function loadMainProduct() {
         }
     } catch (e) {
         console.error("Lỗi loadMainProduct:", e);
+    } finally {
+        // === ĐỘ TRỄ ĐƯỢC ĐIỀU CHỈNH THÀNH 1 GIÂY (1000ms) ===
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        // =======================================================
+        hideLoading(); // ẨN LOADING
     }
 }
 
@@ -304,6 +366,54 @@ function updateCartUI() {
 
     if ($('#cart-total')) $('#cart-total').textContent = formatMoney(total);
 }
+
+// Thêm vào giỏ hàng (ĐÃ CẬP NHẬT LOGIC KIỂM TRA ĐĂNG NHẬP và DÙNG NOTIFICATION)
+window.addToCart = async function(productId, storeId, qty) {
+    const user = await checkLoginAndRedirect("Chưa đăng nhập. Chuyển hướng để thêm sản phẩm vào giỏ hàng.");
+    if (!user) return; 
+
+    // Logic thêm vào giỏ hàng khi đã đăng nhập
+    const key = `${productId}_${storeId}`;
+    cart[key] = (cart[key] || 0) + parseInt(qty);
+    saveCart();
+
+    // Optimistic cache update
+    if (currentProduct && currentProduct.id === key && !CART_CACHE[key]) {
+        CART_CACHE[key] = {
+            product_name: currentProduct.sub_name,
+            product_image_url: currentProduct.img,
+            stores: [{
+                store_name: currentProduct.name,
+                ps_min_price_store: currentProduct.price,
+                product_images: [{
+                    ps_image_url: currentProduct.img
+                }]
+            }]
+        };
+    }
+    updateCartUI();
+    // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+    showNotification('Đã thêm vào giỏ hàng thành công!', '✅'); 
+}
+
+// Mua ngay (ĐÃ CẬP NHẬT LOGIC KIỂM TRA ĐĂNG NHẬP)
+window.buyNow = async function() {
+    const user = await checkLoginAndRedirect("Chưa đăng nhập. Chuyển hướng để mua hàng ngay.");
+    if (!user) return; 
+    
+    // Logic mua ngay khi đã đăng nhập
+    if (currentProduct) {
+        const key = `${currentProduct.product_id}_${currentProduct.store_id}`;
+        cart[key] = (cart[key] || 0) + currentQuantity;
+        saveCart(); 
+        
+        document.body.classList.add('page-fade-out');
+        setTimeout(() => {
+            window.location.href = 'cart.html';
+        }, 500);
+    }
+}
+
 
 // ======================================================================
 // 4. LOGIC XỬ LÝ REVIEWS
@@ -444,16 +554,9 @@ async function submitReview() {
     }
     if (!supabaseClient) return;
 
-    const {
-        data: {
-            user
-        }
-    } = await supabaseClient.auth.getUser();
-    if (!user) {
-        alert("Vui lòng đăng nhập để đánh giá.");
-        window.location.href = "login.html";
-        return;
-    }
+    // Check Login (KHÔNG HIỂN THỊ POPUP)
+    const user = await checkLoginAndRedirect("Chưa đăng nhập. Chuyển hướng để gửi đánh giá.");
+    if (!user) return;
 
     const ratingEl = document.querySelector('input[name="rating"]:checked');
     const commentInput = $('#review-comment');
@@ -929,28 +1032,7 @@ window.searchWithImage = async function() {
 // ======================================================================
 
 // Cart Actions (with Optimistic Update)
-window.addToCart = function(productId, storeId, qty) {
-    const key = `${productId}_${storeId}`;
-    cart[key] = (cart[key] || 0) + parseInt(qty);
-    saveCart();
-
-    // Optimistic cache update (Chỉ dùng cho item hiện tại)
-    if (currentProduct && currentProduct.id === key && !CART_CACHE[key]) {
-        CART_CACHE[key] = {
-            product_name: currentProduct.sub_name,
-            product_image_url: currentProduct.img,
-            stores: [{
-                store_name: currentProduct.name,
-                ps_min_price_store: currentProduct.price,
-                product_images: [{
-                    ps_image_url: currentProduct.img
-                }]
-            }]
-        };
-    }
-    updateCartUI();
-    alert('Đã thêm vào giỏ!');
-}
+// ĐÃ CHUYỂN logic này vào window.addToCart ở trên
 
 window.changeQty = function(key, delta) {
     cart[key] = (cart[key] || 0) + delta;
@@ -1033,7 +1115,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ĐỔI CHỨC NĂNG: Thanh toán -> Xem Giỏ hàng
     if ($('#checkout')) $('#checkout').onclick = () => {
-        if (Object.keys(cart).length === 0) return alert("Giỏ hàng trống");
         document.body.classList.add('page-fade-out');
         setTimeout(() => window.location.href = 'cart.html', 500);
     };
@@ -1054,21 +1135,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
+    // Gắn lại sự kiện cho Thêm vào giỏ và Mua ngay (Sử dụng hàm đã được check login)
     if ($('#add-to-cart-btn')) $('#add-to-cart-btn').onclick = () => {
-        if (currentProduct) addToCart(currentProduct.product_id, currentProduct.store_id, currentQuantity);
+        if (currentProduct) window.addToCart(currentProduct.product_id, currentProduct.store_id, currentQuantity);
     };
 
-    if ($('#buy-now-btn')) $('#buy-now-btn').onclick = () => {
-        if (currentProduct) {
-            addToCart(currentProduct.product_id, currentProduct.store_id, currentQuantity);
-            document.body.classList.add('page-fade-out');
-            setTimeout(() => {
-                window.location.href = 'cart.html';
-            }, 500);
-        }
-    };
+    if ($('#buy-now-btn')) $('#buy-now-btn').onclick = window.buyNow;
 
-    // Review Event
+    // Review Event (Đã có check login bên trong submitReview)
     if ($('#btn-submit-review')) $('#btn-submit-review').onclick = submitReview;
 
     // Map Event

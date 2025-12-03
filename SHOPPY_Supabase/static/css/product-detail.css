@@ -414,7 +414,8 @@ main {
 }
 
 .btn-add-cart:hover {
-  background: #eef3ff;;
+  background: #eef3ff;
+  ;
   color: #00aaff;
   transform: scale(1.05);
   /* Sử dụng transform thay vì scale: 1.05 */
@@ -1036,6 +1037,7 @@ footer {
 }
 
 @keyframes shake {
+
   0%,
   100% {
     transform: translateX(0);
@@ -1125,6 +1127,7 @@ footer {
     transform: rotate(360deg);
   }
 }
+
 /* --- END: CSS TÌM KIẾM BẰNG HÌNH ẢNH (TỪ style.css) --- */
 
 
@@ -1218,5 +1221,104 @@ footer {
 
   .preview-container img {
     max-height: 200px;
+  }
+}
+
+/* Đảm bảo animation spin được định nghĩa */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- 10. FULL-PAGE SPINNER --- */
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  /* Màu nền nhẹ */
+  border-top: 5px solid #1867f8;
+  /* Màu xanh nổi bật */
+  border-radius: 50%;
+  /* Dòng này gọi @keyframes spin */
+  animation: spin 0.8s linear infinite;
+}
+
+/* product-detail.css (Điều chỉnh phần NOTIFICATION TOAST) */
+
+/* --- 11. NOTIFICATION TOAST/SNACKBAR --- */
+.notification-toast {
+  visibility: hidden;
+  /* Mặc định ẩn */
+  min-width: 250px;
+  /* Căn giữa theo chiều ngang */
+  left: 50%;
+  transform: translateX(-50%);
+
+  /* Vị trí mới: 20% từ trên xuống */
+  top: 20%;
+
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 16px;
+  position: fixed;
+  z-index: 10001;
+  /* Cao hơn loading overlay */
+  font-size: 17px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  /* Loại bỏ transition cũ, dùng animation */
+  /* transition: opacity 0.5s, transform 0.5s; */
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.toast-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Các class để kích hoạt animation */
+.notification-toast.show {
+  visibility: visible;
+  opacity: 1;
+  /* Animation fade-in */
+  animation: fadein-center 0.5s, fadeout-center 0.5s 2.5s;
+  /* Hiện 0.5s, ẩn 0.5s sau 2.5s (tổng cộng 3s) */
+}
+
+/* @keyframes MỚI: Fade in từ trên xuống (vị trí ban đầu cao hơn 20%) */
+@keyframes fadein-center {
+  from {
+    top: 15%;
+    /* Bắt đầu từ 15% (cao hơn) */
+    opacity: 0;
+  }
+
+  to {
+    top: 20%;
+    /* Kết thúc ở vị trí 20% */
+    opacity: 1;
+  }
+}
+
+/* @keyframes MỚI: Fade out (biến mất về vị trí ban đầu) */
+@keyframes fadeout-center {
+  from {
+    top: 20%;
+    opacity: 1;
+  }
+
+  to {
+    top: 15%;
+    /* Biến mất trở lại vị trí 15% */
+    opacity: 0;
   }
 }

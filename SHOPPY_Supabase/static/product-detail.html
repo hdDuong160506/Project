@@ -320,8 +320,20 @@
             @ 2025 Shoppy — Khoa CNTT, HCMUS
         </div>
     </footer>
-    <script src="js/supabase-init.js"></script>
-    <script src="js/product-detail.js"></script>
+    <div id="full-page-loading" style="
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255, 255, 255, 0.85); display: none; 
+            justify-content: center; align-items: center; z-index: 10000;
+        ">
+        <div class="spinner"></div>
+    </div>
+    <div id="notification-toast" class="notification-toast">
+        <div class="toast-content">
+            <span class="toast-icon">✅</span>
+            <span id="toast-message">Đã thêm vào giỏ hàng thành công!</span>
+        </div>
+        <script src="js/supabase-init.js"></script>
+        <script src="js/product-detail.js"></script>
 </body>
 
 </html>

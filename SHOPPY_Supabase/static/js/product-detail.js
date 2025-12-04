@@ -596,7 +596,6 @@ async function loadReviews(psId, resetPage = false) {
             loadMoreBtn.className = 'btn-load-more-reviews';
             loadMoreBtn.innerHTML = `
                 Xem thêm đánh giá 
-                <span style="font-size:0.9em; color:#666;">(Còn ${remainingCount} đánh giá)</span>
             `;
             loadMoreBtn.style.cssText = `
                 width: 100%;

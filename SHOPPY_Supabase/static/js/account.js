@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // --- BƯỚC 1: GỌI API PYTHON CỦA BẠN ---
                 // Server Python sẽ dùng Service Key để soi Database thật
-                const res = await fetch('http://127.0.0.1:5000/api/user/check_email', {
+                const res = await fetch('/api/user/check_email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
@@ -79,8 +79,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (error) {
-                    msg.textContent = "❌ " + error.message;
+                    // --- BẮT ĐẦU PHẦN SỬA ---
+                    let noiDungLoi = error.message;
+
+                    // 1. Bắt lỗi mật khẩu yếu (Lỗi bạn đang gặp)
+                    if (noiDungLoi.includes("Password should be at least")) {
+                        noiDungLoi = "Mật khẩu quá yếu! Cần ít nhất 8 ký tự, gồm: chữ Hoa, thường, số và ký tự đặc biệt (!@#).";
+                    }
+                    // 2. Bắt lỗi thao tác quá nhanh (Rate limit)
+                    else if (noiDungLoi.includes("Rate limit") || noiDungLoi.includes("Too many requests")) {
+                        noiDungLoi = "Bạn thao tác quá nhanh. Vui lòng đợi 60 giây rồi thử lại.";
+                    }
+                    // 3. Bắt lỗi email đã tồn tại (dự phòng)
+                    else if (noiDungLoi.includes("User already registered")) {
+                        noiDungLoi = "Email này đã có người đăng ký.";
+                    }
+
+                    // Hiển thị thông báo tiếng Việt
+                    msg.textContent = "❌ " + noiDungLoi;
                     msg.className = "message error";
+                    // --- KẾT THÚC PHẦN SỬA ---
                 } else {
                     msg.innerHTML = `
                         <span style="color:green; font-weight:bold">✅ Đăng ký thành công!</span><br>
@@ -206,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 // 1. GỌI API PYTHON ĐỂ KIỂM TRA
-                const checkRes = await fetch('http://127.0.0.1:5000/api/user/check_email', {
+                const checkRes = await fetch('/api/user/check_email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })

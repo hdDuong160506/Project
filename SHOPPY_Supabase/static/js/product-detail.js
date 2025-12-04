@@ -345,7 +345,7 @@ async function loadMainProduct() {
             // QUAN TRỌNG: Trigger tải đánh giá ngay khi có ps_id
             if (currentProduct.ps_id) {
                 currentPsId = currentProduct.ps_id;
-                loadReviews(currentPsId);
+                loadReviews(currentPsId, true); // Reset khi load lần đầu
             } else {
                 findPsIdAndLoadReviews(currentProduct.product_id, currentProduct.store_id);
             }
@@ -1251,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log("🚀 Initializing product-detail page...");
 
     // ======================
-    // 1. ADVANCED SEARCH HANDLING (Đã sửa từ Simple -> Advanced giống file trên)
+    // 1. ADVANCED SEARCH HANDLING
     // ======================
     const searchForm = $('#search_form');
     
@@ -1333,16 +1333,129 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ======================
-    // 2. LOAD PRODUCT DATA (Giữ nguyên phần còn lại)
+    // 2. LOAD PRODUCT DATA & INITIALIZE UI
     // ======================
     await Promise.all([
         loadMainProduct(),
         fetchCartDetails()
     ]);
     
-    // ... (Phần code khởi tạo còn lại giữ nguyên) ...
     updateAccountLink();
     updateCartUI();
     setupImageUpload();
-    // ...
+
+    // Popup Events
+    const cartBtn = $('#open-cart');
+    const cartPopup = $('#cart-popup');
+
+    if (cartBtn && cartPopup) {
+        cartBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cartPopup.style.display = (cartPopup.style.display === 'block') ? 'none' : 'block';
+        });
+
+        if ($('#close-cart')) $('#close-cart').onclick = () => $('#cart-popup').style.display = 'none';
+
+        // Đóng khi click ra ngoài popup
+        document.addEventListener('click', (e) => {
+            if (cartPopup.style.display === 'block' && !cartPopup.contains(e.target) && !cartBtn.contains(e.target)) {
+                cartPopup.style.display = 'none';
+            }
+        });
+    }
+
+    // Đóng Image Search popup khi click outside hoặc ESC
+    const imageSearchPopup = document.getElementById('image_search_popup');
+    if (imageSearchPopup) {
+        imageSearchPopup.addEventListener('click', (e) => {
+            if (e.target === imageSearchPopup) {
+                closeImageSearch();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const popup = document.getElementById('image_search_popup');
+            const cartPopup = document.getElementById('cart-popup');
+
+            if (popup && popup.style.display === 'flex') {
+                closeImageSearch();
+            }
+            if (cartPopup && cartPopup.style.display === 'block') {
+                cartPopup.style.display = 'none';
+            }
+        }
+    });
+
+       // ĐỔI TÊN & CHỨC NĂNG: Nút Thanh toán -> Xem Giỏ hàng
+    if ($('#checkout')) {
+        // 1. Đổi Text button
+        $('#checkout').textContent = 'Xem Giỏ hàng';
+
+        // 2. Cập nhật Event Listener VỚI LOGIC KIỂM TRA ĐĂNG NHẬP
+        $('#checkout').addEventListener('click', async () => {
+            // Lấy session hiện tại
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session || !session.user) {;
+                // Chuyển hướng đến trang đăng nhập
+                document.body.classList.add('page-fade-out');
+                setTimeout(() => {
+                    window.location.href = 'account.html'; // Hoặc đường dẫn đăng nhập phù hợp
+                }, 500);
+                return;
+            }
+
+            // Nếu đã đăng nhập -> Chuyển đến trang giỏ hàng bình thường
+            document.body.classList.add('page-fade-out');
+
+            setTimeout(() => {
+                window.location.href = 'cart.html';
+            }, 500);
+        });
+    };
+
+    // Product Detail Events
+    const qtyInput = $('#qty-input');
+    if (qtyInput) {
+        qtyInput.value = currentQuantity;
+        $('#qty-minus').onclick = () => {
+            if (currentQuantity > 1) {
+                currentQuantity--;
+                qtyInput.value = currentQuantity;
+            }
+        };
+        $('#qty-plus').onclick = () => {
+            currentQuantity++;
+            qtyInput.value = currentQuantity;
+        };
+    }
+
+    // Gắn lại sự kiện cho Thêm vào giỏ và Mua ngay (Sử dụng hàm đã được check login)
+    if ($('#add-to-cart-btn')) $('#add-to-cart-btn').onclick = () => {
+        if (currentProduct) window.addToCart(currentProduct.product_id, currentProduct.store_id, currentQuantity);
+    };
+
+    if ($('#buy-now-btn')) $('#buy-now-btn').onclick = window.buyNow;
+
+    // Review Event (Đã có check login bên trong submitReview)
+    if ($('#btn-submit-review')) $('#btn-submit-review').onclick = submitReview;
+
+    // Map Event
+    const mapBtn = document.getElementById('map-btn');
+    if (mapBtn) {
+        mapBtn.onclick = () => {
+            if (!currentProduct) {
+                alert('Chưa tải được thông tin cửa hàng!');
+                return;
+            }
+            localStorage.setItem('TARGET_STORE', JSON.stringify({
+                id: currentProduct.store_id,
+                name: currentProduct.name,
+                address: currentProduct.address
+            }));
+            window.location.href = '/map/';
+        };
+    }
 });

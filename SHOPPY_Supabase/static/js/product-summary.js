@@ -231,9 +231,9 @@ window.handleLogout = async function () {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('userName');
         localStorage.removeItem('cart_v1');
-        
+
         // 🎯 SỬA CHỮA: LƯU URL HIỆN TẠI TRƯỚC KHI TẢI LẠI TRANG
-        localStorage.setItem('redirect_after_login', window.location.href); 
+        localStorage.setItem('redirect_after_login', window.location.href);
 
         window.location.reload();
     } catch (err) {
@@ -710,7 +710,7 @@ async function loadProductData(productId) {
         const products = await res.json();
         if (products && products.length > 0) {
             const product = products[0];
-            
+
             // 🎯 LẤY TỌA ĐỘ NGƯỜI DÙNG TRƯỚC
             let userLat = 0, userLon = 0;
             try {
@@ -1143,18 +1143,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ĐỔI CHỨC NĂNG: Nút Checkout (từ product-summary.js gốc)
+    // ĐỔI TÊN & CHỨC NĂNG: Nút Thanh toán -> Xem Giỏ hàng
     if ($('#checkout')) {
-        $('#checkout').addEventListener('click', (e) => {
-            e.preventDefault();
+        // 1. Đổi Text button
+        $('#checkout').textContent = 'Xem Giỏ hàng';
 
-            // --- ĐOẠN CODE ĐÃ BỊ XÓA ---
-            // const count = Object.values(cart).reduce((s, q) => s + q, 0);
-            // if (count === 0) { alert('Giỏ hàng đang rỗng.'); return; }
-            // -----------------------------
+        // 2. Cập nhật Event Listener VỚI LOGIC KIỂM TRA ĐĂNG NHẬP
+        $('#checkout').addEventListener('click', async () => {
+            // Lấy session hiện tại
+            const { data: { session } } = await supabase.auth.getSession();
 
-            // Thêm hiệu ứng chuyển trang (Nếu cần, vì đây là trang chủ/tổng quan)
+            if (!session || !session.user) {;
+                // Chuyển hướng đến trang đăng nhập
+                document.body.classList.add('page-fade-out');
+                setTimeout(() => {
+                    window.location.href = 'account.html'; // Hoặc đường dẫn đăng nhập phù hợp
+                }, 500);
+                return;
+            }
+
+            // Nếu đã đăng nhập -> Chuyển đến trang giỏ hàng bình thường
             document.body.classList.add('page-fade-out');
+
             setTimeout(() => {
                 window.location.href = 'cart.html';
             }, 500);

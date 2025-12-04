@@ -243,100 +243,6 @@ window.handleLogout = async function () {
 
 // --- 3. LOGIC SEARCH (Tích hợp đầy đủ từ script.js) ---
 
-// Các biến search (từ script.js)
-let suggestionTimeout;
-let highlightedIndex = -1; // Index của gợi ý đang được highlight
-
-// Hàm ẩn suggestions (từ script.js)
-function hideSuggestions() {
-    const suggestionsDiv = $('#search_suggestions');
-    if (suggestionsDiv) suggestionsDiv.style.display = 'none';
-    highlightedIndex = -1;
-}
-
-// Hàm chuyển trang tổng quan (từ script.js)
-function navigateToProductSummary(productId) {
-    window.location.href = `product-summary.html?product_id=${productId}`;
-    hideSuggestions();
-}
-
-// Hàm render suggestions (từ script.js)
-function renderSuggestions(products, query) {
-    const container = $('#search_suggestions');
-    container.innerHTML = '';
-    highlightedIndex = -1; // Reset index
-
-    if (!products || products.length === 0) {
-        hideSuggestions();
-        return;
-    }
-
-    // --- 1. Thêm dòng "Tìm kiếm toàn bộ" ---
-    const searchAllItem = document.createElement('div');
-    searchAllItem.className = 'suggestion-item suggestion-search-all';
-    searchAllItem.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#1867f8">
-        <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
-      </svg>
-      Tìm kiếm: <b>${query}</b>
-  `;
-    searchAllItem.addEventListener('click', () => submitSearch(query));
-    container.appendChild(searchAllItem);
-
-    // --- 2. Thêm các sản phẩm gợi ý (có ảnh) ---
-    products.forEach(product => {
-        const item = document.createElement('div');
-        item.className = 'suggestion-item';
-
-        const imageUrl = product.product_image_url || 'images/placeholder.jpg';
-
-        // Tạo HTML cho item gợi ý bao gồm ảnh, tên và vị trí (Không hiện giá)
-        item.innerHTML = `
-        <img class="suggestion-image" src="${imageUrl}" alt="${product.product_name}">
-        <div class="suggestion-text-container">
-            <div class="suggestion-name">${product.product_name}</div>
-            <div class="suggestion-location">📍 ${product.location_name || 'Không rõ vị trí'}</div>
-        </div>
-    `;
-
-        item.dataset.productId = product.product_id;
-        item.addEventListener('click', () => navigateToProductSummary(product.product_id));
-        container.appendChild(item);
-    });
-
-    showSuggestions();
-}
-
-// Hàm fetch suggestions (từ script.js)
-async function fetchSuggestions(query) {
-    if (!query || query.length < 2) {
-        hideSuggestions();
-        return;
-    }
-
-    try {
-        // Giả lập gọi API gợi ý tìm kiếm (chỉ lấy 5 sản phẩm đầu tiên)
-        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
-        const suggestions = await res.json();
-
-        renderSuggestions(suggestions, query);
-
-    } catch (err) {
-        console.error("Lỗi khi fetch gợi ý tìm kiếm:", err);
-        hideSuggestions();
-    }
-}
-
-// Hàm submit search (từ script.js - ĐƯỢC CHỈNH SỬA để redirect về index.html)
-function submitSearch(query) {
-    const searchInput = $('#search_input');
-    if (searchInput) {
-        searchInput.value = query;
-        // Chuyển hướng về index.html với query
-        window.location.href = `index.html?search=${encodeURIComponent(query)}`;
-    }
-    hideSuggestions();
-}
 
 
 // --- 4. LOGIC VOICE SEARCH & IMAGE SEARCH (Tích hợp đầy đủ từ script.js) ---
@@ -699,42 +605,164 @@ async function searchWithImage() {
     }
 }
 
+// ======================================================================
+// PHẦN LOGIC SEARCH SUGGESTIONS (THÊM MỚI - ĐỒNG BỘ VỚI INDEX.HTML)
+// ======================================================================
+
+let suggestionTimeout;
+let highlightedIndex = -1;
+
+function showSuggestions() {
+    const suggestionsDiv = $('#search_suggestions');
+    if (suggestionsDiv) suggestionsDiv.style.display = 'block';
+}
+
+function hideSuggestions() {
+    const suggestionsDiv = $('#search_suggestions');
+    if (suggestionsDiv) suggestionsDiv.style.display = 'none';
+    highlightedIndex = -1;
+}
+
+async function fetchSuggestions(query) {
+    if (!query || query.length < 2) {
+        hideSuggestions();
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
+        const suggestions = await res.json();
+        renderSuggestions(suggestions, query);
+    } catch (err) {
+        console.error("Lỗi khi fetch gợi ý tìm kiếm:", err);
+        hideSuggestions();
+    }
+}
+
+function renderSuggestions(products, query) {
+    const container = $('#search_suggestions');
+    container.innerHTML = '';
+    highlightedIndex = -1;
+
+    if (!products || products.length === 0) {
+        hideSuggestions();
+        return;
+    }
+
+    // 1. Thêm dòng "Tìm kiếm toàn bộ"
+    const searchAllItem = document.createElement('div');
+    searchAllItem.className = 'suggestion-item suggestion-search-all';
+    searchAllItem.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#1867f8">
+            <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
+        </svg>
+        Tìm kiếm: <b>${query}</b>
+    `;
+    searchAllItem.addEventListener('click', () => submitSearch(query));
+    container.appendChild(searchAllItem);
+
+    // 2. Thêm các sản phẩm gợi ý
+    products.forEach(product => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        const imageUrl = product.product_image_url || 'images/placeholder.jpg';
+
+        item.innerHTML = `
+            <img class="suggestion-image" src="${imageUrl}" alt="${product.product_name}">
+            <div class="suggestion-text-container">
+                <div class="suggestion-name">${product.product_name}</div>
+                <div class="suggestion-location">📍 ${product.location_name || 'Không rõ vị trí'}</div>
+            </div>
+        `;
+
+        item.dataset.productId = product.product_id;
+        item.addEventListener('click', () => navigateToProductSummary(product.product_id));
+        container.appendChild(item);
+    });
+
+    showSuggestions();
+}
+
+function submitSearch(query) {
+    const searchInput = $('#search_input');
+    if (searchInput) {
+        searchInput.value = query;
+        window.location.href = `index.html?search=${encodeURIComponent(query)}`;
+    }
+    hideSuggestions();
+}
+
+function navigateToProductSummary(productId) {
+    window.location.href = `product-summary.html?product_id=${productId}`;
+    hideSuggestions();
+}
 
 // ======================================================================
 // PHẦN LOGIC TRANG SUMMARY (Giữ nguyên từ product-summary.js gốc)
 // ======================================================================
 
 async function loadProductData(productId) {
-    showLoading(); // HIỂN THỊ LOADING
-
+    showLoading();
     try {
         const res = await fetch(`/api/product_summary?product_id=${productId}`);
-
-        if (!res.ok) {
-            throw new Error(`Server returned ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
         const products = await res.json();
-
         if (products && products.length > 0) {
             const product = products[0];
+            
+            // 🎯 LẤY TỌA ĐỘ NGƯỜI DÙNG TRƯỚC
+            let userLat = 0, userLon = 0;
+            try {
+                const locRes = await fetch('/map/api/get-current-location');
+                if (locRes.ok) {
+                    const locData = await locRes.json();
+                    userLat = parseFloat(locData.lat) || 0;
+                    userLon = parseFloat(locData.long) || 0;
+                }
+            } catch (err) {
+                console.warn("Không lấy được vị trí người dùng:", err);
+            }
+
+            // 🎯 LẤY DANH SÁCH CỬA HÀNG ĐẦY ĐỦ
+            if (!window.allStores) {
+                try {
+                    const storesRes = await fetch('/map/api/stores');
+                    if (storesRes.ok) window.allStores = await storesRes.json();
+                } catch (e) {
+                    console.error("Lỗi tải danh sách cửa hàng:", e);
+                }
+            }
+
+            // 🎯 TÍNH TOÁN distance_km CHO MỖI CỬA HÀNG
+            product.stores.forEach(store => {
+                const fullStoreInfo = window.allStores?.find(
+                    s => String(s.store_id) === String(store.store_id)
+                );
+                const storeLat = fullStoreInfo ? fullStoreInfo.lat : Number(store.lat || 0);
+                const storeLon = fullStoreInfo ? fullStoreInfo.long : Number(store.long || 0);
+
+                if (userLat && userLon && storeLat && storeLon) {
+                    // Tính khoảng cách với hệ số hiệu chỉnh 1.3
+                    store.distance_km = haversineDistance(userLat, userLon, storeLat, storeLon) * 1.3;
+                } else {
+                    store.distance_km = Infinity; // Không có tọa độ -> đẩy xuống cuối
+                }
+            });
+
+            // ✅ LƯU stores_raw SAU KHI ĐÃ CÓ distance_km
             currentProductData = product;
-            // LƯU TRỮ THỨ TỰ GỐC CỦA CỬA HÀNG CHO CHẾ ĐỘ 'MẶC ĐỊNH'
             currentProductData.stores_raw = [...product.stores];
             return product;
         } else {
-            $('#summary-product-name').textContent = 'Sản phẩm không tồn tại';
-            $('#recommended-stores-list').innerHTML = '<div class="no-stores">Không tìm thấy thông tin sản phẩm này.</div>';
-            return null;
+            // ... xử lý lỗi
         }
-
     } catch (err) {
         console.error("Lỗi khi load Product Data:", err);
-        $('#recommended-stores-list').innerHTML = '<div class="no-stores" style="color:red">Lỗi kết nối server khi tải dữ liệu.</div>';
         return null;
     } finally {
         await new Promise(resolve => setTimeout(resolve, 500));
-        hideLoading(); // ẨN LOADING
+        hideLoading();
     }
 }
 
@@ -759,8 +787,8 @@ window.sortAndRenderStores = function () {
         case 'dist_asc':
             // Gần nhất: Sắp xếp Tăng dần khoảng cách (ps_distance)
             sortedStores.sort((a, b) => {
-                const distA = a.ps_distance || Infinity; // Infinity nằm cuối
-                const distB = b.ps_distance || Infinity;
+                const distA = a.distance_km || Infinity; // Infinity nằm cuối
+                const distB = b.distance_km || Infinity;
                 return distA - distB;
             });
             break;
@@ -909,25 +937,12 @@ async function renderProductSummary(product) {
         }
 
         // --- 3. LOGIC HIỂN THỊ KHOẢNG CÁCH ---
+        // 🎯 HIỂN THỊ KHOẢNG CÁCH (đã tính sẵn trong loadProductData)
         let distanceHtml = '';
-
-        // Tìm thông tin đầy đủ của store trong window.allStores (để lấy lat/long chính xác)
-        const fullStoreInfo = window.allStores?.find(s => String(s.store_id) === String(store.store_id));
-
-        // Lấy tọa độ: Ưu tiên lấy từ fullStoreInfo, nếu không có thì lấy từ store hiện tại, cuối cùng là 0
-        const storeLat = fullStoreInfo ? fullStoreInfo.lat : Number(store.lat || 0);
-        const storeLon = fullStoreInfo ? fullStoreInfo.long : Number(store.long || 0);
-
-        if (userLat && userLon && storeLat && storeLon) {
-            // Tính toán bằng Haversine và sai số
-            const distKm = haversineDistance(userLat, userLon, storeLat, storeLon) * 1.3;
-            if (distKm !== null) {
-                // Style màu xanh lá
-                distanceHtml = `<span style="margin-left: 10px; color: #2ecc71; font-weight: 500;">| Cách bạn khoảng: ${distKm.toFixed(2)} km</span>`;
-            }
-        } else if (store.ps_distance) {
-            // Fallback: Dùng dữ liệu khoảng cách có sẵn từ DB (nếu có)
-            distanceHtml = `<span style="margin-left: 10px;">| Cách bạn khoảng : ${Number(store.ps_distance).toFixed(2)} km</span>`;
+        if (store.distance_km && store.distance_km !== Infinity) {
+            distanceHtml = `<span style="margin-left: 10px; color: #2ecc71; font-weight: 500;">
+                | Cách bạn khoảng: ${store.distance_km.toFixed(2)} km
+            </span>`;
         }
 
         const storeCard = document.createElement('a');
@@ -1032,52 +1047,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // THÊM: Logic Search Suggestion (từ script.js)
-    const searchInput = $('#search_input');
-    if (searchInput) {
-        // Bắt sự kiện gõ phím để hiển thị gợi ý
-        searchInput.addEventListener('input', () => {
-            clearTimeout(suggestionTimeout);
-            suggestionTimeout = setTimeout(() => {
-                fetchSuggestions(searchInput.value);
-            }, 300);
-        });
+    // THÊM PHẦN NÀY: Khởi tạo logic search suggestions
+    const searchForm = $('#search_form');
+    if (searchForm) {
+        // EVENT CHO Ô TÌM KIẾM
+        const searchInput = $('#search_input');
+        if (searchInput) {
+            // Hiển thị gợi ý khi gõ
+            searchInput.addEventListener('input', () => {
+                clearTimeout(suggestionTimeout);
+                suggestionTimeout = setTimeout(() => {
+                    fetchSuggestions(searchInput.value);
+                }, 300);
+            });
 
-        // Bắt sự kiện keydown để chọn gợi ý
-        searchInput.addEventListener('keydown', (e) => {
-            const suggestions = $$('#search_suggestions .suggestion-item');
-            if (suggestions.length === 0) return;
+            // Xử lý phím mũi tên & Enter
+            searchInput.addEventListener('keydown', (e) => {
+                const suggestions = $$('#search_suggestions .suggestion-item');
+                if (suggestions.length === 0) return;
 
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                suggestions[highlightedIndex]?.classList.remove('highlighted');
-                highlightedIndex = (highlightedIndex + 1) % suggestions.length;
-                suggestions[highlightedIndex].classList.add('highlighted');
-                suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
-
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                suggestions[highlightedIndex]?.classList.remove('highlighted');
-                highlightedIndex = (highlightedIndex - 1 + suggestions.length) % suggestions.length;
-                suggestions[highlightedIndex].classList.add('highlighted');
-                suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                const highlighted = suggestions[highlightedIndex];
-                if (highlighted) {
-                    e.stopImmediatePropagation();
-                    highlighted.click();
-                } else {
-                    // Nếu không có item nào được chọn, submit form (redirect về index.html)
-                    document.getElementById('search_form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    suggestions[highlightedIndex]?.classList.remove('highlighted');
+                    highlightedIndex = (highlightedIndex + 1) % suggestions.length;
+                    suggestions[highlightedIndex].classList.add('highlighted');
+                    suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    suggestions[highlightedIndex]?.classList.remove('highlighted');
+                    highlightedIndex = (highlightedIndex - 1 + suggestions.length) % suggestions.length;
+                    suggestions[highlightedIndex].classList.add('highlighted');
+                    suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const highlighted = suggestions[highlightedIndex];
+                    if (highlighted) {
+                        e.stopImmediatePropagation();
+                        highlighted.click();
+                    } else {
+                        searchForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                    }
+                } else if (e.key === 'Escape') {
+                    hideSuggestions();
                 }
-            } else if (e.key === 'Escape') {
-                hideSuggestions();
-            }
-        });
+            });
+        }
+
+        // Submit form
+        searchForm.onsubmit = (e) => {
+            e.preventDefault();
+            const term = $('#search_input').value.trim();
+            if (!term) return;
+            submitSearch(term);
+        };
     }
 
-    // Bắt sự kiện click ra ngoài để ẩn suggestions
+    // Ẩn suggestions khi click ra ngoài
     document.addEventListener('click', function (event) {
         const form = $('#search_form');
         const suggestions = $('#search_suggestions');
@@ -1085,19 +1110,6 @@ document.addEventListener('DOMContentLoaded', () => {
             hideSuggestions();
         }
     });
-
-    // Bắt sự kiện submit form (redirect về index.html)
-    const searchForm = $('#search_form');
-    if (searchForm) {
-        searchForm.onsubmit = (e) => {
-            e.preventDefault();
-            const searchInput = $('#search_input');
-            if (searchInput) {
-                // Sử dụng hàm submitSearch để redirect
-                submitSearch(searchInput.value);
-            }
-        };
-    }
 
     // THÊM: Fetch chi tiết giỏ hàng ngay khi tải trang
     fetchCartDetails();

@@ -19,10 +19,6 @@ def sanitize_input(text):
 
 
 def fetch_location_by_name(location_name):
-    """
-    Tìm location theo tên (tìm kiếm tương đối)
-    Trả về: location_id, location_name nếu tìm thấy, None nếu không
-    """
     safe_name = sanitize_input(location_name).lower()
 
     query = f"""
@@ -45,10 +41,6 @@ def fetch_location_by_name(location_name):
 
 
 def fetch_location_by_gps(lat, lon):
-    """
-    Tìm location theo tọa độ GPS (trong bounding box)
-    Trả về: location_id, location_name nếu tìm thấy, None nếu không
-    """
     query = f"""
         SELECT
             location_id,
@@ -70,10 +62,6 @@ def fetch_location_by_gps(lat, lon):
 
 
 def fetch_products_by_location(location_id, limit=20):
-    """
-    Lấy danh sách sản phẩm theo location_id
-    Trả về: list các product với thông tin cơ bản
-    """
     query = f"""
         SELECT DISTINCT
             p.product_id,
@@ -91,10 +79,6 @@ def fetch_products_by_location(location_id, limit=20):
 
 
 def fetch_random_products(limit=20):
-    """
-    Lấy danh sách sản phẩm ngẫu nhiên từ database (không lọc theo location)
-    Trả về: list các product với thông tin cơ bản
-    """
     query = f"""
         SELECT
             p.product_id,
@@ -102,8 +86,10 @@ def fetch_random_products(limit=20):
             p.image_url AS product_image_url,
             p.tag AS product_tag,
             p.min_cost AS product_min_cost,
-            p.max_cost AS product_max_cost
+            p.max_cost AS product_max_cost,
+            l.name AS location_name
         FROM product p
+        LEFT JOIN location l ON l.location_id = p.location_id
         ORDER BY RANDOM()
         LIMIT {limit}
     """
@@ -112,10 +98,6 @@ def fetch_random_products(limit=20):
 
 
 def fetch_product_stores(product_id, user_lat=None, user_lon=None):
-    """
-    Lấy danh sách cửa hàng bán sản phẩm
-    Bao gồm thông tin giá, rating, địa chỉ, ảnh
-    """
     query = f"""
         SELECT
             p.product_id,
@@ -150,8 +132,4 @@ def fetch_product_stores(product_id, user_lat=None, user_lon=None):
 
 
 def fetch_data_from_database():
-    """
-    Legacy function - không sử dụng nữa
-    Giữ lại để tránh lỗi import
-    """
     return []

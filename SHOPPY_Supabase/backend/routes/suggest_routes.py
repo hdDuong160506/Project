@@ -3,6 +3,7 @@ from database.fetch_data_for_suggest_product import (
     fetch_products_by_location,
     fetch_location_by_gps,
     fetch_location_by_name,
+    fetch_random_products,
 )
 from API.API_groq_fix_location import get_standard_location
 
@@ -20,12 +21,16 @@ def post_suggest_products():
         payload = request.get_json(force=True)
 
         # Lấy các tham số
-        lat = session.get("user_lat")
-        lon = session.get("user_long")
-        # lat = payload.get('latitude')
-        # lon = payload.get('longitude')
+        use_gps = payload.get("use_gps", False)  # Mặc định không dùng GPS
         location_name = payload.get("location_name")
         limit = payload.get("limit", 8)  # Mặc định 8 sản phẩm
+
+        # Lấy GPS từ session (nếu cần)
+        lat = session.get("user_lat") if use_gps else None
+        lon = session.get("user_long") if use_gps else None
+
+        # Debug
+        print(f"🔍 [DEBUG] use_gps={use_gps}, location_name={location_name}, lat={lat}, lon={lon}")
 
         # Tìm location theo thứ tự ưu tiên: location_name > GPS > mặc định
         target_location = None
@@ -58,13 +63,41 @@ def post_suggest_products():
             except:
                 pass
 
-        # Ưu tiên 3: Dùng location mặc định (location_id = 1)
+        # Ưu tiên 3: Nếu không tìm thấy location, trả về 20 sản phẩm ngẫu nhiên
         if not target_location:
-            location_id = 1
-            result_location_name = None
-        else:
-            location_id = target_location.get("location_id")
-            result_location_name = target_location.get("location_name")
+            print("🔍 [DEBUG] Không tìm thấy location, fetch 20 sản phẩm random")
+            products_data = fetch_random_products(20)
+            print(f"🔍 [DEBUG] Số sản phẩm random: {len(products_data)}")
+
+            # Format dữ liệu trả về
+            items = []
+            for row in products_data:
+                items.append(
+                    {
+                        "product_id": row.get("product_id"),
+                        "product_name": row.get("product_name"),
+                        "product_image_url": row.get("product_image_url"),
+                        "product_tag": row.get("product_tag"),
+                        "min_price": row.get("product_min_cost"),
+                        "max_price": row.get("product_max_cost"),
+                    }
+                )
+
+            return (
+                jsonify(
+                    {
+                        "status": "success",
+                        "count": len(items),
+                        "location_name": None,
+                        "products": items,
+                    }
+                ),
+                200,
+            )
+
+        # Có location, lấy sản phẩm theo location
+        location_id = target_location.get("location_id")
+        result_location_name = target_location.get("location_name")
 
         # Lấy sản phẩm theo location
         products_data = fetch_products_by_location(location_id, limit)

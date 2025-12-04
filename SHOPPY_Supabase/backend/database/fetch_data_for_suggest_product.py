@@ -90,6 +90,27 @@ def fetch_products_by_location(location_id, limit=20):
     return result.data if result.data else []
 
 
+def fetch_random_products(limit=20):
+    """
+    Lấy danh sách sản phẩm ngẫu nhiên từ database (không lọc theo location)
+    Trả về: list các product với thông tin cơ bản
+    """
+    query = f"""
+        SELECT
+            p.product_id,
+            p.name AS product_name,
+            p.image_url AS product_image_url,
+            p.tag AS product_tag,
+            p.min_cost AS product_min_cost,
+            p.max_cost AS product_max_cost
+        FROM product p
+        ORDER BY RANDOM()
+        LIMIT {limit}
+    """
+    result = supabase.rpc("exec_sql", {"sql": query}).execute()
+    return result.data if result.data else []
+
+
 def fetch_product_stores(product_id, user_lat=None, user_lon=None):
     """
     Lấy danh sách cửa hàng bán sản phẩm

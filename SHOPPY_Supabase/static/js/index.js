@@ -315,6 +315,25 @@ async function loadSuggestedProducts(locationName = null, useGps = false) {
 	}
 }
 
+function renderLocationList() {
+	const listWrap = document.getElementById("location-list");
+	listWrap.innerHTML =
+
+		LOCATIONS.forEach(loc => {
+			const div = document.createElement("div");
+			div.className = "location-item";
+			div.dataset.location = loc;
+			div.innerHTML = `📍 ${loc}`;
+			div.addEventListener("click", () => {
+				document.getElementById("search_address_input").value = loc;
+				document.getElementById("location-dropdown-menu").style.display = "none";
+			});
+			listWrap.appendChild(div);
+		});
+}
+
+document.addEventListener("DOMContentLoaded", renderLocationList);
+
 // Render sản phẩm gợi ý
 function renderSuggestedProducts(products) {
 	const wrap = $('#suggested-products-list');
@@ -1589,4 +1608,59 @@ async function updateUserLocation(userId) {
 		(err) => {
 			console.warn("⚠️ Không lấy được vị trí (User từ chối hoặc lỗi):", err.message);
 		});
+}
+
+// ======================================================================
+// PHẦN 11: XỬ LÝ LOCATION DROPDOWN
+// ======================================================================
+
+// Khởi tạo location dropdown
+function initLocationDropdown() {
+	const dropdownBtn = $('#location-dropdown-btn');
+	const dropdownMenu = $('#location-dropdown-menu');
+	const addressInput = $('#search_address_input');
+	const locationItems = $$('.location-item');
+
+	if (!dropdownBtn || !dropdownMenu || !addressInput) return;
+
+	// Toggle dropdown khi click vào nút
+	dropdownBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		dropdownMenu.classList.toggle('active');
+	});
+
+	// Xử lý khi chọn một địa điểm
+	locationItems.forEach(item => {
+		item.addEventListener('click', () => {
+			const location = item.getAttribute('data-location');
+			addressInput.value = location;
+			dropdownMenu.classList.remove('active');
+
+			// Lưu vào localStorage và load sản phẩm gợi ý
+			localStorage.setItem('suggest_location_name', location);
+			localStorage.removeItem('suggest_use_gps');
+			loadSuggestedProducts(location);
+		});
+	});
+
+	// Đóng dropdown khi click ra ngoài
+	document.addEventListener('click', (e) => {
+		if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
+			dropdownMenu.classList.remove('active');
+		}
+	});
+
+	// Đóng dropdown khi nhấn ESC
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && dropdownMenu.classList.contains('active')) {
+			dropdownMenu.classList.remove('active');
+		}
+	});
+}
+
+// Gọi hàm khởi tạo khi trang load
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initLocationDropdown);
+} else {
+	initLocationDropdown();
 }

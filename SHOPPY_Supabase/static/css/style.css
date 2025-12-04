@@ -1064,4 +1064,101 @@ main section > div:nth-of-type(2) h2 {
     border-radius: 50%;
     animation: spin 0.8s linear infinite; /* Sử dụng animation spin đã định nghĩa */
 }
-/* 
+
+/* --- 12. LOCATION DROPDOWN --- */
+.address-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.location-dropdown-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+  z-index: 10;
+}
+
+.location-dropdown-btn:hover {
+  background: #f0f0f0;
+}
+
+.location-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  max-height: 300px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: none;
+  animation: slideDown 0.2s ease-out;
+  overflow: hidden;
+}
+
+.location-dropdown-menu.active {
+  display: block;
+}
+
+.location-dropdown-header {
+  padding: 12px 15px;
+  background: #f9f9f9;
+  border-bottom: 1px solid #e5e5e5;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.location-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.location-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.location-item:last-child {
+  border-bottom: none;
+}
+
+.location-item:hover {
+  background: #f0f4f8;
+  color: #1867f8;
+}
+
+/* Scrollbar styling cho location list */
+.location-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.location-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.location-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.location-list::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+/*

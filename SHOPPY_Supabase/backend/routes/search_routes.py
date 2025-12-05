@@ -94,7 +94,7 @@ def handle_image_search_api():
             location_id = session.get("location_id")
 
             # Sử dụng hàm search_product hiện có để tìm kiếm
-            search_results = search_product(recognized_product,location_id, user_lat, user_lon)
+            search_results = search_product(recognized_product, location_id, user_lat, user_lon)
 
             # Format kết quả giống như API thông thường
             formatted_products = []

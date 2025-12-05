@@ -360,14 +360,14 @@ Analyze the core structure and composition to correctly classify Vietnamese dish
                 ]
             }
         ],
-        "temperature": 0.05,  # Low temp for consistent result
-        "max_tokens": 200,    # Enough for product names/keywords
-        "top_p": 0.9,
+        "temperature": 0.01,  # Low temp for consistent result
+        "max_tokens": 400,    # Enough for product names/keywords
+        "top_p": 0.98,
         "stream": False
     }
     
     try:
-        response = requests.post(api_url, headers=headers, json=payload, timeout=30)
+        response = requests.post(api_url, headers=headers, json=payload, timeout=10000)
         
         print(f"📡 Vision API Status: {response.status_code}")
         

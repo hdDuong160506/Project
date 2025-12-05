@@ -839,18 +839,6 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 async function renderProductSummary(product) {
     const $ = document.querySelector.bind(document);
 
-    // Nếu window.allStores chưa có, ta gọi API lấy về ngay lập tức
-    if (!window.allStores) {
-        try {
-            const res = await fetch('/map/api/stores');
-            if (res.ok) {
-                window.allStores = await res.json();
-            }
-        } catch (e) {
-            console.error("Lỗi khi tải danh sách cửa hàng:", e);
-        }
-    }
-
     // --- 1. Cập nhật thông tin tổng quan sản phẩm ---
     if ($('#summary-product-name')) $('#summary-product-name').textContent = product.product_name;
     if ($('#breadcrumb-product-name')) $('#breadcrumb-product-name').textContent = product.product_name;
@@ -884,39 +872,7 @@ async function renderProductSummary(product) {
         return;
     }
 
-    let userLat = 0;
-    let userLon = 0;
-    // CẤU HÌNH TỌA ĐỘ NGƯỜI DÙNG
-    try {
-        const response = await fetch('/map/api/get-current-location');
-
-        if (!response.ok) {
-            throw new Error('Lỗi kết nối tới Server');
-        }
-
-        const data = await response.json();
-
-        // 3. Kiểm tra dữ liệu trả về
-        if (data.lat && data.long) {
-            const lat = parseFloat(data.lat);
-            const lng = parseFloat(data.long);
-
-            // Cập nhật dữ liệu người dùng
-            userLat = lat;
-            userLon = lng;
-
-            console.log("📍 Đã lấy toạ độ từ Session:", lat, lng);
-
-        } else {
-            // Trường hợp Session trả về null
-            throw new Error("Session chưa có dữ liệu vị trí");
-        }
-
-    } catch (error) {
-        console.warn("⚠️ Không lấy được vị trí từ Session:", error);
-
-    }
-
+    
     storesToRender.forEach(store => {
         // --- Logic ảnh và giá ---
         const mainImage = store.product_images && store.product_images.length > 0

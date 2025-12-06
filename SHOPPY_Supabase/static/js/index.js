@@ -297,7 +297,7 @@ async function loadSuggestedProducts(locationName = null, useGps = false) {
 
 	try {
 		// Gọi API với param use_gps
-		const res = await fetch('http://127.0.0.1:5000/api/suggest_products', {
+		const res = await fetch('/api/suggest_products', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -1703,3 +1703,24 @@ if (document.readyState === 'loading') {
 } else {
 	initLocationDropdown();
 }
+
+// ======================================================================
+// XỬ LÝ LƯU URL TRƯỚC KHI ĐĂNG NHẬP
+// ======================================================================
+
+(function() {
+    const accountLink = document.getElementById('account-link');
+    
+    if (accountLink) {
+        accountLink.addEventListener('click', function(e) {
+            // Kiểm tra session (bất đồng bộ)
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (!session) {
+                    // Chưa đăng nhập → Lưu URL hiện tại
+                    localStorage.setItem('redirect_after_login', window.location.href);
+                    console.log('💾 Saved URL:', window.location.href);
+                }
+            });
+        });
+    }
+})();

@@ -122,8 +122,8 @@ function scrollToSearchResults() { // HÀM CUỘN TRANG MỚI
 	if (resultsTitle) {
 		// Cuộn đến vị trí của tiêu đề kết quả
 		resultsTitle.scrollIntoView({
-			behavior : 'smooth', // Hiệu ứng cuộn mượt
-			block : 'center'	 // Cuộn đến đầu của phần tử
+			behavior: 'smooth', // Hiệu ứng cuộn mượt
+			block: 'center'	 // Cuộn đến đầu của phần tử
 		});
 	}
 }
@@ -148,7 +148,7 @@ function submitSearch(query) {
 
 	const searchForm = $('#search_form');
 	// Trigger submit để tải sản phẩm
-	searchForm.dispatchEvent(new Event('submit', {bubbles : true, cancelable : true}));
+	searchForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
 	// THÊM: Cuộn xuống kết quả
 	scrollToSearchResults();
@@ -239,32 +239,43 @@ function renderSearchResults(products, searchQuery = '') {
 			priceText = 'Liên hệ để biết giá';
 		}
 
+		// Khung chứa sản phẩm
+		const productContainer = document.createElement('div');
+		productContainer.className = 'product-container';
+
+		// ==== Khối thông tin sản phẩm chính (ĐÃ CẬP NHẬT: Thay thế nút bằng khoảng giá) ====
 		const productCard = document.createElement('div');
-		productCard.className = 'product-card';
-		productCard.style.cssText = 'background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1); transition:transform 0.2s; cursor:pointer;';
+		productCard.className = 'product-info';
 
 		productCard.innerHTML = `
-			<a href="${detailUrl}" style="text-decoration:none; color:inherit; display:block;">
-				<img src="${imageUrl}" alt="${product.product_name}" style="width:100%; height:200px; object-fit:cover; display:block;">
-				<div style="padding:15px;">
-					<h3 style="font-size:16px; margin:0 0 10px 0; color:#333; height:40px; overflow:hidden; line-height:1.4;">${product.product_name}</h3>
-					<p style="font-size:18px; font-weight:bold; color:#1867f8; margin:0 0 8px 0;">${priceText}</p>
-					${product.location_name ? `<p style="font-size:14px; color:#666; margin:0; display:flex; align-items:center; gap:5px;">📍 ${product.location_name}</p>` : ''}
-				</div>
-			</a>
-		`;
+      <a href="${detailUrl}">
+        <img src="${imageUrl}" alt="${product.product_name}">
+      </a>
+      <div>
+          <a href="${detailUrl}" style="text-decoration:none; color:inherit;">
+            <h3>${product.product_name}</h3>
+          </a>
+          <p class="product-location">📍 ${product.location_name}</p>
+      </div>
+      <div class="product-actions-main" style="margin-top: 5px;">
+          <a href="${detailUrl}" style="text-decoration:none; color:inherit;">
+            <p class="product-price">${priceText}</p>
+            <p style="font-size:12px; color:#555;">(Giá trung bình từ các cửa hàng)</p>
+          </a>
+      </div>
+    `;
 
-		productCard.addEventListener('mouseenter', () => {
-			productCard.style.transform = 'translateY(-5px)';
-			productCard.style.boxShadow = '0 5px 15px rgba(0,0,0,0.15)';
+		productContainer.addEventListener('mouseenter', () => {
+			productContainer.style.transform = 'translateY(-5px) scale(1.03)';
+			productContainer.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
 		});
 
-		productCard.addEventListener('mouseleave', () => {
-			productCard.style.transform = 'translateY(0)';
-			productCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+		productContainer.addEventListener('mouseleave', () => {
+			productContainer.style.transform = 'translateY(0) scale(1)';
+			productContainer.style.boxShadow = '0 4px 18px rgba(9, 11, 14, 0.06)';
 		});
-
-		wrap.appendChild(productCard);
+		productContainer.appendChild(productCard);
+		wrap.appendChild(productContainer);
 	});
 
 	if (products && products.length > 0) {
@@ -298,14 +309,14 @@ async function loadSuggestedProducts(locationName = null, useGps = false) {
 	try {
 		// Gọi API với param use_gps
 		const res = await fetch('/api/suggest_products', {
-			method : 'POST',
-			headers : {
-				'Content-Type' : 'application/json'
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
 			},
-			body : JSON.stringify({
-				location_name : locationName,
-				use_gps : useGps,
-				limit : 100
+			body: JSON.stringify({
+				location_name: locationName,
+				use_gps: useGps,
+				limit: 100
 			})
 		});
 
@@ -421,36 +432,43 @@ function renderSuggestedProducts(products) {
 			priceText = 'Liên hệ qua facebook';
 		}
 
+		// Khung chứa sản phẩm
+		const productContainer = document.createElement('div');
+		productContainer.className = 'product-container';
+
+		// ==== Khối thông tin sản phẩm chính (ĐÃ CẬP NHẬT: Thay thế nút bằng khoảng giá) ====
 		const productCard = document.createElement('div');
-		productCard.className = 'product-card';
-		// Giữ nguyên style thẻ ngoài
-		productCard.style.cssText = 'background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1); transition:all 0.2s; cursor:pointer;';
+		productCard.className = 'product-info';
 
 		productCard.innerHTML = `
-    <a href="${detailUrl}" style="text-decoration:none; color:inherit; display:block;">
-        <div style="padding:15px; display:flex; justify-content:center; align-items:center; background:#f9f9f9; border-top-left-radius:12px; border-top-right-radius:12px;">
-            <img src="${imageUrl}" alt="${product.product_name}" style="width:90%; height:180px; object-fit:contain; display:block; border-radius:40px;">
-        </div>
-        <div style="padding:18px; text-align:center;">
-            <h3 style="font-size:20px; margin:0 0 2px 0; color:#333; height:50px; overflow:hidden; line-height:1.2; text-align:center;">${product.product_name}</h3>
-            ${product.location_name ? `<p style="font-size:14px; color:#666; margin:0 0 8px 0; text-align:center;">📍 ${product.location_name}</p>` : ''}
-            <p style="font-size:20px; font-weight:bold; color:#dc3545; margin:0 0 5px 0;">${priceText}</p>
+      <a href="${detailUrl}">
+        <img src="${imageUrl}" alt="${product.product_name}">
+      </a>
+      <div>
+          <a href="${detailUrl}" style="text-decoration:none; color:inherit;">
+            <h3>${product.product_name}</h3>
+          </a>
+          <p class="product-location">📍 ${product.location_name}</p>
+      </div>
+      <div class="product-actions-main" style="margin-top: 5px;">
+          <a href="${detailUrl}" style="text-decoration:none; color:inherit;">
+            <p class="product-price">${priceText}</p>
             <p style="font-size:12px; color:#555;">(Giá trung bình từ các cửa hàng)</p>
-        </div>
-    </a>
-`;
+          </a>
+      </div>
+    `;
 
-		productCard.addEventListener('mouseenter', () => {
-			productCard.style.transform = 'translateY(-5px)';
-			productCard.style.boxShadow = '0 5px 15px rgba(0,0,0,0.15)';
+		productContainer.addEventListener('mouseenter', () => {
+			productContainer.style.transform = 'translateY(-5px) scale(1.03)';
+			productContainer.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
 		});
 
-		productCard.addEventListener('mouseleave', () => {
-			productCard.style.transform = 'translateY(0)';
-			productCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+		productContainer.addEventListener('mouseleave', () => {
+			productContainer.style.transform = 'translateY(0) scale(1)';
+			productContainer.style.boxShadow = '0 4px 18px rgba(9, 11, 14, 0.06)';
 		});
-
-		wrap.appendChild(productCard);
+		productContainer.appendChild(productCard);
+		wrap.appendChild(productContainer);
 	});
 }
 
@@ -605,7 +623,7 @@ if (document.getElementById('search_form')) {
 			suggestions[highlightedIndex].classList.add('highlighted');
 
 			// Focus vào item được chọn (cuộn nếu cần)
-			suggestions[highlightedIndex].scrollIntoView({block : "nearest"});
+			suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
 
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault();
@@ -614,7 +632,7 @@ if (document.getElementById('search_form')) {
 			suggestions[highlightedIndex].classList.add('highlighted');
 
 			// Focus vào item được chọn (cuộn nếu cần)
-			suggestions[highlightedIndex].scrollIntoView({block : "nearest"});
+			suggestions[highlightedIndex].scrollIntoView({ block: "nearest" });
 		} else if (e.key === 'Enter') {
 			e.preventDefault(); // Chặn form submit mặc định
 			const highlighted = suggestions[highlightedIndex];
@@ -624,7 +642,7 @@ if (document.getElementById('search_form')) {
 				highlighted.click(); // Kích hoạt hành động của item được chọn
 			} else {
 				// Nếu không có item nào được chọn, submit form như bình thường
-				document.getElementById('search_form').dispatchEvent(new Event('submit', {bubbles : true, cancelable : true}));
+				document.getElementById('search_form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 			}
 		} else if (e.key === 'Escape') {
 			hideSuggestions();
@@ -632,7 +650,7 @@ if (document.getElementById('search_form')) {
 	});
 
 	// Ẩn suggestions khi click ra ngoài
-	document.addEventListener('click', function(event) {
+	document.addEventListener('click', function (event) {
 		const form = $('#search_form');
 		const suggestions = $('#search_suggestions');
 		if (form && suggestions && !form.contains(event.target) && !suggestions.contains(event.target)) {
@@ -682,12 +700,12 @@ function startVoiceSearch() {
 	popup.style.display = "flex";
 
 	// Khi bắt đầu nghe
-	recognition.onstart = function() {
+	recognition.onstart = function () {
 		transcriptDisplay.textContent = "Đang nghe... Hãy nói gì đó!";
 	};
 
 	// Nhận kết quả
-	recognition.onresult = function(event) {
+	recognition.onresult = function (event) {
 		let finalTranscript = '';
 		let interimTranscript = '';
 
@@ -736,7 +754,7 @@ function startVoiceSearch() {
 	};
 
 	// Khi xảy ra lỗi micro / không nói
-	recognition.onerror = function(event) {
+	recognition.onerror = function (event) {
 		console.error("Lỗi nhận diện:", event.error);
 
 		let msg = "Lỗi: ";
@@ -755,7 +773,7 @@ function startVoiceSearch() {
 	};
 
 	// Khi kết thúc
-	recognition.onend = function() {
+	recognition.onend = function () {
 		currentRecognition = null;
 
 		if ($('#transcript_display').textContent === "Đang nghe...") {
@@ -1026,12 +1044,12 @@ async function searchWithImage() {
 
 	try {
 		const response = await fetch('/api/search-by-image', {
-			method : 'POST',
-			headers : {
-				'Content-Type' : 'application/json'
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
 			},
-			body : JSON.stringify({
-				image : currentImageData
+			body: JSON.stringify({
+				image: currentImageData
 			})
 		});
 
@@ -1222,14 +1240,14 @@ async function fetchCartDetails() {
 
 	try {
 		const res = await fetch('/api/cart/details', {
-			method : 'POST',
-			headers : {'Content-Type' : 'application/json'},
-			body : JSON.stringify({cart : cartToFetch})
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ cart: cartToFetch })
 		});
 		if (res.ok) {
 			// Merge cache mới vào cache cũ
 			const newCache = await res.json();
-			CART_CACHE = {...CART_CACHE, ...newCache};
+			CART_CACHE = { ...CART_CACHE, ...newCache };
 			updateCartUI();
 		}
 	} catch (err) {
@@ -1258,7 +1276,7 @@ function updateCartUI() {
 		return;
 	}
 
-	Object.entries(cart).forEach(([ key, qty ]) => {
+	Object.entries(cart).forEach(([key, qty]) => {
 		const details = CART_CACHE[key];
 
 		if (details) {
@@ -1314,14 +1332,14 @@ function addToCart(productId, storeId) {
 }
 
 // Tăng/giảm số lượng - GIỮ NGUYÊN
-window.changeQty = function(key, delta) { // Export ra window để HTML gọi được
+window.changeQty = function (key, delta) { // Export ra window để HTML gọi được
 	cart[key] = (cart[key] || 0) + delta;
 	if (cart[key] <= 0) delete cart[key];
 	saveCart();
 }
 
-				   // Xóa khỏi giỏ - GIỮ NGUYÊN
-				   window.removeItem = function(key) { // Export ra window để HTML gọi được
+// Xóa khỏi giỏ - GIỮ NGUYÊN
+window.removeItem = function (key) { // Export ra window để HTML gọi được
 	if (confirm('Xóa sản phẩm này khỏi giỏ hàng?')) {
 		delete cart[key];
 		if (CART_CACHE[key]) delete CART_CACHE[key]; // Xóa khỏi cache
@@ -1339,7 +1357,7 @@ if ($('#checkout')) {
 	// 2. Cập nhật Event Listener VỚI LOGIC KIỂM TRA ĐĂNG NHẬP
 	$('#checkout').addEventListener('click', async () => {
 		// Lấy session hiện tại
-		const {data : {session}} = await supabase.auth.getSession();
+		const { data: { session } } = await supabase.auth.getSession();
 
 		if (!session || !session.user) {
 
@@ -1396,7 +1414,7 @@ async function updateAccountLink() {
 	const logoutLink = document.getElementById('logout-link');
 
 	// 1. Lấy thông tin User hiện tại
-	const {data : {session}} = await supabase.auth.getSession();
+	const { data: { session } } = await supabase.auth.getSession();
 
 	let finalName = null;
 
@@ -1404,11 +1422,11 @@ async function updateAccountLink() {
 		// --- [LOGIC MỚI: Ưu tiên lấy tên từ Database] ---
 
 		// Gọi Supabase lấy tên trong bảng profiles
-		const {data : profile, error} = await supabase
-											.from('profiles')
-											.select('name')
-											.eq('id', session.user.id)
-											.single();
+		const { data: profile, error } = await supabase
+			.from('profiles')
+			.select('name')
+			.eq('id', session.user.id)
+			.single();
 
 		if (profile && profile.name) {
 			// Nếu trong DB có tên -> Dùng tên DB (Tên cũ)
@@ -1470,7 +1488,7 @@ async function reverseGeocode(latitude, longitude) {
 		const country = address.country || '';
 
 		// Xây dựng chuỗi kết quả: City, Country
-		const result = [ city, country ].filter(Boolean).join(', ');
+		const result = [city, country].filter(Boolean).join(', ');
 
 		// Sử dụng tọa độ nếu không lấy được thông tin cơ bản
 		return result || `Tọa độ: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
@@ -1537,8 +1555,8 @@ function showCustomConfirm(message) {
 		};
 
 		// Gắn sự kiện (đảm bảo chỉ gắn một lần)
-		yesButton.addEventListener('click', handleYes, {once : true});
-		noButton.addEventListener('click', handleNo, {once : true});
+		yesButton.addEventListener('click', handleYes, { once: true });
+		noButton.addEventListener('click', handleNo, { once: true });
 
 		// Hàm gỡ bỏ listeners dự phòng
 		const removeListeners = () => {
@@ -1554,7 +1572,7 @@ function showCustomConfirm(message) {
 // ======================================================================
 
 // Khi trang load → tải toàn bộ sản phẩm + cập nhật giỏ hàng
-window.onload = async function() {
+window.onload = async function () {
 	// THÊM: Fetch chi tiết giỏ hàng ngay khi tải trang
 	await fetchCartDetails();
 	updateCartUI();
@@ -1563,7 +1581,7 @@ window.onload = async function() {
 	updateAccountLink();
 
 	// === 2. KIỂM TRA SESSION & CẬP NHẬT VỊ TRÍ LÊN DB ===
-	const {data : {session}} = await supabase.auth.getSession();
+	const { data: { session } } = await supabase.auth.getSession();
 
 	if (session && session.user) {
 		updateUserLocation(session.user.id);
@@ -1575,7 +1593,7 @@ window.onload = async function() {
 
 	if (searchText) {
 		// ✅ CÓ PARAMETER SEARCH TRONG URL
-		
+
 		// Gán vào ô search input
 		const input = document.getElementById('search_input');
 		if (input) input.value = searchText;
@@ -1595,13 +1613,13 @@ window.onload = async function() {
 
 		// Load và hiển thị kết quả tìm kiếm
 		await loadProducts(searchText);
-		
+
 		// Cuộn xuống kết quả
 		scrollToSearchResults();
-		
+
 	} else {
 		// ✅ KHÔNG CÓ SEARCH PARAMETER -> HIỂN THỊ SẢN PHẨM GỢI Ý
-		
+
 		// Load sản phẩm gợi ý (khôi phục trạng thái từ localStorage nếu có)
 		const savedLocationName = localStorage.getItem('suggest_location_name');
 		const savedUseGps = localStorage.getItem('suggest_use_gps');
@@ -1704,7 +1722,7 @@ window.onload = async function() {
 };
 
 // Hàm đăng xuất toàn cục (gắn vào window để html gọi được)
-window.handleLogout = async function() {
+window.handleLogout = async function () {
 	// SỬ DỤNG CUSTOM MODAL THAY CHO CONFIRM()
 	const confirmLogout = await showCustomConfirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?");
 
@@ -1713,7 +1731,7 @@ window.handleLogout = async function() {
 	// Nếu người dùng đồng ý (confirmLogout là true)
 	try {
 		// 1. Gọi Supabase đăng xuất
-		const {error} = await supabase.auth.signOut();
+		const { error } = await supabase.auth.signOut();
 		if (error) throw error;
 
 		// 2. Xóa sạch LocalStorage
@@ -1736,17 +1754,17 @@ async function updateUserLocation(userId) {
 
 	navigator.geolocation.getCurrentPosition(
 		async (position) => {
-			const {latitude, longitude} = position.coords;
+			const { latitude, longitude } = position.coords;
 
 			// Gọi Supabase update
-			const {error} = await supabase
-								.from('profiles')
-								.update({
-									lat : latitude,
-									long : longitude,
-									updated_at : new Date()
-								})
-								.eq('id', userId);
+			const { error } = await supabase
+				.from('profiles')
+				.update({
+					lat: latitude,
+					long: longitude,
+					updated_at: new Date()
+				})
+				.eq('id', userId);
 
 			if (!error) {
 				console.log(`✅ Đã cập nhật vị trí lên DB: ${latitude}, ${longitude}`);
@@ -1806,19 +1824,19 @@ if (document.readyState === 'loading') {
 // XỬ LÝ LƯU URL TRƯỚC KHI ĐĂNG NHẬP
 // ======================================================================
 
-(function() {
-const accountLink = document.getElementById('account-link');
+(function () {
+	const accountLink = document.getElementById('account-link');
 
-if (accountLink) {
-	accountLink.addEventListener('click', function(e) {
-		// Kiểm tra session (bất đồng bộ)
-		supabase.auth.getSession().then(({data : {session}}) => {
-			if (!session) {
-				// Chưa đăng nhập → Lưu URL hiện tại
-				localStorage.setItem('redirect_after_login', window.location.href);
-				console.log('💾 Saved URL:', window.location.href);
-			}
+	if (accountLink) {
+		accountLink.addEventListener('click', function (e) {
+			// Kiểm tra session (bất đồng bộ)
+			supabase.auth.getSession().then(({ data: { session } }) => {
+				if (!session) {
+					// Chưa đăng nhập → Lưu URL hiện tại
+					localStorage.setItem('redirect_after_login', window.location.href);
+					console.log('💾 Saved URL:', window.location.href);
+				}
+			});
 		});
-	});
-}
+	}
 })();

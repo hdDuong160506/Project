@@ -1569,23 +1569,57 @@ window.onload = async function() {
 		updateUserLocation(session.user.id);
 	}
 
-	// === 3. Load sản phẩm gợi ý (khôi phục trạng thái từ localStorage nếu có) ===
-	const savedLocationName = localStorage.getItem('suggest_location_name');
-	const savedUseGps = localStorage.getItem('suggest_use_gps');
+	// === 3. ✅ KIỂM TRA URL PARAMETER ?search=... (THÊM MỚI) ===
+	const params = new URLSearchParams(window.location.search);
+	const searchText = params.get('search');
 
-	if (savedUseGps === 'true') {
-		// Nếu trước đó dùng GPS, load lại theo GPS
-		loadSuggestedProducts(null, true);
-	} else if (savedLocationName) {
-		// Nếu trước đó nhập địa chỉ, khôi phục và load lại
-		const addressInput = $('#search_address_input');
-		if (addressInput) {
-			addressInput.value = savedLocationName;
+	if (searchText) {
+		// ✅ CÓ PARAMETER SEARCH TRONG URL
+		
+		// Gán vào ô search input
+		const input = document.getElementById('search_input');
+		if (input) input.value = searchText;
+
+		// Ẩn tiêu đề sản phẩm gợi ý
+		const suggestedTitle = $('#suggested-products-title');
+		if (suggestedTitle) {
+			suggestedTitle.style.display = 'none';
 		}
-		loadSuggestedProducts(savedLocationName);
+
+		// Hiển thị tiêu đề kết quả tìm kiếm
+		const resultsTitle = $('#search-results-title');
+		if (resultsTitle) {
+			resultsTitle.textContent = `🔍 Kết quả tìm kiếm cho "${searchText}"`;
+			resultsTitle.style.display = 'block';
+		}
+
+		// Load và hiển thị kết quả tìm kiếm
+		await loadProducts(searchText);
+		
+		// Cuộn xuống kết quả
+		scrollToSearchResults();
+		
 	} else {
-		// Mặc định: load sản phẩm gợi ý thông thường
-		loadSuggestedProducts();
+		// ✅ KHÔNG CÓ SEARCH PARAMETER -> HIỂN THỊ SẢN PHẨM GỢI Ý
+		
+		// Load sản phẩm gợi ý (khôi phục trạng thái từ localStorage nếu có)
+		const savedLocationName = localStorage.getItem('suggest_location_name');
+		const savedUseGps = localStorage.getItem('suggest_use_gps');
+
+		if (savedUseGps === 'true') {
+			// Nếu trước đó dùng GPS, load lại theo GPS
+			loadSuggestedProducts(null, true);
+		} else if (savedLocationName) {
+			// Nếu trước đó nhập địa chỉ, khôi phục và load lại
+			const addressInput = $('#search_address_input');
+			if (addressInput) {
+				addressInput.value = savedLocationName;
+			}
+			loadSuggestedProducts(savedLocationName);
+		} else {
+			// Mặc định: load sản phẩm gợi ý thông thường
+			loadSuggestedProducts();
+		}
 	}
 
 	// === 4. Xử lý event cho ô địa chỉ ===

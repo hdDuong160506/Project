@@ -235,7 +235,7 @@ async function fetchProductDetails() {
 
 function renderEmptyCart() {
     const list = $('#cart-page-list');
-    if(list) list.innerHTML = '<div class="empty-cart">Giỏ trống <br><a href="index.html">Mua ngay</a></div>';
+    if(list) list.innerHTML = '<div class="empty-cart">Giỏ trống <br><a href="index.html">Tiếp tục mua sắm</a></div>';
     const totalEl = $('#cart-page-total');
     if(totalEl) totalEl.innerHTML = `Tổng cộng (0 Sản phẩm): <span>0₫</span>`;
     if($('#cart-page-checkout')) $('#cart-page-checkout').disabled = true;

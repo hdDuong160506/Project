@@ -216,7 +216,7 @@ function showNotification(message, icon = '✅') {
 
     if (!toast || !msgEl || !iconEl) {
         // Fallback nếu không tìm thấy HTML
-        return alert(message);
+        return console.warn("Lỗi: Không tìm thấy Toast HTML. Nội dung thông báo:", message);
     }
 
     // 1. Cập nhật nội dung
@@ -236,6 +236,49 @@ function showNotification(message, icon = '✅') {
         toast.classList.remove('show');
     }, 3000);
 }
+
+// HÀM CUSTOM MODAL (DÙNG CHO ĐĂNG XUẤT) - ĐỒNG BỘ TỪ index.js
+function showCustomConfirm(message) {
+	return new Promise(resolve => {
+		const modal = document.getElementById('custom-confirm-modal');
+		const messageElement = modal.querySelector('#modal-message');
+		const yesButton = modal.querySelector('#modal-confirm-yes');
+		const noButton = modal.querySelector('#modal-confirm-no');
+
+		// Đảm bảo các phần tử modal tồn tại trước khi thao tác
+		if (!modal || !messageElement || !yesButton || !noButton) {
+			console.error("Lỗi: Không tìm thấy các phần tử Custom Modal.");
+			resolve(confirm(message));
+			return;
+		}
+
+		messageElement.textContent = message;
+		modal.style.display = 'flex';
+
+		const handleYes = () => {
+			modal.style.display = 'none';
+			removeListeners();
+			resolve(true); // Trả về true (Đồng ý)
+		};
+
+		const handleNo = () => {
+			modal.style.display = 'none';
+			removeListeners();
+			resolve(false); // Trả về false (Hủy)
+		};
+
+		// Gắn sự kiện (đảm bảo chỉ gắn một lần)
+		yesButton.addEventListener('click', handleYes, { once: true });
+		noButton.addEventListener('click', handleNo, { once: true });
+
+		// Hàm gỡ bỏ listeners dự phòng
+		const removeListeners = () => {
+			yesButton.removeEventListener('click', handleYes);
+			noButton.removeEventListener('click', handleNo);
+		};
+	});
+}
+// KẾT THÚC HÀM CUSTOM MODAL
 
 // Hàm kiểm tra đăng nhập và chuyển hướng (KHÔNG HIỂN THỊ POP-UP)
 async function checkLoginAndRedirect(message = "Chuyển hướng đến trang đăng nhập...") {
@@ -292,11 +335,9 @@ async function updateAccountLink() {
         accountLink.href = 'profile.html';
         if (logoutLink) {
             logoutLink.style.display = 'flex';
-            // Gắn sự kiện đăng xuất
+            // Gắn sự kiện đăng xuất (Đã được sửa để gọi handleLogout trực tiếp)
             logoutLink.onclick = async () => {
-                if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
-                    await handleLogout();
-                }
+                await handleLogout();
             };
         }
     } else if (accountLink) {
@@ -306,8 +347,14 @@ async function updateAccountLink() {
     }
 }
 
-// Logic Đăng Xuất (ĐÃ CẬP NHẬT: Tải lại trang)
+// Logic Đăng Xuất (ĐÃ CẬP NHẬT: Tải lại trang và dùng Custom Modal)
 window.handleLogout = async function () {
+    // SỬ DỤNG CUSTOM MODAL THAY CHO window.confirm
+    const confirmLogout = await showCustomConfirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?");
+
+    if (!confirmLogout) return; // Nếu người dùng chọn Hủy
+
+    // Nếu người dùng đồng ý (confirmLogout là true)
     try {
         const {
             error
@@ -325,7 +372,8 @@ window.handleLogout = async function () {
 
     } catch (err) {
         console.error("Lỗi đăng xuất:", err);
-        alert("Đăng xuất thất bại. Vui lòng thử lại.");
+        // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+        showNotification("Đăng xuất thất bại. Vui lòng thử lại.", "❌");
     }
 };
 
@@ -603,200 +651,7 @@ async function findPsIdAndLoadReviews(productId, storeId) {
     }
 }
 
-async function loadReviews(psId, resetPage = false) {
-    if (!psId || !supabaseClient) return;
-
-    // Reset page về 0 nếu cần
-    if (resetPage) {
-        currentReviewsPage = 0;
-    }
-
-    // Check Login UI (chỉ làm khi reset/lần đầu)
-    if (resetPage) {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        const formContainer = $('#review-form-container');
-        const loginPrompt = $('#login-prompt');
-
-        if (formContainer && loginPrompt) {
-            if (session) {
-                formContainer.style.display = 'block';
-                loginPrompt.style.display = 'none';
-            } else {
-                formContainer.style.display = 'none';
-                loginPrompt.style.display = 'block';
-            }
-        }
-    }
-
-    const listEl = $('#reviews-list');
-
-    // Hiển thị loading (chỉ khi reset)
-    if (resetPage && listEl) {
-        listEl.innerHTML = '<p style="color:#999; padding:10px">Đang tải đánh giá...</p>';
-    }
-
-    // 🎯 BƯỚC 1: Đếm tổng số reviews để hiển thị header
-    if (resetPage) {
-        // Dùng count: 'exact' với head: true để chỉ đếm
-        const { count, error: countError } = await supabaseClient
-            .from('reviews')
-            .select('*', { count: 'exact', head: true })
-            .eq('ps_id', psId);
-
-        if (!countError && count !== null) {
-            totalReviewsCount = count;
-
-            // Tính rating trung bình (chỉ khi có reviews)
-            if (count > 0) {
-                const { data: ratingData } = await supabaseClient
-                    .from('reviews')
-                    .select('rating')
-                    .eq('ps_id', psId);
-
-                if (ratingData && ratingData.length > 0) {
-                    const sumRating = ratingData.reduce((acc, curr) => acc + (curr.rating || 0), 0);
-                    const avgRating = sumRating / ratingData.length;
-                    updateReviewHeader(avgRating, count);
-                }
-            } else {
-                updateReviewHeader(0, 0);
-            }
-        } else {
-            totalReviewsCount = 0;
-            updateReviewHeader(0, 0);
-        }
-    }
-
-    // 🎯 BƯỚC 2: Load reviews với phân trang
-    const from = currentReviewsPage * REVIEWS_PER_PAGE;
-    const to = from + REVIEWS_PER_PAGE - 1;
-
-    const { data: reviews, error } = await supabaseClient
-        .from('reviews')
-        .select('*')
-        .eq('ps_id', psId)
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-    if (error) {
-        console.error("Lỗi tải review:", error);
-        if (resetPage && listEl) {
-            listEl.innerHTML = '<p style="color:red">Không thể tải đánh giá.</p>';
-        }
-        return;
-    }
-
-    // Kiểm tra còn review để load không
-    hasMoreReviews = reviews && reviews.length === REVIEWS_PER_PAGE;
-
-    if (!listEl) return;
-
-    // Clear list nếu reset
-    if (resetPage) {
-        listEl.innerHTML = '';
-    }
-
-    // Xóa nút "Xem thêm" cũ nếu có
-    const oldLoadMoreBtn = document.getElementById('load-more-reviews-btn');
-    if (oldLoadMoreBtn) {
-        oldLoadMoreBtn.remove();
-    }
-
-    if (!reviews || reviews.length === 0) {
-        if (resetPage) {
-            listEl.innerHTML = '<p style="color:#777; font-style: italic;">Chưa có đánh giá nào.</p>';
-        }
-        return;
-    }
-
-    // 🎯 BƯỚC 3: Lấy thông tin User
-    const userIds = [...new Set(reviews.map(r => r.user_id))];
-    const { data: profiles } = await supabaseClient
-        .from('profiles')
-        .select('id, name, avatar_url')
-        .in('id', userIds);
-
-    const profileMap = {};
-    if (profiles) profiles.forEach(p => profileMap[p.id] = p);
-
-    // 🎯 BƯỚC 4: Render reviews
-    reviews.forEach(r => {
-        const user = profileMap[r.user_id] || {
-            name: 'Người dùng ẩn danh',
-            avatar_url: null
-        };
-        let starsHtml = '';
-        for (let i = 1; i <= 5; i++) starsHtml += `<span style="color:${i <= r.rating ? '#ffc107' : '#ddd'}">★</span>`;
-
-        const date = new Date(r.created_at).toLocaleDateString('vi-VN');
-        const avatarHtml = user.avatar_url ?
-            `<img src="${user.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` :
-            `<div style="width:100%;height:100%;background:#ccc;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;border-radius:50%">${user.name ? user.name.charAt(0).toUpperCase() : 'U'}</div>`;
-
-        const item = document.createElement('div');
-        item.className = 'review-item';
-        item.innerHTML = `
-            <div class="review-avatar" style="width:40px;height:40px;">${avatarHtml}</div>
-            <div class="review-content">
-                <h4 style="margin:0;font-size:14px;">${user.name}</h4>
-                <div class="stars" style="font-size:12px;">${starsHtml}</div>
-                <p style="margin:5px 0;font-size:14px;">${r.comment || ''}</p>
-                <div class="date" style="font-size:12px;color:#999;">${date}</div>
-            </div>
-        `;
-        listEl.appendChild(item);
-    });
-
-    // 🎯 BƯỚC 5: Thêm nút "Xem thêm" nếu còn reviews
-    if (hasMoreReviews) {
-        const loadedCount = (currentReviewsPage + 1) * REVIEWS_PER_PAGE;
-        const remainingCount = Math.max(0, totalReviewsCount - loadedCount);
-
-        // ✅ CHỈ HIỂN THỊ NÚT NẾU CÒN ĐÁNH GIÁ
-        if (remainingCount > 0) {
-            const loadMoreBtn = document.createElement('button');
-            loadMoreBtn.id = 'load-more-reviews-btn';
-            loadMoreBtn.className = 'btn-load-more-reviews';
-            loadMoreBtn.innerHTML = `
-                Xem thêm đánh giá 
-            `;
-            loadMoreBtn.style.cssText = `
-                width: 100%;
-                padding: 12px 20px;
-                margin-top: 15px;
-                background: #f8f9fa;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                color: #333;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            `;
-
-            loadMoreBtn.onmouseover = () => {
-                loadMoreBtn.style.background = '#e9ecef';
-                loadMoreBtn.style.borderColor = '#bbb';
-            };
-            loadMoreBtn.onmouseout = () => {
-                loadMoreBtn.style.background = '#f8f9fa';
-                loadMoreBtn.style.borderColor = '#ddd';
-            };
-
-            loadMoreBtn.onclick = async () => {
-                loadMoreBtn.disabled = true;
-                loadMoreBtn.innerHTML = '⏳ Đang tải...';
-
-                currentReviewsPage++;
-                await loadReviews(psId, false); // Load thêm không reset
-            };
-
-            listEl.appendChild(loadMoreBtn);
-        }
-    }
-}
-
-function updateReviewHeader(rating, count) {
+async function updateReviewHeader(rating, count) {
     const statsEl = document.getElementById('review-stats');
     if (!statsEl) return;
 
@@ -812,56 +667,9 @@ function updateReviewHeader(rating, count) {
     }
 }
 
-async function submitReview() {
-    if (!currentPsId) {
-        alert("Lỗi: Không tìm thấy mã sản phẩm.");
-        return;
-    }
-    if (!supabaseClient) return;
+// 🎯 HÀM GỐC submitReview ĐÃ ĐƯỢC CẬP NHẬT Ở PHẦN 4.10, PHẦN NÀY KHÔNG CẦN NỮA.
 
-    // Check Login (KHÔNG HIỂN THỊ POPUP)
-    const user = await checkLoginAndRedirect("Chưa đăng nhập. Chuyển hướng để gửi đánh giá.");
-    if (!user) return;
 
-    const ratingEl = document.querySelector('input[name="rating"]:checked');
-    const commentInput = $('#review-comment');
-    const comment = commentInput ? commentInput.value.trim() : '';
-
-    if (!ratingEl) {
-        alert("Vui lòng chọn số sao!");
-        return;
-    }
-
-    const btn = $('#btn-submit-review');
-    btn.textContent = "Đang gửi...";
-    btn.disabled = true;
-
-    try {
-        const { error } = await supabaseClient
-            .from('reviews')
-            .insert([{
-                ps_id: currentPsId,
-                user_id: user.id,
-                rating: parseInt(ratingEl.value),
-                comment: comment
-            }]);
-
-        if (error) throw error;
-
-        showNotification("Cảm ơn bạn đã đánh giá!", "✅");
-        commentInput.value = '';
-        if (ratingEl) ratingEl.checked = false;
-
-        // Reset về trang đầu tiên và reload
-        loadReviews(currentPsId, true);
-
-    } catch (err) {
-        showNotification("Gửi thất bại: " + err.message, "❌");
-    } finally {
-        btn.textContent = "Gửi đánh giá";
-        btn.disabled = false;
-    }
-}
 // ======================================================================
 // 4.1. THÊM BIẾN CHO REVIEW FILTER & CRUD
 // ======================================================================
@@ -880,7 +688,14 @@ async function filterReviews(filterType) {
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    event.target.classList.add('active');
+    // Tìm nút được click (sử dụng event.target) để thêm class 'active'
+    // Ta giả định hàm này được gọi từ onclick event, nên ta giữ nguyên logic của bạn
+    // **LƯU Ý:** Nếu không có `event` object, dòng này sẽ lỗi.
+    // Vì không có `event` object trong ngữ cảnh này, ta cần sửa lại bằng cách tìm nút:
+    const clickedBtn = document.querySelector(`.filter-btn[onclick*="'${filterType}'"]`);
+    if (clickedBtn) {
+        clickedBtn.classList.add('active');
+    }
 
     // Load lại reviews với filter mới
     if (currentPsId) {
@@ -1171,7 +986,8 @@ async function updateReview() {
     const comment = commentInput ? commentInput.value.trim() : '';
 
     if (!ratingEl) {
-        alert("Vui lòng chọn số sao!");
+        // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+        showNotification("Vui lòng chọn số sao!", "⚠️");
         return;
     }
 
@@ -1264,7 +1080,8 @@ async function deleteReview() {
 // ======================================================================
 async function submitReview() {
     if (!currentPsId) {
-        alert("Lỗi: Không tìm thấy mã sản phẩm.");
+        // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+        showNotification("Lỗi: Không tìm thấy mã sản phẩm.", "❌");
         return;
     }
     if (!supabaseClient) return;
@@ -1277,7 +1094,8 @@ async function submitReview() {
     const comment = commentInput ? commentInput.value.trim() : '';
 
     if (!ratingEl) {
-        alert("Vui lòng chọn số sao!");
+        // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+        showNotification("Vui lòng chọn số sao!", "⚠️");
         return;
     }
 
@@ -1335,10 +1153,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if ($('#edit-review-modal').style.display === 'flex') {
+            if ($('#edit-review-modal') && $('#edit-review-modal').style.display === 'flex') {
                 closeEditReviewModal();
             }
-            if ($('#confirm-delete-modal').style.display === 'flex') {
+            if ($('#confirm-delete-modal') && $('#confirm-delete-modal').style.display === 'flex') {
                 closeConfirmDeleteModal();
             }
         }
@@ -1351,7 +1169,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Bắt đầu ghi âm
 window.startVoiceSearch = function () {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
-        alert("Trình duyệt không hỗ trợ tìm kiếm bằng giọng nói! Hãy thử Chrome.");
+        // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+        showNotification("Trình duyệt không hỗ trợ tìm kiếm bằng giọng nói! Hãy thử Chrome.", "❌");
         return;
     }
 
@@ -1438,7 +1257,8 @@ window.startVoiceSearch = function () {
     } catch (error) {
         console.error("Không thể start recognition:", error);
         popup.style.display = "none";
-        alert("Không thể bật giọng nói!");
+        // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+        showNotification("Không thể bật giọng nói!", "❌");
     }
 }
 
@@ -1786,7 +1606,8 @@ window.changeQty = function (key, delta) {
 }
 
 window.removeItem = function (key) {
-    if (confirm("Xóa sản phẩm này khỏi giỏ hàng?")) {
+    // SỬ DỤNG window.confirm TẠM THỜI (Giữ nguyên cho đến khi có custom confirm modal)
+    if (window.confirm("Xóa sản phẩm này khỏi giỏ hàng?")) {
         delete cart[key];
         if (CART_CACHE[key]) delete CART_CACHE[key]; // Xóa khỏi cache
         saveCart();
@@ -1930,12 +1751,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.key === 'Escape') {
             const popup = document.getElementById('image_search_popup');
             const cartPopup = document.getElementById('cart-popup');
+            const customModal = document.getElementById('custom-confirm-modal');
+
 
             if (popup && popup.style.display === 'flex') {
                 closeImageSearch();
             }
             if (cartPopup && cartPopup.style.display === 'block') {
                 cartPopup.style.display = 'none';
+            }
+            // Thêm logic đóng cho custom modal
+            if (customModal && customModal.style.display === 'flex') {
+                customModal.style.display = 'none';
+                // Ngăn ESC kích hoạt hành động mặc định của trang
+                e.preventDefault();
             }
         }
     });
@@ -1991,7 +1820,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnAddToCart) {
         btnAddToCart.onclick = async () => {
             // 1. Kiểm tra sản phẩm
-            if (!currentProduct) return;
+            if (!currentProduct) {
+                showNotification('Lỗi: Không tìm thấy thông tin sản phẩm.', '❌');
+                return;
+            }
 
             // 2. Gọi hàm cũ để xử lý LocalStorage và UI (Badge số lượng...)
             // Hàm này sẽ cập nhật localStorage.getItem('cart_v1')
@@ -2041,7 +1873,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mapBtn) {
         mapBtn.onclick = () => {
             if (!currentProduct) {
-                alert('Chưa tải được thông tin cửa hàng!');
+                // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
+                showNotification('Chưa tải được thông tin cửa hàng!', '⚠️');
                 return;
             }
             localStorage.setItem('TARGET_STORE', JSON.stringify({

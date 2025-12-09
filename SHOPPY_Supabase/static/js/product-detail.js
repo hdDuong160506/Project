@@ -73,7 +73,7 @@ function renderSuggestions(products, query) {
         </svg>
         Tìm kiếm: <b>${query}</b>
     `;
-    
+
     // ✅ REDIRECT VỀ INDEX
     searchAllItem.addEventListener('click', () => {
         hideSuggestions();
@@ -82,7 +82,7 @@ function renderSuggestions(products, query) {
             window.location.href = `index.html?search=${encodeURIComponent(query)}`;
         }, 500);
     });
-    
+
     container.appendChild(searchAllItem);
 
     // 2. Thêm các sản phẩm gợi ý - VẪN ĐI ĐẾN PRODUCT-SUMMARY
@@ -120,7 +120,7 @@ function submitSearch(query) {
         searchInput.value = query;
     }
     hideSuggestions();
-    
+
     document.body.classList.add('page-fade-out');
     setTimeout(() => {
         window.location.href = `index.html?search=${encodeURIComponent(query)}`;
@@ -143,10 +143,57 @@ function formatMoney(n) {
     return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '₫';
 }
 
+// Thay thế hàm saveCart cũ trong product-summary.js bằng hàm này:
+
 function saveCart() {
+    // 1. LƯU LOCALSTORAGE & UPDATE UI (Giữ nguyên logic cũ của bạn)
     localStorage.setItem('cart_v1', JSON.stringify(cart));
-    updateCartUI();
-    fetchCartDetails(); // THÊM: Cập nhật cache
+    
+    // Cập nhật giao diện ngay lập tức
+    if (typeof updateCartUI === 'function') updateCartUI();
+    
+    // Cập nhật cache chi tiết sản phẩm (như code cũ bạn đang có)
+    if (typeof fetchCartDetails === 'function') fetchCartDetails();
+
+    // 2. LOGIC MỚI: ĐỒNG BỘ LÊN DATABASE (Thêm đoạn này vào)
+    
+    // Hủy lệnh hẹn giờ cũ nếu user thao tác liên tiếp
+    if (window.summarySyncTimeout) clearTimeout(window.summarySyncTimeout);
+
+    // Đặt hẹn giờ mới (1 giây sau sẽ đẩy lên DB)
+    window.summarySyncTimeout = setTimeout(async () => {
+        // Kiểm tra Supabase có tồn tại không
+        if (typeof supabase === 'undefined') return;
+
+        try {
+            // Lấy session user
+            const { data: { session } } = await supabase.auth.getSession();
+
+            // Chỉ lưu nếu đã đăng nhập
+            if (session && session.user) {
+                console.log("☁️ [Popup] Đang đồng bộ giỏ hàng lên Database...");
+
+                // Đọc lại data mới nhất từ LocalStorage (Fresh Data)
+                const freshCart = JSON.parse(localStorage.getItem('cart_v1') || '{}');
+
+                const { error } = await supabase
+                    .from('cart')
+                    .upsert({ 
+                        user_id: session.user.id, 
+                        cart_data: freshCart, 
+                        updated_at: new Date()
+                    }, { onConflict: 'user_id' });
+
+                if (error) {
+                    console.error("❌ [Popup] Lỗi sync:", error.message);
+                } else {
+                    console.log("✅ [Popup] Đã lưu lên mây thành công!");
+                }
+            }
+        } catch (err) {
+            console.warn("⚠️ Lỗi hệ thống khi sync popup:", err);
+        }
+    }, 1000); // Debounce 1s
 }
 
 // HÀM QUẢN LÝ LOADING OVERLAY (THÊM MỚI)
@@ -175,7 +222,7 @@ function showNotification(message, icon = '✅') {
     // 1. Cập nhật nội dung
     msgEl.textContent = message;
     iconEl.textContent = icon;
-    
+
     // 2. Xóa timeout cũ nếu đang chạy
     clearTimeout(notificationTimeout);
 
@@ -183,11 +230,11 @@ function showNotification(message, icon = '✅') {
     toast.classList.remove('show'); // Reset animation
     void toast.offsetWidth; // Force reflow/repaint
     toast.classList.add('show');
-    
+
     // 4. Tự động ẩn sau 3 giây (thời gian tương đương animation fadeout)
     notificationTimeout = setTimeout(() => {
         toast.classList.remove('show');
-    }, 3000); 
+    }, 3000);
 }
 
 // Hàm kiểm tra đăng nhập và chuyển hướng (KHÔNG HIỂN THỊ POP-UP)
@@ -195,15 +242,15 @@ async function checkLoginAndRedirect(message = "Chuyển hướng đến trang �
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
         // Ghi log vào console (KHÔNG HIỂN THỊ BẤT KỲ GIAO DIỆN NÀO)
-        console.log(message); 
-        
+        console.log(message);
+
         // 🎯 SỬA CHỮA: LƯU URL HIỆN TẠI VÀO LOCALSTORAGE TRƯỚC KHI CHUYỂN TRANG
-        localStorage.setItem('redirect_after_login', window.location.href); 
-        
+        localStorage.setItem('redirect_after_login', window.location.href);
+
         // Kích hoạt hiệu ứng chuyển trang và chuyển hướng
         document.body.classList.add('page-fade-out');
         setTimeout(() => {
-            window.location.href = 'account.html'; 
+            window.location.href = 'account.html';
         }, 500);
         return false;
     }
@@ -260,7 +307,7 @@ async function updateAccountLink() {
 }
 
 // Logic Đăng Xuất (ĐÃ CẬP NHẬT: Tải lại trang)
-window.handleLogout = async function() {
+window.handleLogout = async function () {
     try {
         const {
             error
@@ -274,7 +321,7 @@ window.handleLogout = async function() {
         localStorage.setItem('redirect_after_login', window.location.href);
 
         // Cập nhật: Tải lại trang hiện tại (product-detail.html)
-        window.location.reload(); 
+        window.location.reload();
 
     } catch (err) {
         console.error("Lỗi đăng xuất:", err);
@@ -299,7 +346,7 @@ async function loadMainProduct() {
     }
 
     const key = `${product_id}_${store_id}`;
-    
+
     showLoading(); // HIỂN THỊ LOADING
 
     try {
@@ -407,7 +454,8 @@ async function fetchCartDetails() {
         });
         if (res.ok) {
             const newCache = await res.json();
-            CART_CACHE = { ...CART_CACHE,
+            CART_CACHE = {
+                ...CART_CACHE,
                 ...newCache
             };
             updateCartUI();
@@ -489,9 +537,9 @@ function updateCartUI() {
 }
 
 // Thêm vào giỏ hàng (ĐÃ CẬP NHẬT LOGIC KIỂM TRA ĐĂNG NHẬP và DÙNG NOTIFICATION)
-window.addToCart = async function(productId, storeId, qty) {
+window.addToCart = async function (productId, storeId, qty) {
     const user = await checkLoginAndRedirect("Chưa đăng nhập. Chuyển hướng để thêm sản phẩm vào giỏ hàng.");
-    if (!user) return; 
+    if (!user) return;
 
     // Logic thêm vào giỏ hàng khi đã đăng nhập
     const key = `${productId}_${storeId}`;
@@ -514,20 +562,20 @@ window.addToCart = async function(productId, storeId, qty) {
     }
     updateCartUI();
     // THAY THẾ ALERT BẰNG CUSTOM NOTIFICATION
-    showNotification('Đã thêm vào giỏ hàng thành công!', '✅'); 
+    showNotification('Đã thêm vào giỏ hàng thành công!', '✅');
 }
 
 // Mua ngay (ĐÃ CẬP NHẬT LOGIC KIỂM TRA ĐĂNG NHẬP)
-window.buyNow = async function() {
+window.buyNow = async function () {
     const user = await checkLoginAndRedirect("Chưa đăng nhập. Chuyển hướng để mua hàng ngay.");
-    if (!user) return; 
-    
+    if (!user) return;
+
     // Logic mua ngay khi đã đăng nhập
     if (currentProduct) {
         const key = `${currentProduct.product_id}_${currentProduct.store_id}`;
         cart[key] = (cart[key] || 0) + currentQuantity;
-        saveCart(); 
-        
+        saveCart();
+
         document.body.classList.add('page-fade-out');
         setTimeout(() => {
             window.location.href = 'cart.html';
@@ -581,7 +629,7 @@ async function loadReviews(psId, resetPage = false) {
     }
 
     const listEl = $('#reviews-list');
-    
+
     // Hiển thị loading (chỉ khi reset)
     if (resetPage && listEl) {
         listEl.innerHTML = '<p style="color:#999; padding:10px">Đang tải đánh giá...</p>';
@@ -597,14 +645,14 @@ async function loadReviews(psId, resetPage = false) {
 
         if (!countError && count !== null) {
             totalReviewsCount = count;
-            
+
             // Tính rating trung bình (chỉ khi có reviews)
             if (count > 0) {
                 const { data: ratingData } = await supabaseClient
                     .from('reviews')
                     .select('rating')
                     .eq('ps_id', psId);
-                
+
                 if (ratingData && ratingData.length > 0) {
                     const sumRating = ratingData.reduce((acc, curr) => acc + (curr.rating || 0), 0);
                     const avgRating = sumRating / ratingData.length;
@@ -703,7 +751,7 @@ async function loadReviews(psId, resetPage = false) {
     if (hasMoreReviews) {
         const loadedCount = (currentReviewsPage + 1) * REVIEWS_PER_PAGE;
         const remainingCount = Math.max(0, totalReviewsCount - loadedCount);
-        
+
         // ✅ CHỈ HIỂN THỊ NÚT NẾU CÒN ĐÁNH GIÁ
         if (remainingCount > 0) {
             const loadMoreBtn = document.createElement('button');
@@ -738,7 +786,7 @@ async function loadReviews(psId, resetPage = false) {
             loadMoreBtn.onclick = async () => {
                 loadMoreBtn.disabled = true;
                 loadMoreBtn.innerHTML = '⏳ Đang tải...';
-                
+
                 currentReviewsPage++;
                 await loadReviews(psId, false); // Load thêm không reset
             };
@@ -827,13 +875,13 @@ let reviewsDataCache = []; // Cache toàn bộ reviews đã tải
 // ======================================================================
 async function filterReviews(filterType) {
     currentFilter = filterType;
-    
+
     // Cập nhật UI nút filter
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
-    
+
     // Load lại reviews với filter mới
     if (currentPsId) {
         await loadReviews(currentPsId, true);
@@ -871,7 +919,7 @@ async function loadReviews(psId, resetPage = false) {
     }
 
     const listEl = $('#reviews-list');
-    
+
     if (resetPage && listEl) {
         listEl.innerHTML = '<p style="color:#999; padding:10px">Đang tải đánh giá...</p>';
     }
@@ -885,13 +933,13 @@ async function loadReviews(psId, resetPage = false) {
 
         if (!countError && count !== null) {
             totalReviewsCount = count;
-            
+
             if (count > 0) {
                 const { data: ratingData } = await supabaseClient
                     .from('reviews')
                     .select('rating')
                     .eq('ps_id', psId); // 🎯 ĐÃ XÓA .eq('is_deleted', false)
-                
+
                 if (ratingData && ratingData.length > 0) {
                     const sumRating = ratingData.reduce((acc, curr) => acc + (curr.rating || 0), 0);
                     const avgRating = sumRating / ratingData.length;
@@ -986,7 +1034,7 @@ async function loadReviews(psId, resetPage = false) {
             name: 'Người dùng ẩn danh',
             avatar_url: null
         };
-        
+
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
             starsHtml += `<span style="color:${i <= r.rating ? '#ffc107' : '#ddd'}">★</span>`;
@@ -1000,10 +1048,10 @@ async function loadReviews(psId, resetPage = false) {
         const item = document.createElement('div');
         item.className = 'review-item';
         item.dataset.reviewId = r.review_id;
-        
+
         // Kiểm tra nếu là review của user hiện tại
         const isCurrentUserReview = currentUserId && r.user_id === currentUserId;
-        
+
         let editDeleteButtons = '';
         if (isCurrentUserReview) {
             editDeleteButtons = `
@@ -1041,7 +1089,7 @@ async function loadReviews(psId, resetPage = false) {
     if (hasMoreReviews) {
         const loadedCount = (currentReviewsPage + 1) * REVIEWS_PER_PAGE;
         const remainingCount = Math.max(0, totalReviewsCount - loadedCount);
-        
+
         if (remainingCount > 0) {
             const loadMoreBtn = document.createElement('button');
             loadMoreBtn.id = 'load-more-reviews-btn';
@@ -1073,7 +1121,7 @@ async function loadReviews(psId, resetPage = false) {
             loadMoreBtn.onclick = async () => {
                 loadMoreBtn.disabled = true;
                 loadMoreBtn.innerHTML = '⏳ Đang tải...';
-                
+
                 currentReviewsPage++;
                 await loadReviews(psId, false);
             };
@@ -1088,18 +1136,18 @@ async function loadReviews(psId, resetPage = false) {
 // ======================================================================
 async function openEditReviewModal(reviewId) {
     editingReviewId = reviewId;
-    
+
     // Tìm review trong cache
     const review = reviewsDataCache.find(r => r.review_id === reviewId);
     if (!review) return;
-    
+
     // Điền dữ liệu vào modal
     document.querySelectorAll('#edit-rating-stars input').forEach(input => {
         input.checked = parseInt(input.value) === review.rating;
     });
-    
+
     $('#edit-review-comment').value = review.comment || '';
-    
+
     // Hiển thị modal
     $('#edit-review-modal').style.display = 'flex';
 }
@@ -1117,21 +1165,21 @@ function closeEditReviewModal() {
 // ======================================================================
 async function updateReview() {
     if (!editingReviewId || !supabaseClient) return;
-    
+
     const ratingEl = document.querySelector('input[name="edit-rating"]:checked');
     const commentInput = $('#edit-review-comment');
     const comment = commentInput ? commentInput.value.trim() : '';
-    
+
     if (!ratingEl) {
         alert("Vui lòng chọn số sao!");
         return;
     }
-    
+
     const btn = document.querySelector('#edit-review-modal .btn-primary');
     const originalText = btn.textContent;
     btn.textContent = "Đang lưu...";
     btn.disabled = true;
-    
+
     try {
         const { error } = await supabaseClient
             .from('reviews')
@@ -1141,17 +1189,17 @@ async function updateReview() {
                 updated_at: new Date().toISOString()
             })
             .eq('review_id', editingReviewId);
-        
+
         if (error) throw error;
-        
+
         showNotification("Đã cập nhật đánh giá thành công!", "✅");
         closeEditReviewModal();
-        
+
         // Reload reviews
         if (currentPsId) {
             await loadReviews(currentPsId, true);
         }
-        
+
     } catch (err) {
         showNotification("Cập nhật thất bại: " + err.message, "❌");
     } finally {
@@ -1181,29 +1229,29 @@ function closeConfirmDeleteModal() {
 // ======================================================================
 async function deleteReview() {
     if (!editingReviewId || !supabaseClient) return;
-    
+
     const btn = document.querySelector('#confirm-delete-modal .btn-danger');
     const originalText = btn.textContent;
     btn.textContent = "Đang xóa...";
     btn.disabled = true;
-    
+
     try {
         // SỬA: Dùng .delete() thay vì .update() để xóa cứng
         const { error } = await supabaseClient
             .from('reviews')
             .delete()
             .eq('review_id', editingReviewId);
-        
+
         if (error) throw error;
-        
+
         showNotification("Đã xóa đánh giá thành công!", "✅");
         closeConfirmDeleteModal();
-        
+
         // Reload reviews
         if (currentPsId) {
             await loadReviews(currentPsId, true);
         }
-        
+
     } catch (err) {
         showNotification("Xóa thất bại: " + err.message, "❌");
     } finally {
@@ -1270,7 +1318,7 @@ async function submitReview() {
 // ======================================================================
 document.addEventListener('DOMContentLoaded', async () => {
     // ... code hiện tại ...
-    
+
     // Thêm vào phần cuối của DOMContentLoaded
     // Event listener cho modal
     $('#edit-review-modal').addEventListener('click', (e) => {
@@ -1278,13 +1326,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             closeEditReviewModal();
         }
     });
-    
+
     $('#confirm-delete-modal').addEventListener('click', (e) => {
         if (e.target === $('#confirm-delete-modal')) {
             closeConfirmDeleteModal();
         }
     });
-    
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if ($('#edit-review-modal').style.display === 'flex') {
@@ -1301,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ======================================================================
 
 // Bắt đầu ghi âm
-window.startVoiceSearch = function() {
+window.startVoiceSearch = function () {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
         alert("Trình duyệt không hỗ trợ tìm kiếm bằng giọng nói! Hãy thử Chrome.");
         return;
@@ -1325,11 +1373,11 @@ window.startVoiceSearch = function() {
     transcriptDisplay.textContent = "Đang nghe...";
     popup.style.display = "flex";
 
-    recognition.onstart = function() {
+    recognition.onstart = function () {
         transcriptDisplay.textContent = "Đang nghe... Hãy nói gì đó!";
     };
 
-    recognition.onresult = function(event) {
+    recognition.onresult = function (event) {
         let finalTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -1359,7 +1407,7 @@ window.startVoiceSearch = function() {
         }
     };
 
-    recognition.onerror = function(event) {
+    recognition.onerror = function (event) {
         console.error("Lỗi nhận diện:", event.error);
 
         let msg = "Lỗi: ";
@@ -1377,7 +1425,7 @@ window.startVoiceSearch = function() {
         }, 200);
     };
 
-    recognition.onend = function() {
+    recognition.onend = function () {
         currentRecognition = null;
 
         if ($('#transcript_display').textContent === "Đang nghe...") {
@@ -1395,7 +1443,7 @@ window.startVoiceSearch = function() {
 }
 
 // Hủy ghi âm
-window.cancelVoiceSearch = function() {
+window.cancelVoiceSearch = function () {
     if (currentRecognition) currentRecognition.abort();
     $('#voice_popup').style.display = "none";
 }
@@ -1405,7 +1453,7 @@ window.cancelVoiceSearch = function() {
 // ======================================================================
 
 // Mở popup tìm kiếm bằng hình ảnh
-window.openImageSearch = function() {
+window.openImageSearch = function () {
     const popup = document.getElementById('image_search_popup');
     popup.classList.add('active');
     popup.style.display = 'flex';
@@ -1416,7 +1464,7 @@ window.openImageSearch = function() {
 }
 
 // Đóng popup
-window.closeImageSearch = function() {
+window.closeImageSearch = function () {
     const popup = document.getElementById('image_search_popup');
     popup.classList.remove('active');
     setTimeout(() => {
@@ -1428,7 +1476,7 @@ window.closeImageSearch = function() {
 }
 
 // Chuyển tab
-window.switchImageTab = function(tabName) {
+window.switchImageTab = function (tabName) {
     currentTab = tabName;
 
     document.querySelectorAll('.tab-button').forEach(btn => {
@@ -1620,7 +1668,7 @@ function showImagePreview(imageData, tab) {
 }
 
 // Xóa ảnh upload
-window.clearUploadImage = function() {
+window.clearUploadImage = function () {
     const preview = document.getElementById('imagePreview');
     const container = document.getElementById('uploadPreviewContainer');
     const uploadArea = document.getElementById('imageUploadArea');
@@ -1637,7 +1685,7 @@ window.clearUploadImage = function() {
 }
 
 // Xóa ảnh paste
-window.clearPasteImage = function() {
+window.clearPasteImage = function () {
     const preview = document.getElementById('pastePreview');
     const container = document.getElementById('pastePreviewContainer');
     const input = document.getElementById('imagePasteInput');
@@ -1678,7 +1726,7 @@ function hideError() {
 }
 
 // Tìm kiếm bằng ảnh
-window.searchWithImage = async function() {
+window.searchWithImage = async function () {
     if (!currentImageData) {
         showError('Vui lòng chọn hoặc nhập ảnh trước');
         return;
@@ -1731,13 +1779,13 @@ window.searchWithImage = async function() {
 // Cart Actions (with Optimistic Update)
 // ĐÃ CHUYỂN logic này vào window.addToCart ở trên
 
-window.changeQty = function(key, delta) {
+window.changeQty = function (key, delta) {
     cart[key] = (cart[key] || 0) + delta;
     if (cart[key] <= 0) delete cart[key];
     saveCart();
 }
 
-window.removeItem = function(key) {
+window.removeItem = function (key) {
     if (confirm("Xóa sản phẩm này khỏi giỏ hàng?")) {
         delete cart[key];
         if (CART_CACHE[key]) delete CART_CACHE[key]; // Xóa khỏi cache
@@ -1753,13 +1801,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. ADVANCED SEARCH HANDLING (ĐÃ SỬA)
     // ======================
     const searchForm = $('#search_form');
-    
+
     if (searchForm) {
         const searchInput = $('#search_input');
-        
+
         if (searchInput) {
             // 1.1. Xử lý khi gõ phím (Hiển thị gợi ý)
-            searchInput.addEventListener('input', function() {
+            searchInput.addEventListener('input', function () {
                 clearTimeout(suggestionTimeout);
                 suggestionTimeout = setTimeout(() => {
                     const query = this.value.trim();
@@ -1778,7 +1826,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    if(highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+                    if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
                         suggestions[highlightedIndex].classList.remove('highlighted');
                     }
                     highlightedIndex = (highlightedIndex + 1) % suggestions.length;
@@ -1787,7 +1835,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    if(highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+                    if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
                         suggestions[highlightedIndex].classList.remove('highlighted');
                     }
                     highlightedIndex = (highlightedIndex - 1 + suggestions.length) % suggestions.length;
@@ -1797,7 +1845,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
                     const highlighted = suggestions[highlightedIndex];
-                    
+
                     if (highlighted) {
                         // ✅ CÓ SUGGESTION ĐƯỢC CHỌN -> CLICK VÀO NÓ
                         e.stopImmediatePropagation();
@@ -1809,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             submitSearch(query);
                         }
                     }
-                    
+
                 } else if (e.key === 'Escape') {
                     hideSuggestions();
                 }
@@ -1826,10 +1874,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         // 1.4. Ẩn gợi ý khi click ra ngoài
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             const suggestionsDiv = $('#search_suggestions');
             if (suggestionsDiv && suggestionsDiv.style.display === 'block' &&
-                !searchForm.contains(event.target) && 
+                !searchForm.contains(event.target) &&
                 !suggestionsDiv.contains(event.target)) {
                 hideSuggestions();
             }
@@ -1843,7 +1891,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadMainProduct(),
         fetchCartDetails()
     ]);
-    
+
     updateAccountLink();
     updateCartUI();
     setupImageUpload();
@@ -1892,7 +1940,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-       // ĐỔI TÊN & CHỨC NĂNG: Nút Thanh toán -> Xem Giỏ hàng
+    // ĐỔI TÊN & CHỨC NĂNG: Nút Thanh toán -> Xem Giỏ hàng
     if ($('#checkout')) {
         // 1. Đổi Text button
         $('#checkout').textContent = 'Xem Giỏ hàng';
@@ -1902,7 +1950,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Lấy session hiện tại
             const { data: { session } } = await supabase.auth.getSession();
 
-            if (!session || !session.user) {;
+            if (!session || !session.user) {
+                ;
                 // Chuyển hướng đến trang đăng nhập
                 document.body.classList.add('page-fade-out');
                 setTimeout(() => {
@@ -1936,10 +1985,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // Gắn lại sự kiện cho Thêm vào giỏ và Mua ngay (Sử dụng hàm đã được check login)
-    if ($('#add-to-cart-btn')) $('#add-to-cart-btn').onclick = () => {
-        if (currentProduct) window.addToCart(currentProduct.product_id, currentProduct.store_id, currentQuantity);
-    };
+    // Gắn lại sự kiện cho Thêm vào giỏ và Mua ngay (Đã nâng cấp: Sync Database)
+    const btnAddToCart = $('#add-to-cart-btn');
+
+    if (btnAddToCart) {
+        btnAddToCart.onclick = async () => {
+            // 1. Kiểm tra sản phẩm
+            if (!currentProduct) return;
+
+            // 2. Gọi hàm cũ để xử lý LocalStorage và UI (Badge số lượng...)
+            // Hàm này sẽ cập nhật localStorage.getItem('cart_v1')
+            window.addToCart(currentProduct.product_id, currentProduct.store_id, currentQuantity);
+
+            // 3. LOGIC MỚI: Đẩy ngay dữ liệu mới nhất lên Supabase
+            if (typeof supabase !== 'undefined') {
+                try {
+                    // Lấy session (dùng getSession cho nhanh, không cần mạng check)
+                    const { data: { session } } = await supabase.auth.getSession();
+
+                    if (session && session.user) {
+                        console.log("🔄 Đang đồng bộ giỏ hàng mới lên Server...");
+
+                        // Lấy giỏ hàng VỪA ĐƯỢC CẬP NHẬT xong từ bước 2
+                        const updatedCart = JSON.parse(localStorage.getItem('cart_v1') || '{}');
+
+                        // Gửi lên Database
+                        const { error } = await supabase
+                            .from('cart')
+                            .upsert({
+                                user_id: session.user.id,
+                                cart_data: updatedCart,
+                                updated_at: new Date()
+                            }, { onConflict: 'user_id' });
+
+                        if (error) {
+                            console.error("❌ Lỗi sync background:", error.message);
+                        } else {
+                            console.log("✅ Đã lưu giỏ hàng lên Database!");
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Lỗi hệ thống khi lưu giỏ hàng:", err);
+                }
+            }
+        };
+    }
 
     if ($('#buy-now-btn')) $('#buy-now-btn').onclick = window.buyNow;
 
@@ -1972,7 +2062,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Xử lý nút Tài Khoản trên Header
     const accountLink = document.getElementById('account-link');
     if (accountLink) {
-        accountLink.addEventListener('click', function(e) {
+        accountLink.addEventListener('click', function (e) {
             // Lưu URL hiện tại ngay lập tức khi bấm
             localStorage.setItem('redirect_after_login', window.location.href);
         });
@@ -1982,7 +2072,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Vì link này nằm trong HTML tĩnh nên ta có thể bắt sự kiện ngay
     const reviewLoginLink = document.querySelector('#login-prompt a');
     if (reviewLoginLink) {
-        reviewLoginLink.addEventListener('click', function(e) {
+        reviewLoginLink.addEventListener('click', function (e) {
             // Lưu URL hiện tại: product-detail.html?product_id=...
             localStorage.setItem('redirect_after_login', window.location.href);
             console.log('💾 Đã lưu vị trí để quay lại:', window.location.href);
